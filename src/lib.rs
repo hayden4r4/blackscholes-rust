@@ -23,33 +23,6 @@ pub struct Inputs {
     pub sigma: f64,
 }
 
-// fn std_dev_log_return(returns: Series) -> f64 {
-//     // Returns the std dev of log returns
-//     // Calculates the standard deviation of log returns
-//     let mut returns_vec: Vec<f64> = Vec::new();
-//     let mut mean: f64 = 0.0;
-//     for i in 0..returns.len() {
-//         if i <= returns.len() - 2 {
-//             returns_vec.push(
-//                 (returns.str_value(i + 1).to_string().parse::<f64>().unwrap()
-//                     / returns.str_value(i).to_string().parse::<f64>().unwrap())
-//                 .ln(),
-//             );
-//             mean += returns_vec[i];
-//         }
-//     }
-
-//     mean /= returns_vec.len() as f64;
-//     // Calculating variance of log returns
-//     let mut variance: f64 = 0.0;
-//     for i in 0..returns_vec.len() {
-//         variance += (returns_vec[i] - mean).powi(2);
-//     }
-//     variance /= returns_vec.len() as f64;
-//     // Returns square root of variance = std dev.
-//     variance.sqrt()
-// }
-
 fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     // Returns the first and second order moments of the normal distribution
 
@@ -141,16 +114,3 @@ pub fn calc_price(inputs: Inputs) -> f64 {
     };
     price
 }
-
-// fn main() {
-//     let inputs: Inputs = Inputs {
-//         option_type: OptionType::Call,
-//         s: 4123.34,
-//         k: 4120.0,
-//         r: 0.0312,
-//         t: 176.0 / 360.0,
-//         sigma: 0.3,
-//     };
-//     let price: f64 = calc_price(&inputs);
-//     println!("{}", price);
-// }
