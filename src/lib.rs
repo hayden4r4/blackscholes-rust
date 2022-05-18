@@ -79,6 +79,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
         let n: Normal = Normal::new(0.0, 1.0).unwrap();
         n_tx.send(n);
     });
+    handles.push(handle_n);
 
     // Calculates the first and second order moments of the normal distribution
     let n: Normal = n_rx.recv().unwrap();
