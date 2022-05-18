@@ -1,3 +1,3 @@
 # Black-Scholes Rust
 
-A Black-Scholes pricing model built in Rust. This is a basic Black-Scholes implementation assuming no dividends and European option. The current implentation is using historical volatility in the calculation from a provided csv but can be changed to a more advanced method to increase accuracy. This implementation does not prioritze speed though it should be pretty effecient.
+A Black-Scholes pricing model built in Rust. This is a basic Black-Scholes implementation assuming no dividends and a European option, will calculate the price of calls or puts. The computation is parallelized using crossbeam. Simply pass an Inputs struct to the calc_price() function to return the calculated price of an option.
