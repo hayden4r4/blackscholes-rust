@@ -27,20 +27,27 @@ pub struct Inputs {
 fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     // Returns the first and second order moments of the normal distribution
 
-    let mut handles = vec![];
+    // Creating a vector to hold threads before joining
+    let mut handles = Vec::new();
+    // Creating a channel with max capacity of one message to communicate between threads
     let (numd1_tx, numd1_rx) = bounded(1);
-    let inputs1 = Arc::clone(&inputs);
+    // Creating mutex for inputs
+    let inputs1: Arc<Mutex<Inputs>> = Arc::clone(&inputs);
+    // Creating thread for first order moment
     let handle_numd1 = thread::spawn(move || {
         // Calculating numerator of the first moment of the normal distribution
+        // Create a lock on the inputs1 mutex
         let inputs = inputs1.lock().unwrap();
         let numd1: f64 =
             (inputs.s / inputs.k).ln() + (inputs.r + (inputs.sigma.powi(2)) / 2.0) * inputs.t;
+        // Send the result to the channel
         numd1_tx.send(numd1).unwrap();
     });
+    // Pushing the handle to the handles vector
     handles.push(handle_numd1);
 
     let (numd2_tx, numd2_rx) = bounded(1);
-    let inputs2 = Arc::clone(&inputs);
+    let inputs2: Arc<Mutex<Inputs>> = Arc::clone(&inputs);
     let handle_numd2 = thread::spawn(move || {
         // Calculating numerator of the second moment of the normal distribution
         let inputs = inputs2.lock().unwrap();
@@ -51,7 +58,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     handles.push(handle_numd2);
 
     let (den_tx, den_rx) = bounded(1);
-    let inputs3 = Arc::clone(&inputs);
+    let inputs3: Arc<Mutex<Inputs>> = Arc::clone(&inputs);
     let handle_den = thread::spawn(move || {
         // Calculating denominator of the first and second moment of the normal distribution
         let inputs = inputs3.lock().unwrap();
@@ -61,16 +68,14 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     handles.push(handle_den);
 
     let (d1d2_tx, d1d2_rx) = bounded(1);
-    let inputs4 = Arc::clone(&inputs);
     let handle_d1d2 = thread::spawn(move || {
         // Calculating the first and second moment of the normal distribution
-        let inputs = inputs4.lock().unwrap();
         let den: f64 = den_rx.recv().unwrap();
         let d1d2: (f64, f64) = (
             numd1_rx.recv().unwrap() / den,
             numd2_rx.recv().unwrap() / den,
         );
-        d1d2_tx.send(d1d2);
+        d1d2_tx.send(d1d2).unwrap();
     });
     handles.push(handle_d1d2);
 
@@ -78,13 +83,14 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     let handle_n = thread::spawn(move || {
         // Creating normal distribution
         let n: Normal = Normal::new(0.0, 1.0).unwrap();
-        n_tx.send(n);
+        n_tx.send(n).unwrap();
     });
     handles.push(handle_n);
 
     // Calculates the first and second order moments of the normal distribution
     let n: Normal = n_rx.recv().unwrap();
     let d1d2: (f64, f64) = d1d2_rx.recv().unwrap();
+    // Checks if OptionType is Call or Put
     let nd1nd2: (f64, f64) = match inputs.lock().unwrap().option_type {
         OptionType::Call => (n.cdf(d1d2.0), n.cdf(d1d2.1)),
         OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
