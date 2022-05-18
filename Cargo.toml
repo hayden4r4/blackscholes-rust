@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 statrs = "0.15.0"
+crossbeam-channel = "0.5.4"

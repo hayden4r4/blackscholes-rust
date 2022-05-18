@@ -1,6 +1,7 @@
+use crossbeam_channel::bounded;
 use statrs::distribution::{ContinuousCDF, Normal};
 use std::f64::consts::E;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 #[derive(Clone)]
@@ -27,7 +28,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     // Returns the first and second order moments of the normal distribution
 
     let mut handles = vec![];
-    let (numd1_tx, numd1_rx) = mpsc::channel();
+    let (numd1_tx, numd1_rx) = bounded(1);
     let inputs1 = Arc::clone(&inputs);
     let handle_numd1 = thread::spawn(move || {
         // Calculating numerator of the first moment of the normal distribution
@@ -38,7 +39,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     });
     handles.push(handle_numd1);
 
-    let (numd2_tx, numd2_rx) = mpsc::channel();
+    let (numd2_tx, numd2_rx) = bounded(1);
     let inputs2 = Arc::clone(&inputs);
     let handle_numd2 = thread::spawn(move || {
         // Calculating numerator of the second moment of the normal distribution
@@ -49,7 +50,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     });
     handles.push(handle_numd2);
 
-    let (den_tx, den_rx) = mpsc::channel();
+    let (den_tx, den_rx) = bounded(1);
     let inputs3 = Arc::clone(&inputs);
     let handle_den = thread::spawn(move || {
         // Calculating denominator of the first and second moment of the normal distribution
@@ -59,7 +60,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     });
     handles.push(handle_den);
 
-    let (d1d2_tx, d1d2_rx) = mpsc::channel();
+    let (d1d2_tx, d1d2_rx) = bounded(1);
     let inputs4 = Arc::clone(&inputs);
     let handle_d1d2 = thread::spawn(move || {
         // Calculating the first and second moment of the normal distribution
@@ -73,7 +74,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     });
     handles.push(handle_d1d2);
 
-    let (n_tx, n_rx) = mpsc::channel();
+    let (n_tx, n_rx) = bounded(1);
     let handle_n = thread::spawn(move || {
         // Creating normal distribution
         let n: Normal = Normal::new(0.0, 1.0).unwrap();
