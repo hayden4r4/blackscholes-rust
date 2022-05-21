@@ -1,7 +1,7 @@
 use crossbeam_channel::bounded;
 use statrs::distribution::{ContinuousCDF, Normal};
 use std::f64::consts::E;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::thread;
 
 #[derive(Clone)]
@@ -24,7 +24,7 @@ pub struct Inputs {
     pub sigma: f64,
 }
 
-fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
+fn nd1nd2(inputs: Arc<RwLock<Inputs>>) -> (f64, f64) {
     // Returns the first and second order moments of the normal distribution
 
     // Creating a vector to hold threads before joining
@@ -32,12 +32,12 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     // Creating a channel with max capacity of one message to communicate between threads
     let (numd1_tx, numd1_rx) = bounded(1);
     // Creating mutex for inputs
-    let inputs1: Arc<Mutex<Inputs>> = Arc::clone(&inputs);
+    let inputs1: Arc<RwLock<Inputs>> = Arc::clone(&inputs);
     // Creating thread for first order moment
     let handle_numd1 = thread::spawn(move || {
         // Calculating numerator of the first moment of the normal distribution
-        // Create a lock on the inputs1 mutex
-        let inputs = inputs1.lock().unwrap();
+        // Obtains a read lock on inputs1
+        let inputs = inputs1.read().unwrap();
         let numd1: f64 =
             (inputs.s / inputs.k).ln() + (inputs.r + (inputs.sigma.powi(2)) / 2.0) * inputs.t;
         // Send the result to the channel
@@ -47,10 +47,10 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     handles.push(handle_numd1);
 
     let (numd2_tx, numd2_rx) = bounded(1);
-    let inputs2: Arc<Mutex<Inputs>> = Arc::clone(&inputs);
+    let inputs2: Arc<RwLock<Inputs>> = Arc::clone(&inputs);
     let handle_numd2 = thread::spawn(move || {
         // Calculating numerator of the second moment of the normal distribution
-        let inputs = inputs2.lock().unwrap();
+        let inputs = inputs2.read().unwrap();
         let numd2: f64 =
             (inputs.s / inputs.k).ln() + (inputs.r - (inputs.sigma.powi(2)) / 2.0) * inputs.t;
         numd2_tx.send(numd2).unwrap();
@@ -58,10 +58,10 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     handles.push(handle_numd2);
 
     let (den_tx, den_rx) = bounded(1);
-    let inputs3: Arc<Mutex<Inputs>> = Arc::clone(&inputs);
+    let inputs3: Arc<RwLock<Inputs>> = Arc::clone(&inputs);
     let handle_den = thread::spawn(move || {
         // Calculating denominator of the first and second moment of the normal distribution
-        let inputs = inputs3.lock().unwrap();
+        let inputs = inputs3.read().unwrap();
         let den: f64 = inputs.sigma * (inputs.t.sqrt());
         den_tx.send(den).unwrap();
     });
@@ -91,7 +91,7 @@ fn nd1nd2(inputs: Arc<Mutex<Inputs>>) -> (f64, f64) {
     let n: Normal = n_rx.recv().unwrap();
     let d1d2: (f64, f64) = d1d2_rx.recv().unwrap();
     // Checks if OptionType is Call or Put
-    let nd1nd2: (f64, f64) = match inputs.lock().unwrap().option_type {
+    let nd1nd2: (f64, f64) = match inputs.read().unwrap().option_type {
         OptionType::Call => (n.cdf(d1d2.0), n.cdf(d1d2.1)),
         OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
     };
@@ -107,9 +107,9 @@ pub fn calc_price(inputs: Inputs) -> f64 {
     // Returns the price of the option
 
     // Calculates the price of the option
-    let inputs_arc = Arc::new(Mutex::new(inputs));
+    let inputs_arc = Arc::new(RwLock::new(inputs));
     let (nd1, nd2): (f64, f64) = nd1nd2(Arc::clone(&inputs_arc));
-    let inputs = inputs_arc.lock().unwrap();
+    let inputs = inputs_arc.read().unwrap();
     let price: f64 = match inputs.option_type {
         OptionType::Call => f64::max(
             0.0,
