@@ -1,6 +1,6 @@
 use crossbeam_channel::bounded;
 use statrs::distribution::{ContinuousCDF, Normal};
-use std::f64::consts::E;
+use std::f64::consts::{E, PI};
 use std::sync::{Arc, RwLock};
 use std::thread;
 
@@ -26,7 +26,7 @@ pub struct Inputs {
     pub sigma: f64,
 }
 
-fn nd1nd2(inputs: Arc<RwLock<Inputs>>) -> (f64, f64) {
+fn nd1nd2(inputs: Arc<RwLock<Inputs>>, normal: bool) -> (f64, f64) {
     // Returns the first and second order moments of the normal distribution
 
     // Creating a vector to hold threads before joining
@@ -87,6 +87,9 @@ fn nd1nd2(inputs: Arc<RwLock<Inputs>>) -> (f64, f64) {
     let n: Normal = n_rx.recv().unwrap();
 
     let d1d2: (f64, f64) = d1d2_rx.recv().unwrap();
+    if !normal {
+        return d1d2;
+    }
 
     // Checks if OptionType is Call or Put
     let nd1nd2: (f64, f64) = match inputs.read().unwrap().option_type {
@@ -106,7 +109,7 @@ pub fn calc_price(inputs: Inputs) -> f64 {
 
     // Calculates the price of the option
     let inputs_arc = Arc::new(RwLock::new(inputs));
-    let (nd1, nd2): (f64, f64) = nd1nd2(Arc::clone(&inputs_arc));
+    let (nd1, nd2): (f64, f64) = nd1nd2(Arc::clone(&inputs_arc), true);
     let inputs = inputs_arc.read().unwrap();
     let price: f64 = match inputs.option_type {
         OptionType::Call => f64::max(
@@ -121,4 +124,84 @@ pub fn calc_price(inputs: Inputs) -> f64 {
         ),
     };
     price
+}
+
+pub fn calc_delta(inputs: Inputs) -> f64 {
+    let inputs_arc = Arc::new(RwLock::new(inputs));
+    let (nd1, _): (f64, f64) = nd1nd2(Arc::clone(&inputs_arc), true);
+    let inputs = inputs_arc.read().unwrap();
+    let delta: f64 = match inputs.option_type {
+        OptionType::Call => nd1 * E.powf(-inputs.q * inputs.t),
+        OptionType::Put => -nd1 * E.powf(-inputs.q * inputs.t),
+    };
+    delta
+}
+
+pub fn calc_nprimed1(inputs: Arc<RwLock<Inputs>>) -> f64 {
+    // Returns the derivative of the first order moment of the normal distribution
+    let (d1, _): (f64, f64) = nd1nd2(inputs, false);
+    let nprimed1: f64 = (1.0 / (2.0 * PI).sqrt()) * E.powf((-d1).powf(2.0) / 2.0);
+    nprimed1
+}
+
+pub fn calc_gamma(inputs: Inputs) -> f64 {
+    // Calculates the gamma of an option
+    let inputs_arc = Arc::new(RwLock::new(inputs));
+    let nprimed1: f64 = calc_nprimed1(Arc::clone(&inputs_arc));
+    let inputs = inputs_arc.read().unwrap();
+    let gamma: f64 =
+        E.powf(-inputs.q * inputs.t) * nprimed1 / (inputs.s * inputs.sigma * inputs.t.sqrt());
+    gamma
+}
+
+pub fn calc_theta(inputs: Inputs) -> f64 {
+    // Calculates the theta of the option
+
+    let inputs_arc = Arc::new(RwLock::new(inputs));
+    let nprimed1: f64 = calc_nprimed1(Arc::clone(&inputs_arc));
+    let (nd1, nd2): (f64, f64) = nd1nd2(Arc::clone(&inputs_arc), true);
+    let inputs = inputs_arc.read().unwrap();
+
+    // Calculation uses 360 for T: Time of days per year.
+    let theta: f64 = match inputs.option_type {
+        OptionType::Call => {
+            (-(inputs.s * inputs.sigma * E.powf(-inputs.q * inputs.t) * nprimed1
+                / (2.0 * inputs.t.sqrt()))
+                - inputs.r * inputs.k * E.powf(-inputs.r * inputs.t) * nd2
+                + inputs.q * inputs.s * E.powf(-inputs.q * inputs.t) * nd1)
+                / 360.0
+        }
+        OptionType::Put => {
+            (-(inputs.s * inputs.sigma * E.powf(-inputs.q * inputs.t) * nprimed1
+                / (2.0 * inputs.t.sqrt()))
+                + inputs.r * inputs.k * E.powf(-inputs.r * inputs.t) * nd2
+                - inputs.q * inputs.s * E.powf(-inputs.q * inputs.t) * nd1)
+                / 360.0
+        }
+    };
+    theta
+}
+
+pub fn calc_vega(inputs: Inputs) -> f64 {
+    // Calculates the vega of the option
+
+    let inputs_arc = Arc::new(RwLock::new(inputs));
+    let nprimed1: f64 = calc_nprimed1(Arc::clone(&inputs_arc));
+    let inputs = inputs_arc.read().unwrap();
+    let vega: f64 =
+        1.0 / 100.0 * inputs.s * E.powf(-inputs.q * inputs.t) * inputs.t.sqrt() * nprimed1;
+    vega
+}
+
+pub fn calc_rho(inputs: Inputs) -> f64 {
+    // Calculates the rho of the option
+
+    let inputs_arc = Arc::new(RwLock::new(inputs));
+    let (_, nd2): (f64, f64) = nd1nd2(Arc::clone(&inputs_arc), true);
+    let inputs = inputs_arc.read().unwrap();
+    let rho: f64 = match inputs.option_type {
+        OptionType::Call => 1.0 / 100.0 * inputs.k * inputs.t * E.powf(-inputs.r * inputs.t) * nd2,
+        OptionType::Put => -1.0 / 100.0 * inputs.k * inputs.t * E.powf(-inputs.r * inputs.t) * nd2,
+    };
+    rho
 }
