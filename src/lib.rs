@@ -229,6 +229,9 @@ pub fn calc_rho(inputs: &Inputs) -> f64 {
 
 pub fn calc_iv(inputs: &Inputs, tolerance: f64) -> f64 {
     // Calculates the implied volatility of the option
+    // Tolerance is the max error allowed for the implied volatility,
+    // the lower the tolerance the more iterations will be required.
+    // Recommended to be a value between 0.001 - 0.0001 for highest efficiency/accuracy
 
     let p: f64 = match &inputs.p {
         Some(p) => *p,
