@@ -1,5 +1,3 @@
-use crossbeam_channel::bounded;
-use crossbeam_utils::thread;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
 
@@ -37,49 +35,21 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
         },
     };
 
-    // Creating channels with max capacity of one message to communicate between threads
-    let (numd1_tx, numd1_rx) = bounded(1);
-    let (den_tx, den_rx) = bounded(1);
-    let (d1d2_tx, d1d2_rx) = bounded(1);
-    let (n_tx, n_rx) = bounded(1);
+    let nd1nd2 = {
+        // Calculating numerator of the first moment of the normal distribution
+        let numd1: f64 =
+            (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
 
-    // Spawning a crossbeam scoped thread
-    let nd1nd2 = thread::scope(|s| {
-        // Creating thread for first order moment
-        s.spawn(|_| {
-            // Calculating numerator of the first moment of the normal distribution
-            let numd1: f64 = (inputs.s / inputs.k).ln()
-                + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
-            // Send the result to the channel
-            numd1_tx.send(numd1).unwrap();
-        });
+        // Calculating denominator of the first and second moment of the normal distribution
+        let den: f64 = sigma * (inputs.t.sqrt());
 
-        s.spawn(|_| {
-            // Calculating denominator of the first and second moment of the normal distribution
-            let den: f64 = sigma * (inputs.t.sqrt());
-            den_tx.send(den).unwrap();
-        });
+        let d1: f64 = numd1 / den;
+        let d2: f64 = d1 - den;
 
-        s.spawn(|_| {
-            // Calculating the first and second moment of the normal distribution
-            let den: f64 = den_rx.recv().unwrap();
+        let d1d2: (f64, f64) = (d1, d2);
 
-            let d1: f64 = numd1_rx.recv().unwrap() / den;
-            let d2: f64 = d1 - den;
-
-            let d1d2: (f64, f64) = (d1, d2);
-            d1d2_tx.send(d1d2).unwrap();
-        });
-
-        s.spawn(|_| {
-            // Creating normal distribution
-            let n: Normal = Normal::new(0.0, 1.0).unwrap();
-            n_tx.send(n).unwrap();
-        });
-
-        let n: Normal = n_rx.recv().unwrap();
-
-        let d1d2: (f64, f64) = d1d2_rx.recv().unwrap();
+        // Creating normal distribution
+        let n: Normal = Normal::new(0.0, 1.0).unwrap();
 
         // Returns first and second moments if deriving from normal distribution is not necessary
         if !normal {
@@ -93,9 +63,7 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
             OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
         };
         nd1nd2
-    })
-    .unwrap();
-
+    };
     nd1nd2
 }
 
