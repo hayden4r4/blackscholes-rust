@@ -2,8 +2,6 @@ use crossbeam_channel::bounded;
 use crossbeam_utils::thread;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
-use std::sync::RwLock;
-// use std::thread;
 
 #[derive(Clone)]
 pub enum OptionType {
@@ -31,13 +29,9 @@ pub struct Inputs {
 
 fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
     // Returns the first and second order moments of the normal distribution
-
-    // Creates Read-write lock on inputs stuct
-    let inputs = RwLock::new(inputs);
-
     let sigma: f64 = match sigma {
         Some(sigma) => sigma,
-        None => match inputs.read().unwrap().sigma {
+        None => match inputs.sigma {
             Some(sigma) => sigma,
             None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
         },
@@ -54,8 +48,6 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
         // Creating thread for first order moment
         s.spawn(|_| {
             // Calculating numerator of the first moment of the normal distribution
-            let inputs = inputs.read().unwrap();
-
             let numd1: f64 = (inputs.s / inputs.k).ln()
                 + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
             // Send the result to the channel
@@ -64,8 +56,6 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
 
         s.spawn(|_| {
             // Calculating denominator of the first and second moment of the normal distribution
-            let inputs = inputs.read().unwrap();
-
             let den: f64 = sigma * (inputs.t.sqrt());
             den_tx.send(den).unwrap();
         });
@@ -98,7 +88,7 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
 
         // Calculates the first and second order moments of the normal distribution
         // Checks if OptionType is Call or Put
-        let nd1nd2: (f64, f64) = match inputs.read().unwrap().option_type {
+        let nd1nd2: (f64, f64) = match inputs.option_type {
             OptionType::Call => (n.cdf(d1d2.0), n.cdf(d1d2.1)),
             OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
         };
