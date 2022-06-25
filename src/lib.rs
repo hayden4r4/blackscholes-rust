@@ -43,7 +43,7 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
     let (d1d2_tx, d1d2_rx) = bounded(1);
     let (n_tx, n_rx) = bounded(1);
 
-    // Spawning a scoped thread to avoid the need for arcs (adds overhead as they are stored on heap)
+    // Spawning a crossbeam scoped thread
     let nd1nd2 = thread::scope(|s| {
         // Creating thread for first order moment
         s.spawn(|_| {
@@ -120,7 +120,8 @@ fn _calc_price(inputs: &Inputs, custom_sigma: Option<f64>) -> f64 {
 }
 
 pub fn calc_price(inputs: &Inputs) -> f64 {
-    // Returns the price of the option
+    // Returns the price of the option (abstraction for _calc_price)
+
     _calc_price(inputs, None)
 }
 
@@ -135,6 +136,7 @@ pub fn calc_delta(inputs: &Inputs) -> f64 {
 
 fn calc_nprimed1(inputs: &Inputs, sigma: Option<f64>) -> f64 {
     // Returns the derivative of the first order moment of the normal distribution
+
     let (d1, _): (f64, f64) = nd1nd2(&inputs, false, sigma);
 
     // Generate normal probability distribution
@@ -146,7 +148,7 @@ fn calc_nprimed1(inputs: &Inputs, sigma: Option<f64>) -> f64 {
 }
 
 pub fn calc_gamma(inputs: &Inputs) -> f64 {
-    // Calculates the gamma of an option
+    // Calculates the gamma of the option
 
     let sigma: f64 = match &inputs.sigma {
         Some(sigma) => *sigma,
@@ -208,7 +210,8 @@ fn _calc_vega(inputs: &Inputs, sigma: Option<f64>) -> f64 {
 }
 
 pub fn calc_vega(inputs: &Inputs) -> f64 {
-    // Calculates the vega of the option
+    // Calculates the vega of the option (abstraction for _calc_vega)
+
     _calc_vega(inputs, None)
 }
 
@@ -237,14 +240,14 @@ pub fn calc_iv(inputs: &Inputs, tolerance: f64) -> f64 {
         Some(p) => *p,
         None => panic!("inputs.p must contain Some(f64), found None"),
     };
-    // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating intial iv guess
+    // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation
     let mut sigma: f64 = (2.0 * PI / inputs.t).sqrt() * (p / inputs.s);
     // Initialize diff to 100 for use in while loop
     let mut diff: f64 = 100.0;
 
     // Uses Newton Raphson algorithm to calculate implied volatility
     // Test if the difference between calculated option price and actual option price is > tolerance
-    // If so then interate until the difference is less than tolerance
+    // If so then iterate until the difference is less than tolerance
     while diff.abs() > tolerance {
         diff = _calc_price(&inputs, Some(sigma)) - p;
         sigma -= diff / (_calc_vega(&inputs, Some(sigma)) * 100.0);
