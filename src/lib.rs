@@ -109,7 +109,7 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
     nd1nd2
 }
 
-pub fn calc_price(inputs: &Inputs, custom_sigma: Option<f64>) -> f64 {
+fn _calc_price(inputs: &Inputs, custom_sigma: Option<f64>) -> f64 {
     // Returns the price of the option
 
     // Calculates the price of the option
@@ -127,6 +127,11 @@ pub fn calc_price(inputs: &Inputs, custom_sigma: Option<f64>) -> f64 {
         ),
     };
     price
+}
+
+pub fn calc_price(inputs: &Inputs) -> f64 {
+    // Returns the price of the option
+    _calc_price(inputs, None)
 }
 
 pub fn calc_delta(inputs: &Inputs) -> f64 {
@@ -246,7 +251,7 @@ pub fn calc_iv(inputs: &Inputs, tolerance: f64) -> f64 {
     // Test if the difference between calculated option price and actual option price is > tolerance
     // If so then interate until the difference is less than tolerance
     while diff.abs() > tolerance {
-        diff = calc_price(&inputs, Some(sigma)) - p;
+        diff = _calc_price(&inputs, Some(sigma)) - p;
         sigma -= diff / (calc_vega(&inputs, Some(sigma)) * 100.0);
     }
     sigma
