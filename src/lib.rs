@@ -133,7 +133,7 @@ pub fn calc_delta(inputs: &Inputs) -> f64 {
     delta
 }
 
-pub fn calc_nprimed1(inputs: &Inputs, sigma: Option<f64>) -> f64 {
+fn calc_nprimed1(inputs: &Inputs, sigma: Option<f64>) -> f64 {
     // Returns the derivative of the first order moment of the normal distribution
     let (d1, _): (f64, f64) = nd1nd2(&inputs, false, sigma);
 
@@ -190,7 +190,7 @@ pub fn calc_theta(inputs: &Inputs) -> f64 {
     theta
 }
 
-pub fn calc_vega(inputs: &Inputs, sigma: Option<f64>) -> f64 {
+fn _calc_vega(inputs: &Inputs, sigma: Option<f64>) -> f64 {
     // Calculates the vega of the option
 
     let sigma: f64 = match sigma {
@@ -205,6 +205,11 @@ pub fn calc_vega(inputs: &Inputs, sigma: Option<f64>) -> f64 {
     let vega: f64 =
         1.0 / 100.0 * &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1;
     vega
+}
+
+pub fn calc_vega(inputs: &Inputs) -> f64 {
+    // Calculates the vega of the option
+    _calc_vega(inputs, None)
 }
 
 pub fn calc_rho(inputs: &Inputs) -> f64 {
@@ -242,7 +247,7 @@ pub fn calc_iv(inputs: &Inputs, tolerance: f64) -> f64 {
     // If so then interate until the difference is less than tolerance
     while diff.abs() > tolerance {
         diff = _calc_price(&inputs, Some(sigma)) - p;
-        sigma -= diff / (calc_vega(&inputs, Some(sigma)) * 100.0);
+        sigma -= diff / (_calc_vega(&inputs, Some(sigma)) * 100.0);
     }
     sigma
 }
