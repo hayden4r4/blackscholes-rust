@@ -48,13 +48,13 @@ fn nd1nd2(inputs: &Inputs, normal: bool, sigma: Option<f64>) -> (f64, f64) {
 
         let d1d2: (f64, f64) = (d1, d2);
 
-        // Creating normal distribution
-        let n: Normal = Normal::new(0.0, 1.0).unwrap();
-
         // Returns first and second moments if deriving from normal distribution is not necessary
         if !normal {
             return d1d2;
         }
+
+        // Creating normal distribution
+        let n: Normal = Normal::new(0.0, 1.0).unwrap();
 
         // Calculates the first and second order moments of the normal distribution
         // Checks if OptionType is Call or Put
