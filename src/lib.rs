@@ -2,7 +2,7 @@ use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum OptionType {
     Call,
     Put,
