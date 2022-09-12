@@ -6,8 +6,5 @@ license = "MIT"
 description = "Black-Scholes option pricing model calculator"
 repository = "https://github.com/hayden4r4/blackscholes-rust"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 statrs = "0.15.0"
