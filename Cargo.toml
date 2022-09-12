@@ -2,7 +2,18 @@
 name = "blackscholes"
 version = "0.9.0"
 edition = "2021"
+license = "MIT"
+description = "Black-Scholes option pricing model calculator"
+repository = "https://github.com/hayden4r4/blackscholes-rust"
 
+[profile.release]
+lto = true
+
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
-statrs = "0.15.0"
+getrandom = { version = "0.2.7", features = ["js"] }
+statrs = "0.16.0"
+wasm-bindgen = "0.2.82"
+

@@ -1,8 +1,10 @@
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
+use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[wasm_bindgen(inspectable)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OptionType {
     Call,
     Put,
@@ -17,6 +19,7 @@ impl Display for OptionType {
     }
 }
 
+#[wasm_bindgen(inspectable)]
 #[derive(Debug, Clone)]
 pub struct Inputs {
     // The type of the option (call or put)
@@ -37,7 +40,9 @@ pub struct Inputs {
     pub sigma: Option<f64>,
 }
 
+#[wasm_bindgen]
 impl Inputs {
+    #[wasm_bindgen(constructor)]
     pub fn new(
         option_type: OptionType,
         s: f64,
@@ -135,8 +140,10 @@ fn calc_nprimed1(inputs: &Inputs) -> f64 {
     nprimed1
 }
 
+#[wasm_bindgen]
 pub struct Price {}
 
+#[wasm_bindgen]
 impl Price {
     pub fn calc_price(inputs: &Inputs) -> f64 {
         // Returns the price of the option
@@ -159,8 +166,10 @@ impl Price {
     }
 }
 
+#[wasm_bindgen]
 pub struct Greeks {}
 
+#[wasm_bindgen]
 impl Greeks {
     pub fn calc_delta(inputs: &Inputs) -> f64 {
         let (nd1, _): (f64, f64) = nd1nd2(&inputs, true);
@@ -241,8 +250,10 @@ impl Greeks {
     }
 }
 
+#[wasm_bindgen]
 pub struct Volatility {}
 
+#[wasm_bindgen]
 impl Volatility {
     pub fn calc_iv(inputs: &mut Inputs, tolerance: f64) -> f64 {
         // Calculates the implied volatility of the option
