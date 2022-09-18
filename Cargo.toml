@@ -8,6 +8,9 @@ repository = "https://github.com/hayden4r4/blackscholes-rust"
 
 [profile.release]
 lto = true
+strip = true
+opt-level = "z"
+codegen-units = 1
 
 [lib]
 crate-type = ["cdylib"]
