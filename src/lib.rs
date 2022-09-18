@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter, Result};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(inspectable)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum OptionType {
     Call,
     Put,
@@ -20,7 +20,7 @@ impl Display for OptionType {
 }
 
 #[wasm_bindgen(inspectable)]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Inputs {
     // The type of the option (call or put)
     pub option_type: OptionType,
