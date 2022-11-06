@@ -237,7 +237,7 @@ impl Greeks {
                 &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * 1.0 / 100.0
             }
             OptionType::Put => {
-                &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * -1.0 / 100.0
+                -&inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * -1.0 / 100.0
             }
         };
         rho
