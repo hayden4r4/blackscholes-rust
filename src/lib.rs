@@ -207,14 +207,14 @@ impl Greeks {
                     / (2.0 * &inputs.t.sqrt()))
                     - &inputs.r * &inputs.k * E.powf(-&inputs.r * &inputs.t) * nd2
                     + &inputs.q * &inputs.s * E.powf(-&inputs.q * &inputs.t) * nd1)
-                    / 360.0
+                    / 365.25
             }
             OptionType::Put => {
                 (-(&inputs.s * sigma * E.powf(-&inputs.q * &inputs.t) * nprimed1
                     / (2.0 * &inputs.t.sqrt()))
                     + &inputs.r * &inputs.k * E.powf(-&inputs.r * &inputs.t) * nd2
                     - &inputs.q * &inputs.s * E.powf(-&inputs.q * &inputs.t) * nd1)
-                    / 360.0
+                    / 365.25
             }
         };
         theta
