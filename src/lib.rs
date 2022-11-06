@@ -230,7 +230,7 @@ impl Greeks {
 
         let nprimed1: f64 = calc_nprimed1(&inputs);
         let vega: f64 =
-            1.0 / 100.0 * &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1;
+            &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1; // * 1.0 / 100.0
         vega
     }
 
@@ -240,10 +240,10 @@ impl Greeks {
         let (_, nd2): (f64, f64) = nd1nd2(&inputs, true);
         let rho: f64 = match &inputs.option_type {
             OptionType::Call => {
-                1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
+                &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * 1.0 / 100.0
             }
             OptionType::Put => {
-                -1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
+                -&inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * -1.0 / 100.0
             }
         };
         rho
