@@ -140,6 +140,7 @@ pub struct Price {}
 impl Price {
     pub fn calc_price(inputs: &Inputs) -> f64 {
         // Returns the price of the option
+        // Requires s k r q t sigma
 
         // Calculates the price of the option
         let (nd1, nd2): (f64, f64) = nd1nd2(&inputs, true);
@@ -162,7 +163,10 @@ impl Price {
 pub struct Greeks {}
 
 impl Greeks {
+    // Requires s k r q t sigma
     pub fn calc_delta(inputs: &Inputs) -> f64 {
+        // Calculates the delta of the option
+
         let (nd1, _): (f64, f64) = nd1nd2(&inputs, true);
         let delta: f64 = match &inputs.option_type {
             OptionType::Call => nd1 * E.powf(-&inputs.q * &inputs.t),
@@ -220,8 +224,7 @@ impl Greeks {
         // Calculates the vega of the option
 
         let nprimed1: f64 = calc_nprimed1(&inputs);
-        let vega: f64 =
-            1.0 / 100.0 * &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1;
+        let vega: f64 = &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1; // * 1.0 / 100.0
         vega
     }
 
@@ -231,10 +234,10 @@ impl Greeks {
         let (_, nd2): (f64, f64) = nd1nd2(&inputs, true);
         let rho: f64 = match &inputs.option_type {
             OptionType::Call => {
-                1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
+                &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * 1.0 / 100.0
             }
             OptionType::Put => {
-                -1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
+                &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2 // * -1.0 / 100.0
             }
         };
         rho
@@ -249,6 +252,7 @@ impl Volatility {
         // Tolerance is the max error allowed for the implied volatility,
         // the lower the tolerance the more iterations will be required.
         // Recommended to be a value between 0.001 - 0.0001 for highest efficiency/accuracy
+        // Requires s k r q t price
 
         let p: f64 = match &inputs.p {
             Some(p) => *p,
