@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter, Result};
 use pyo3::prelude::*;
 
 #[pymodule]
-fn blackscholes(_py: Python, m: &PyModule) -> PyResult<()> {
+fn blackscholes_python(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<OptionType>()?;
     m.add_class::<Inputs>()?;
     m.add_class::<Price>()?;
