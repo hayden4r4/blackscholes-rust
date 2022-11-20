@@ -7,4 +7,9 @@ description = "Black-Scholes option pricing model calculator"
 repository = "https://github.com/hayden4r4/blackscholes-rust"
 
 [dependencies]
-statrs = "0.15.0"
+statrs = "0.16.0"
+pyo3 = { version = "0.17.3", features = ["extension-module"] }
+
+[lib]
+crate-type = ["cdylib"]
+name = "blackscholes"

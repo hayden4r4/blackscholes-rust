@@ -2,7 +2,20 @@ use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
 
+use pyo3::prelude::*;
+
+#[pymodule]
+fn blackscholes(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<OptionType>()?;
+    m.add_class::<Inputs>()?;
+    m.add_class::<Price>()?;
+    m.add_class::<Greeks>()?;
+    m.add_class::<Volatility>()?;
+    Ok(())
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
+#[pyclass(text_signature= "(Call, Put, /)")]
 pub enum OptionType {
     Call,
     Put,
@@ -18,6 +31,7 @@ impl Display for OptionType {
 }
 
 #[derive(Debug, Clone)]
+#[pyclass(text_signature = "(option_type, s, k, p, r, q, t, sigma, /)")]
 pub struct Inputs {
     // The type of the option (call or put)
     pub option_type: OptionType,
@@ -37,7 +51,9 @@ pub struct Inputs {
     pub sigma: Option<f64>,
 }
 
+#[pymethods]
 impl Inputs {
+    #[new]
     pub fn new(
         option_type: OptionType,
         s: f64,
@@ -135,10 +151,13 @@ fn calc_nprimed1(inputs: &Inputs) -> f64 {
     nprimed1
 }
 
+#[pyclass]
 pub struct Price {}
 
+#[pymethods]
 impl Price {
-    pub fn calc_price(inputs: &Inputs) -> f64 {
+    #[staticmethod]
+    pub fn calc_price(inputs: &Inputs) -> PyResult<f64> {
         // Returns the price of the option
         // Requires s k r q t sigma
 
@@ -156,15 +175,18 @@ impl Price {
                     - nd1 * inputs.s * E.powf(-inputs.q * inputs.t),
             ),
         };
-        price
+        Ok(price)
     }
 }
 
+#[pyclass]
 pub struct Greeks {}
 
+#[pymethods]
 impl Greeks {
+    #[staticmethod]
     // Requires s k r q t sigma
-    pub fn calc_delta(inputs: &Inputs) -> f64 {
+    pub fn calc_delta(inputs: &Inputs) -> PyResult<f64> {
         // Calculates the delta of the option
 
         let (nd1, _): (f64, f64) = nd1nd2(&inputs, true);
@@ -172,10 +194,11 @@ impl Greeks {
             OptionType::Call => nd1 * E.powf(-&inputs.q * &inputs.t),
             OptionType::Put => -nd1 * E.powf(-&inputs.q * &inputs.t),
         };
-        delta
+        Ok(delta)
     }
 
-    pub fn calc_gamma(inputs: &Inputs) -> f64 {
+    #[staticmethod]
+    pub fn calc_gamma(inputs: &Inputs) -> PyResult<f64> {
         // Calculates the gamma of the option
 
         let sigma: f64 = match &inputs.sigma {
@@ -186,10 +209,11 @@ impl Greeks {
         let nprimed1: f64 = calc_nprimed1(&inputs);
         let gamma: f64 =
             E.powf(-&inputs.q * &inputs.t) * nprimed1 / (&inputs.s * sigma * &inputs.t.sqrt());
-        gamma
+        Ok(gamma)
     }
 
-    pub fn calc_theta(inputs: &Inputs) -> f64 {
+    #[staticmethod]
+    pub fn calc_theta(inputs: &Inputs) -> PyResult<f64> {
         // Calculates the theta of the option
 
         let sigma: f64 = match &inputs.sigma {
@@ -217,19 +241,21 @@ impl Greeks {
                     / 365.25
             }
         };
-        theta
+        Ok(theta)
     }
 
-    pub fn calc_vega(inputs: &Inputs) -> f64 {
+    #[staticmethod]
+    pub fn calc_vega(inputs: &Inputs) -> PyResult<f64> {
         // Calculates the vega of the option
 
         let nprimed1: f64 = calc_nprimed1(&inputs);
         let vega: f64 =
             1.0 / 100.0 * &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1;
-        vega
+        Ok(vega)
     }
 
-    pub fn calc_rho(inputs: &Inputs) -> f64 {
+    #[staticmethod]
+    pub fn calc_rho(inputs: &Inputs) -> PyResult<f64> {
         // Calculates the rho of the option
 
         let (_, nd2): (f64, f64) = nd1nd2(&inputs, true);
@@ -241,14 +267,17 @@ impl Greeks {
                 -1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
             }
         };
-        rho
+        Ok(rho)
     }
 }
 
+#[pyclass]
 pub struct Volatility {}
 
+#[pymethods]
 impl Volatility {
-    pub fn calc_iv(inputs: &mut Inputs, tolerance: f64) -> f64 {
+    #[staticmethod]
+    pub fn calc_iv(inputs: &mut Inputs, tolerance: f64) -> PyResult<f64> {
         // Calculates the implied volatility of the option
         // Tolerance is the max error allowed for the implied volatility,
         // the lower the tolerance the more iterations will be required.
@@ -269,9 +298,9 @@ impl Volatility {
         // If so then iterate until the difference is less than tolerance
         while diff.abs() > tolerance {
             inputs.sigma = Some(sigma);
-            diff = Price::calc_price(&inputs) - p;
-            sigma -= diff / (Greeks::calc_vega(&inputs) * 100.0);
+            diff = Price::calc_price(&inputs).unwrap() - p;
+            sigma -= diff / (Greeks::calc_vega(&inputs).unwrap() * 100.0);
         }
-        sigma
+        Ok(sigma)
     }
 }
