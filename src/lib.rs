@@ -30,6 +30,21 @@ impl Display for OptionType {
     }
 }
 
+#[pymethods]
+impl OptionType {
+    #[new]
+    pub fn new(option_type: &str) -> Self {
+        match option_type {
+            "Call" => OptionType::Call,
+            "Put" => OptionType::Put,
+            _ => panic!("Option type must be either Call or Put"),
+        }
+    }
+    pub fn __str__(&self) -> String {
+        format!("{}", self)
+    }
+}
+
 #[derive(Debug, Clone)]
 #[pyclass(text_signature = "(option_type, s, k, p, r, q, t, sigma, /)")]
 pub struct Inputs {
@@ -74,6 +89,26 @@ impl Inputs {
             t,
             sigma,
         }
+    }
+
+    pub fn __str__ (&self) -> String {
+        format!(
+            "OptionType: {}, S: {}, K: {}, P: {}, R: {}, Q: {}, T: {}, Sigma: {}",
+            self.option_type,
+            self.s,
+            self.k,
+            match self.p {
+                Some(p) => format!("{}", p),
+                None => "None".to_string(),
+            },
+            self.r,
+            self.q,
+            self.t,
+            match self.sigma {
+                Some(sigma) => format!("{}", sigma),
+                None => "None".to_string(),
+            },
+        )
     }
 }
 
