@@ -17,7 +17,7 @@ impl Display for OptionType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Inputs {
     // The type of the option (call or put)
     pub option_type: OptionType,
@@ -145,13 +145,11 @@ impl Inputs {
         let price: f64 = match self.option_type {
             OptionType::Call => f64::max(
                 0.0,
-                nd1 * self.s * E.powf(-self.q * self.t)
-                    - nd2 * self.k * E.powf(-self.r * self.t),
+                nd1 * self.s * E.powf(-self.q * self.t) - nd2 * self.k * E.powf(-self.r * self.t),
             ),
             OptionType::Put => f64::max(
                 0.0,
-                nd2 * self.k * E.powf(-self.r * self.t)
-                    - nd1 * self.s * E.powf(-self.q * self.t),
+                nd2 * self.k * E.powf(-self.r * self.t) - nd1 * self.s * E.powf(-self.q * self.t),
             ),
         };
         price
@@ -178,8 +176,7 @@ impl Inputs {
         };
 
         let nprimed1: f64 = calc_nprimed1(&self);
-        let gamma: f64 =
-            E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
+        let gamma: f64 = E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
         gamma
     }
 
@@ -197,15 +194,13 @@ impl Inputs {
         // Calculation uses 360 for T: Time of days per year.
         let theta: f64 = match self.option_type {
             OptionType::Call => {
-                (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1
-                    / (2.0 * &self.t.sqrt()))
+                (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * &self.t.sqrt()))
                     - self.r * self.k * E.powf(-self.r * self.t) * nd2
                     + self.q * self.s * E.powf(-self.q * self.t) * nd1)
                     / 365.25
             }
             OptionType::Put => {
-                (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1
-                    / (2.0 * &self.t.sqrt()))
+                (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * &self.t.sqrt()))
                     + self.r * self.k * E.powf(-self.r * self.t) * nd2
                     - self.q * self.s * E.powf(-self.q * self.t) * nd1)
                     / 365.25
@@ -218,8 +213,7 @@ impl Inputs {
         // Calculates the vega of the option
 
         let nprimed1: f64 = calc_nprimed1(&self);
-        let vega: f64 =
-            1.0 / 100.0 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
+        let vega: f64 = 1.0 / 100.0 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
         vega
     }
 
@@ -228,12 +222,8 @@ impl Inputs {
 
         let (_, nd2): (f64, f64) = nd1nd2(&self, true);
         let rho: f64 = match &self.option_type {
-            OptionType::Call => {
-                1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2
-            }
-            OptionType::Put => {
-                -1.0 / 100.0 * self.k * &self.t * E.powf(-self.r * self.t) * nd2
-            }
+            OptionType::Call => 1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
+            OptionType::Put => -1.0 / 100.0 * self.k * &self.t * E.powf(-self.r * self.t) * nd2,
         };
         rho
     }
