@@ -1,10 +1,10 @@
 [package]
 name = "blackscholes"
-version = "0.9.0"
+version = "0.9.1"
 edition = "2021"
 license = "MIT"
 description = "Black-Scholes option pricing model calculator"
 repository = "https://github.com/hayden4r4/blackscholes-rust"
 
 [dependencies]
-statrs = "0.15.0"
+statrs = "0.16.0"
