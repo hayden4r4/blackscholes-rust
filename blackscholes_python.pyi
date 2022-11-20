@@ -11,29 +11,38 @@ class Inputs:
     """
     def __new__(cls, option_type: OptionType, s: float, k: float, p: Optional[float], r: float, q: float, t: float, sigma: Optional[float]) -> Inputs: ...
     def __str__(self) -> str: ...
-class Price:
+
+    def calc_price(self) -> float: ...
     """
-    A class containing methods to calculate price
+    Calculates the price of the option
     """
-    @staticmethod
-    def calc_price(inp: Inputs) -> float: ...
-class Greeks:
+
+    def calc_delta(self) -> float: ...
     """
-    A class containing methods to calculate greeks
+    Calculates the delta of the option
     """
-    @staticmethod
-    def calc_delta(inp: Inputs) -> float: ...
-    @staticmethod
-    def calc_gamma(inp: Inputs) -> float: ...
-    @staticmethod
-    def calc_vega(inp: Inputs) -> float: ...
-    @staticmethod
-    def calc_theta(inp: Inputs) -> float: ...
-    @staticmethod
-    def calc_rho(inp: Inputs) -> float: ...
-class Volatility:
+
+    def calc_gamma(self) -> float: ...
     """
-    A class containing methods to calculate implied volatility
+    Calculates the gamma of the option
     """
-    @staticmethod
-    def calc_iv(inp: Inputs, tolerance: float) -> float: ...
+  
+    def calc_vega(self) -> float: ...
+    """
+    Calculates the vega of the option
+    """
+  
+    def calc_theta(self) -> float: ...
+    """
+    Calculates the theta of the option
+    """
+  
+    def calc_rho(self) -> float: ...
+    """
+    Calculates the rho of the option
+    """
+
+    def calc_iv(self, tolerance: float) -> float: ...
+    """
+    Calculates the implied volatility of the option
+    """
