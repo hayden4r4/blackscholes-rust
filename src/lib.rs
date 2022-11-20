@@ -37,30 +37,6 @@ pub struct Inputs {
     pub sigma: Option<f64>,
 }
 
-impl Inputs {
-    pub fn new(
-        option_type: OptionType,
-        s: f64,
-        k: f64,
-        p: Option<f64>,
-        r: f64,
-        q: f64,
-        t: f64,
-        sigma: Option<f64>,
-    ) -> Self {
-        Self {
-            option_type,
-            s,
-            k,
-            p,
-            r,
-            q,
-            t,
-            sigma,
-        }
-    }
-}
-
 impl Display for Inputs {
     fn fmt(&self, f: &mut Formatter) -> Result {
         writeln!(f, "Option type: {}", self.option_type)?;
@@ -136,6 +112,28 @@ fn calc_nprimed1(inputs: &Inputs) -> f64 {
 }
 
 impl Inputs {
+    pub fn new(
+        option_type: OptionType,
+        s: f64,
+        k: f64,
+        p: Option<f64>,
+        r: f64,
+        q: f64,
+        t: f64,
+        sigma: Option<f64>,
+    ) -> Self {
+        Self {
+            option_type,
+            s,
+            k,
+            p,
+            r,
+            q,
+            t,
+            sigma,
+        }
+    }
+
     pub fn calc_price(&self) -> f64 {
         // Returns the price of the option
         // Requires s k r q t sigma
