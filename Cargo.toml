@@ -8,7 +8,7 @@ repository = "https://github.com/hayden4r4/blackscholes-rust"
 documentation = "https://docs.rs/blackscholes"
 readme = "README.md"
 authors = ["Hayden Rose"]
-keywords = ["finance", "option", "pricing", "black-scholes", "blackscholes", "option-pricing", "delta", "gamma", "theta", "vega", "rho", "volatility", "implied-volatility", "impliedvolatility", "implied_volatility"]
+keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 categories = ["finance::options", "science::mathematics::probability-theory", "science::mathematics::statistics"]
 
 [dependencies]
