@@ -6,4 +6,4 @@ This library provides an simple, lightweight, and efficient (though not heavily 
   
 Simply create an instance of the `Inputs` struct and call the desired method.  
   
-View the [docs](https://crates.io/crates/blackscholes) for usage and examples.
+View the [docs](https://docs.rs/blackscholes) for usage and examples.
