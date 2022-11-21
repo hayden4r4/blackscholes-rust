@@ -1,4 +1,4 @@
-# blackscholes  
+# blackscholes_python  
   
 This library provides an simple, lightweight, and efficient (though not heavily optimized) implementation of the Black-Scholes-Merton model for pricing European options.  
   
