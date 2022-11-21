@@ -9,7 +9,6 @@ documentation = "https://docs.rs/blackscholes"
 readme = "README.md"
 authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
-categories = ["finance::options", "science::mathematics::probability-theory", "science::mathematics::statistics"]
 
 [dependencies]
 statrs = "0.16.0"
