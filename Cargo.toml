@@ -1,10 +1,15 @@
 [package]
 name = "blackscholes"
-version = "0.9.1"
+version = "0.10.0"
 edition = "2021"
 license = "MIT"
 description = "Black-Scholes option pricing model calculator"
 repository = "https://github.com/hayden4r4/blackscholes-rust"
+documentation = "https://docs.rs/blackscholes"
+readme = "README.md"
+authors = ["Hayden Rose"]
+keywords = ["finance", "option", "pricing", "black-scholes", "blackscholes", "option-pricing", "delta", "gamma", "theta", "vega", "rho", "volatility", "implied-volatility", "impliedvolatility", "implied_volatility"]
+categories = ["finance::options", "science::mathematics::probability-theory", "science::mathematics::statistics"]
 
 [dependencies]
 statrs = "0.16.0"

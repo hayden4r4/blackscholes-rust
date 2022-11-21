@@ -1,7 +1,22 @@
+//! # blackscholes
+//! This library provides an simple, lightweight, and efficient (though not heavily optimized) implementation of the Black-Scholes-Merton model for pricing European options.
+//!
+//! ## Usage
+//! Simply create an instance of the `Inputs` struct and call the desired method.
+//!
+//! Example:
+//! ```
+//! let inputs: blackscholes::Inputs = blackscholes::Inputs.new(blackscholes::OptionType::Call, 100.0, 100.0, None, 0.05, 0.02, 20.0 / 365.25, Some(0.2));
+//! let price: f64 = inputs.calc_price();
+//! ```
+//!
+//! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a WASM crate and a [python module](https://pypi.org/project/blackscholes/) are also available.
+
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
 
+/// The type of option to be priced.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum OptionType {
     Call,
@@ -17,23 +32,24 @@ impl Display for OptionType {
     }
 }
 
+/// The inputs to the Black-Scholes-Merton model.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Inputs {
-    // The type of the option (call or put)
+    /// The type of the option (call or put)
     pub option_type: OptionType,
-    // Stock price
+    /// Stock price
     pub s: f64,
-    // Strike price
+    /// Strike price
     pub k: f64,
-    // Option price
+    /// Option price
     pub p: Option<f64>,
-    // Risk-free rate
+    /// Risk-free rate
     pub r: f64,
-    // Dividend yield
+    /// Dividend yield
     pub q: f64,
-    // Time to maturity as fraction of year
+    /// Time to maturity in years
     pub t: f64,
-    // Volatility
+    /// Volatility
     pub sigma: Option<f64>,
 }
 
@@ -57,9 +73,10 @@ impl Display for Inputs {
     }
 }
 
+/// Calculates the d1, d2, nd1, and nd2 values for the option.
+/// # Returns
+/// Tuple (f64, f64) of the nd1 and nd2 values for the given inputs.
 fn nd1nd2(inputs: &Inputs, normal: bool) -> (f64, f64) {
-    // Returns the nd1 and nd2 values for the given inputs
-
     let sigma: f64 = match inputs.sigma {
         Some(sigma) => sigma,
         None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
@@ -98,9 +115,9 @@ fn nd1nd2(inputs: &Inputs, normal: bool) -> (f64, f64) {
     nd1nd2
 }
 
+/// # Returns
+/// f64 of the derivative of the nd1.
 fn calc_nprimed1(inputs: &Inputs) -> f64 {
-    // Returns the derivative of the nd1
-
     let (d1, _): (f64, f64) = nd1nd2(&inputs, false);
 
     // Generate normal probability distribution
@@ -111,7 +128,25 @@ fn calc_nprimed1(inputs: &Inputs) -> f64 {
     nprimed1
 }
 
+/// Methods for calculating the price, greeks, and implied volatility of an option.
 impl Inputs {
+    /// Creates instance ot the `Inputs` struct.
+    /// # Arguments
+    /// * `option_type` - The type of option to be priced.
+    /// * `s` - The current price of the underlying asset.
+    /// * `k` - The strike price of the option.
+    /// * `p` - The dividend yield of the underlying asset.
+    /// * `r` - The risk-free interest rate.
+    /// * `q` - The dividend yield of the underlying asset.
+    /// * `t` - The time to maturity of the option in years.
+    /// * `sigma` - The volatility of the underlying asset.
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// ```
+    /// # Returns
+    /// An instance of the `Inputs` struct.
     pub fn new(
         option_type: OptionType,
         s: f64,
@@ -134,10 +169,18 @@ impl Inputs {
         }
     }
 
+    /// Calculates the price of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma.
+    /// # Returns
+    /// f64 of the price of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// let price = inputs.calc_price();
+    /// ```
     pub fn calc_price(&self) -> f64 {
-        // Returns the price of the option
-        // Requires s k r q t sigma
-
         // Calculates the price of the option
         let (nd1, nd2): (f64, f64) = nd1nd2(&self, true);
         let price: f64 = match self.option_type {
@@ -153,10 +196,18 @@ impl Inputs {
         price
     }
 
-    // Requires s k r q t sigma
+    /// Calculates the delta of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma
+    /// # Returns
+    /// f64 of the delta of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// let delta = inputs.calc_delta();
+    /// ```
     pub fn calc_delta(&self) -> f64 {
-        // Calculates the delta of the option
-
         let (nd1, _): (f64, f64) = nd1nd2(&self, true);
         let delta: f64 = match self.option_type {
             OptionType::Call => nd1 * E.powf(-self.q * self.t),
@@ -165,9 +216,18 @@ impl Inputs {
         delta
     }
 
+    /// Calculates the gamma of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma
+    /// # Returns
+    /// f64 of the gamma of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// let gamma = inputs.calc_gamma();
+    /// ```
     pub fn calc_gamma(&self) -> f64 {
-        // Calculates the gamma of the option
-
         let sigma: f64 = match self.sigma {
             Some(sigma) => sigma,
             None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
@@ -178,9 +238,19 @@ impl Inputs {
         gamma
     }
 
+    /// Calculates the theta of the option.
+    /// Uses 365.25 days in a year for calculations.
+    /// # Requires
+    /// s, k, r, q, t, sigma
+    /// # Returns
+    /// f64 of theta per day (not per year).
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// let theta = inputs.calc_theta();
+    /// ```
     pub fn calc_theta(&self) -> f64 {
-        // Calculates the theta of the option
-
         let sigma: f64 = match self.sigma {
             Some(sigma) => sigma,
             None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
@@ -189,7 +259,7 @@ impl Inputs {
         let nprimed1: f64 = calc_nprimed1(&self);
         let (nd1, nd2): (f64, f64) = nd1nd2(&self, true);
 
-        // Calculation uses 360 for T: Time of days per year.
+        // Calculation uses 365.25 for T: Time of days per year.
         let theta: f64 = match self.option_type {
             OptionType::Call => {
                 (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * &self.t.sqrt()))
@@ -207,17 +277,35 @@ impl Inputs {
         theta
     }
 
+    /// Calculates the vega of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma
+    /// # Returns
+    /// f64 of the vega of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// let vega = inputs.calc_vega();
+    /// ```
     pub fn calc_vega(&self) -> f64 {
-        // Calculates the vega of the option
-
         let nprimed1: f64 = calc_nprimed1(&self);
         let vega: f64 = 1.0 / 100.0 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
         vega
     }
 
+    /// Calculates the rho of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma
+    /// # Returns
+    /// f64 of the rho of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// let rho = inputs.calc_rho();
+    /// ```
     pub fn calc_rho(&self) -> f64 {
-        // Calculates the rho of the option
-
         let (_, nd2): (f64, f64) = nd1nd2(&self, true);
         let rho: f64 = match &self.option_type {
             OptionType::Call => 1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
@@ -226,27 +314,37 @@ impl Inputs {
         rho
     }
 
+    /// Calculates the implied volatility of the option.
+    /// Tolerance is the max error allowed for the implied volatility,
+    /// the lower the tolerance the more iterations will be required.
+    /// Recommended to be a value between 0.001 - 0.0001 for highest efficiency/accuracy.
+    /// Initializes estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
+    /// Uses Newton Raphson algorithm to calculate implied volatility.
+    /// # Requires
+    /// s, k, r, q, t, p
+    /// # Returns
+    /// f64 of the implied volatility of the option.
+    /// # Example:
+    /// ```
+    /// use blackscholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(10), 0.05, 0.02, 20.0 / 365.25, None);
+    /// let iv = inputs.calc_iv(0.0001);
+    /// ```
     pub fn calc_iv(&self, tolerance: f64) -> f64 {
-        // Calculates the implied volatility of the option
-        // Tolerance is the max error allowed for the implied volatility,
-        // the lower the tolerance the more iterations will be required.
-        // Recommended to be a value between 0.001 - 0.0001 for highest efficiency/accuracy
-        // Requires s k r q t price
-
         let mut inputs: Inputs = self.clone();
 
         let p: f64 = match inputs.p {
             Some(p) => p,
             None => panic!("inputs.p must contain Some(f64), found None"),
         };
-        // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation
+        // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
         let mut sigma: f64 = (2.0 * PI / inputs.t).sqrt() * (p / inputs.s);
         // Initialize diff to 100 for use in while loop
         let mut diff: f64 = 100.0;
 
-        // Uses Newton Raphson algorithm to calculate implied volatility
-        // Test if the difference between calculated option price and actual option price is > tolerance
-        // If so then iterate until the difference is less than tolerance
+        // Uses Newton Raphson algorithm to calculate implied volatility.
+        // Test if the difference between calculated option price and actual option price is > tolerance,
+        // if so then iterate until the difference is less than tolerance
         while diff.abs() > tolerance {
             inputs.sigma = Some(sigma);
             diff = inputs.calc_price() - p;
