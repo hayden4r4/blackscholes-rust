@@ -8,4 +8,4 @@ This crate is compilable to a python package using pyo3 and Maturin.  It feature
   
 Simply create an instance of the `Inputs` struct and call the desired method.  
   
-View the [Rust docs](https://docs.rs/blackscholes_python) and [Python docs](https://pypi.org/project/blackscholes/) for usage and examples.  
+View the [Rust docs](https://docs.rs/blackscholes_python) and [Python docs](https://pypi.org/project/blackscholes-python/) for usage and examples.  

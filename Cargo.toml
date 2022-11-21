@@ -1,10 +1,10 @@
 [package]
 name = "blackscholes_python"
-version = "0.10.3"
+version = "0.10.4"
 edition = "2021"
 license = "MIT"
 description = "Black-Scholes option pricing model calculator"
-repository = "https://github.com/hayden4r4/blackscholes-rust"
+repository = "https://github.com/hayden4r4/blackscholes-rust/tree/python_package"
 documentation = "https://docs.rs/blackscholes_python"
 readme = "README.md"
 authors = ["Hayden Rose"]
