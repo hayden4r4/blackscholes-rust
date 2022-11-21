@@ -1,3 +1,18 @@
+//! # blackscholes_wasm
+//! This library provides an simple, lightweight, and efficient (though not heavily optimized) implementation of the Black-Scholes-Merton model for pricing European options.
+//!
+//! ## Usage
+//! Simply create an instance of the `Inputs` struct and call the desired method.
+//!
+//! Example:
+//! ```
+//! let inputs: blackscholes::Inputs = blackscholes::Inputs.new(blackscholes::OptionType::Call, 100.0, 100.0, None, 0.05, 0.02, 20.0 / 365.25, Some(0.2));
+//! let price: f64 = inputs.calc_price();
+//! ```
+//!
+//! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a WASM crate and a [python module](https://pypi.org/project/blackscholes/) are also available.
+
+
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::f64::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
@@ -40,31 +55,6 @@ pub struct Inputs {
     pub sigma: Option<f64>,
 }
 
-#[wasm_bindgen]
-impl Inputs {
-    #[wasm_bindgen(constructor)]
-    pub fn new(
-        option_type: OptionType,
-        s: f64,
-        k: f64,
-        p: Option<f64>,
-        r: f64,
-        q: f64,
-        t: f64,
-        sigma: Option<f64>,
-    ) -> Self {
-        Self {
-            option_type,
-            s,
-            k,
-            p,
-            r,
-            q,
-            t,
-            sigma,
-        }
-    }
-}
 
 impl Display for Inputs {
     fn fmt(&self, f: &mut Formatter) -> Result {
@@ -87,7 +77,6 @@ impl Display for Inputs {
 }
 
 fn nd1nd2(inputs: &Inputs, normal: bool) -> (f64, f64) {
-    // Returns the nd1 and nd2 values for the given inputs
 
     let sigma: f64 = match inputs.sigma {
         Some(sigma) => sigma,
@@ -128,7 +117,6 @@ fn nd1nd2(inputs: &Inputs, normal: bool) -> (f64, f64) {
 }
 
 fn calc_nprimed1(inputs: &Inputs) -> f64 {
-    // Returns the derivative of the nd1
 
     let (d1, _): (f64, f64) = nd1nd2(&inputs, false);
 
@@ -140,129 +128,127 @@ fn calc_nprimed1(inputs: &Inputs) -> f64 {
     nprimed1
 }
 
-#[wasm_bindgen]
-pub struct Price {}
 
 #[wasm_bindgen]
-impl Price {
-    pub fn calc_price(inputs: &Inputs) -> f64 {
-        // Returns the price of the option
+impl Inputs {
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        option_type: OptionType,
+        s: f64,
+        k: f64,
+        p: Option<f64>,
+        r: f64,
+        q: f64,
+        t: f64,
+        sigma: Option<f64>,
+    ) -> Self {
+        Self {
+            option_type,
+            s,
+            k,
+            p,
+            r,
+            q,
+            t,
+            sigma,
+        }
+    }
+    pub fn calc_price(&self) -> f64 {
 
         // Calculates the price of the option
-        let (nd1, nd2): (f64, f64) = nd1nd2(&inputs, true);
-        let price: f64 = match &inputs.option_type {
+        let (nd1, nd2): (f64, f64) = nd1nd2(self, true);
+        let price: f64 = match self.option_type {
             OptionType::Call => f64::max(
                 0.0,
-                nd1 * &inputs.s * E.powf(-&inputs.q * &inputs.t)
-                    - nd2 * &inputs.k * E.powf(-&inputs.r * &inputs.t),
+                nd1 * self.s * E.powf(-self.q * self.t)
+                    - nd2 * self.k * E.powf(-self.r * self.t),
             ),
             OptionType::Put => f64::max(
                 0.0,
-                nd2 * inputs.k * E.powf(-inputs.r * inputs.t)
-                    - nd1 * inputs.s * E.powf(-inputs.q * inputs.t),
+                nd2 * self.k * E.powf(-self.r * self.t)
+                    - nd1 * self.s * E.powf(-self.q * self.t),
             ),
         };
         price
     }
-}
-
-#[wasm_bindgen]
-pub struct Greeks {}
-
-#[wasm_bindgen]
-impl Greeks {
-    pub fn calc_delta(inputs: &Inputs) -> f64 {
-        let (nd1, _): (f64, f64) = nd1nd2(&inputs, true);
-        let delta: f64 = match &inputs.option_type {
-            OptionType::Call => nd1 * E.powf(-&inputs.q * &inputs.t),
-            OptionType::Put => -nd1 * E.powf(-&inputs.q * &inputs.t),
+    pub fn calc_delta(&self) -> f64 {
+        let (nd1, _): (f64, f64) = nd1nd2(self, true);
+        let delta: f64 = match self.option_type {
+            OptionType::Call => nd1 * E.powf(-self.q * self.t),
+            OptionType::Put => -nd1 * E.powf(-self.q * self.t),
         };
         delta
     }
 
-    pub fn calc_gamma(inputs: &Inputs) -> f64 {
-        // Calculates the gamma of the option
+    pub fn calc_gamma(&self) -> f64 {
 
-        let sigma: f64 = match &inputs.sigma {
-            Some(sigma) => *sigma,
+        let sigma: f64 = match self.sigma {
+            Some(sigma) => sigma,
             None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
         };
 
-        let nprimed1: f64 = calc_nprimed1(&inputs);
+        let nprimed1: f64 = calc_nprimed1(self);
         let gamma: f64 =
-            E.powf(-&inputs.q * &inputs.t) * nprimed1 / (&inputs.s * sigma * &inputs.t.sqrt());
+            E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
         gamma
     }
 
-    pub fn calc_theta(inputs: &Inputs) -> f64 {
-        // Calculates the theta of the option
+    pub fn calc_theta(&self) -> f64 {
 
-        let sigma: f64 = match &inputs.sigma {
-            Some(sigma) => *sigma,
+        let sigma: f64 = match self.sigma {
+            Some(sigma) => sigma,
             None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
         };
 
-        let nprimed1: f64 = calc_nprimed1(&inputs);
-        let (nd1, nd2): (f64, f64) = nd1nd2(&inputs, true);
+        let nprimed1: f64 = calc_nprimed1(self);
+        let (nd1, nd2): (f64, f64) = nd1nd2(self, true);
 
-        // Calculation uses 360 for T: Time of days per year.
-        let theta: f64 = match &inputs.option_type {
+        // Calculation uses 365.25 for T: Time of days per year.
+        let theta: f64 = match self.option_type {
             OptionType::Call => {
-                (-(&inputs.s * sigma * E.powf(-&inputs.q * &inputs.t) * nprimed1
-                    / (2.0 * &inputs.t.sqrt()))
-                    - &inputs.r * &inputs.k * E.powf(-&inputs.r * &inputs.t) * nd2
-                    + &inputs.q * &inputs.s * E.powf(-&inputs.q * &inputs.t) * nd1)
+                (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
+                    / (2.0 * self.t.sqrt()))
+                    - self.r * self.k * E.powf(-self.r * self.t) * nd2
+                    + self.q * self.s * E.powf(-self.q * self.t) * nd1)
                     / 365.25
             }
             OptionType::Put => {
-                (-(&inputs.s * sigma * E.powf(-&inputs.q * &inputs.t) * nprimed1
-                    / (2.0 * &inputs.t.sqrt()))
-                    + &inputs.r * &inputs.k * E.powf(-&inputs.r * &inputs.t) * nd2
-                    - &inputs.q * &inputs.s * E.powf(-&inputs.q * &inputs.t) * nd1)
+                (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
+                    / (2.0 * self.t.sqrt()))
+                    + self.r * self.k * E.powf(-self.r * self.t) * nd2
+                    - self.q * self.s * E.powf(-self.q * self.t) * nd1)
                     / 365.25
             }
         };
         theta
     }
 
-    pub fn calc_vega(inputs: &Inputs) -> f64 {
-        // Calculates the vega of the option
+    pub fn calc_vega(&self) -> f64 {
 
-        let nprimed1: f64 = calc_nprimed1(&inputs);
+        let nprimed1: f64 = calc_nprimed1(self);
         let vega: f64 =
-            1.0 / 100.0 * &inputs.s * E.powf(-&inputs.q * &inputs.t) * &inputs.t.sqrt() * nprimed1;
+            1.0 / 100.0 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
         vega
     }
 
-    pub fn calc_rho(inputs: &Inputs) -> f64 {
-        // Calculates the rho of the option
+    pub fn calc_rho(&self) -> f64 {
 
-        let (_, nd2): (f64, f64) = nd1nd2(&inputs, true);
-        let rho: f64 = match &inputs.option_type {
+        let (_, nd2): (f64, f64) = nd1nd2(self, true);
+        let rho: f64 = match self.option_type {
             OptionType::Call => {
-                1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
+                1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2
             }
             OptionType::Put => {
-                -1.0 / 100.0 * &inputs.k * &inputs.t * E.powf(-&inputs.r * &inputs.t) * nd2
+                -1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2
             }
         };
         rho
     }
-}
+    pub fn calc_iv(&self, tolerance: f64) -> f64 {
 
-#[wasm_bindgen]
-pub struct Volatility {}
-
-#[wasm_bindgen]
-impl Volatility {
-    pub fn calc_iv(inputs: &mut Inputs, tolerance: f64) -> f64 {
-        // Calculates the implied volatility of the option
-        // Tolerance is the max error allowed for the implied volatility,
-        // the lower the tolerance the more iterations will be required.
-        // Recommended to be a value between 0.001 - 0.0001 for highest efficiency/accuracy
-
-        let p: f64 = match &inputs.p {
-            Some(p) => *p,
+        let mut inputs: Inputs = self.clone();
+        let p: f64 = match inputs.p {
+            Some(p) => p,
             None => panic!("inputs.p must contain Some(f64), found None"),
         };
         // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation
@@ -275,8 +261,8 @@ impl Volatility {
         // If so then iterate until the difference is less than tolerance
         while diff.abs() > tolerance {
             inputs.sigma = Some(sigma);
-            diff = Price::calc_price(&inputs) - p;
-            sigma -= diff / (Greeks::calc_vega(&inputs) * 100.0);
+            diff = inputs.calc_price() - p;
+            sigma -= diff / (inputs.calc_vega() * 100.0);
         }
         sigma
     }
