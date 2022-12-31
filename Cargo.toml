@@ -11,4 +11,4 @@ authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
 [dependencies]
-statrs = "0.16.0"
+num-traits = "0.2.15"
