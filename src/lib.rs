@@ -6,7 +6,8 @@
 //!
 //! Example:
 //! ```
-//! let inputs: blackscholes::Inputs = blackscholes::Inputs.new(blackscholes::OptionType::Call, 100.0, 100.0, None, 0.05, 0.02, 20.0 / 365.25, Some(0.2));
+//! use blackscholes::{Inputs, OptionType};
+//! let inputs: Inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.02, 20.0 / 365.25, Some(0.2));
 //! let price: f64 = inputs.calc_price();
 //! ```
 //!
@@ -142,8 +143,8 @@ impl Inputs {
     /// * `sigma` - The volatility of the underlying asset.
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// ```
     /// # Returns
     /// An instance of the `Inputs` struct.
@@ -176,8 +177,8 @@ impl Inputs {
     /// f64 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// let price = inputs.calc_price();
     /// ```
     pub fn calc_price(&self) -> f64 {
@@ -203,8 +204,8 @@ impl Inputs {
     /// f64 of the delta of the option.
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// let delta = inputs.calc_delta();
     /// ```
     pub fn calc_delta(&self) -> f64 {
@@ -223,8 +224,8 @@ impl Inputs {
     /// f64 of the gamma of the option.
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// let gamma = inputs.calc_gamma();
     /// ```
     pub fn calc_gamma(&self) -> f64 {
@@ -246,8 +247,8 @@ impl Inputs {
     /// f64 of theta per day (not per year).
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// let theta = inputs.calc_theta();
     /// ```
     pub fn calc_theta(&self) -> f64 {
@@ -284,8 +285,8 @@ impl Inputs {
     /// f64 of the vega of the option.
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// let vega = inputs.calc_vega();
     /// ```
     pub fn calc_vega(&self) -> f64 {
@@ -301,8 +302,8 @@ impl Inputs {
     /// f64 of the rho of the option.
     /// # Example
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20/365.25, Some(0.2));
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
     /// let rho = inputs.calc_rho();
     /// ```
     pub fn calc_rho(&self) -> f64 {
@@ -326,8 +327,8 @@ impl Inputs {
     /// f64 of the implied volatility of the option.
     /// # Example:
     /// ```
-    /// use blackscholes::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(10), 0.05, 0.02, 20.0 / 365.25, None);
+    /// use blackscholes::{Inputs, OptionType};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(10.0), 0.05, 0.02, 20.0 / 365.25, None);
     /// let iv = inputs.calc_iv(0.0001);
     /// ```
     pub fn calc_iv(&self, tolerance: f64) -> f64 {
