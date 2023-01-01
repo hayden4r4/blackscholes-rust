@@ -1,6 +1,6 @@
 use blackscholes;
 
-const INPUTS_CALL_OTM: blackscholes::Inputs = blackscholes::Inputs {
+const INPUTS_CALL_OTM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Call,
     s: 100.0,
     k: 110.0,
@@ -10,7 +10,7 @@ const INPUTS_CALL_OTM: blackscholes::Inputs = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_CALL_ITM: blackscholes::Inputs = blackscholes::Inputs {
+const INPUTS_CALL_ITM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Call,
     s: 100.0,
     k: 90.0,
@@ -20,7 +20,7 @@ const INPUTS_CALL_ITM: blackscholes::Inputs = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_OTM: blackscholes::Inputs = blackscholes::Inputs {
+const INPUTS_PUT_OTM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Put,
     s: 100.0,
     k: 90.0,
@@ -30,7 +30,7 @@ const INPUTS_PUT_OTM: blackscholes::Inputs = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_ITM: blackscholes::Inputs = blackscholes::Inputs {
+const INPUTS_PUT_ITM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Put,
     s: 100.0,
     k: 110.0,
@@ -43,6 +43,7 @@ const INPUTS_PUT_ITM: blackscholes::Inputs = blackscholes::Inputs {
 
 #[test]
 fn price_call_otm() {
+    println!("{}", INPUTS_CALL_OTM.calc_price());
     assert!((INPUTS_CALL_OTM.calc_price() - 0.0376).abs() < 0.001);
 }
 #[test]
@@ -52,7 +53,6 @@ fn price_call_itm() {
 
 #[test]
 fn price_put_otm() {
-    println!("{}", INPUTS_PUT_OTM.calc_price());
     assert!((INPUTS_PUT_OTM.calc_price() - 0.01867).abs() < 0.001);
 }
 #[test]

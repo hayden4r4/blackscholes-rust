@@ -7,15 +7,38 @@
 //! Example:
 //! ```
 //! use blackscholes::{Inputs, OptionType};
-//! let inputs: Inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.02, 20.0 / 365.25, Some(0.2));
+//! let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
 //! let price: f64 = inputs.calc_price();
 //! ```
 //!
 //! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a [npm WASM package](https://www.npmjs.com/package/@haydenr4/blackscholes_wasm) and a [python module](https://pypi.org/project/blackscholes/) are also available.
 
-use statrs::distribution::{Continuous, ContinuousCDF, Normal};
-use std::f64::consts::{E, PI};
+use num_traits::float::Float;
+use num_traits::NumCast;
+use statrs::distribution::{ContinuousCDF, Normal};
+use std::f32::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
+
+/// Trait alias for floats
+pub trait BSFloat:
+    Float
+    + From<f32>
+    + Display
+    + std::ops::SubAssign
+    + std::ops::AddAssign
+    + std::ops::MulAssign
+    + std::ops::DivAssign
+{
+}
+impl BSFloat for f32 {}
+impl BSFloat for f64 {}
+
+/// Constants
+const N_MEAN: f32 = 0.0;
+const N_STD_DEV: f32 = 1.0;
+const SQRT_2PI: f32 = 2.5066282;
+const HALF: f32 = 0.5;
+const DAYS_PER_YEAR: f32 = 365.25;
 
 /// The type of option to be priced.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -35,26 +58,26 @@ impl Display for OptionType {
 
 /// The inputs to the Black-Scholes-Merton model.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Inputs {
+pub struct Inputs<T: BSFloat> {
     /// The type of the option (call or put)
     pub option_type: OptionType,
     /// Stock price
-    pub s: f64,
+    pub s: T,
     /// Strike price
-    pub k: f64,
+    pub k: T,
     /// Option price
-    pub p: Option<f64>,
+    pub p: Option<T>,
     /// Risk-free rate
-    pub r: f64,
+    pub r: T,
     /// Dividend yield
-    pub q: f64,
+    pub q: T,
     /// Time to maturity in years
-    pub t: f64,
+    pub t: T,
     /// Volatility
-    pub sigma: Option<f64>,
+    pub sigma: Option<T>,
 }
 
-impl Display for Inputs {
+impl<T: BSFloat> Display for Inputs<T> {
     fn fmt(&self, f: &mut Formatter) -> Result {
         writeln!(f, "Option type: {}", self.option_type)?;
         writeln!(f, "Stock price: {:.2}", self.s)?;
@@ -76,61 +99,72 @@ impl Display for Inputs {
 
 /// Calculates the d1, d2, nd1, and nd2 values for the option.
 /// # Returns
-/// Tuple (f64, f64) of the nd1 and nd2 values for the given inputs.
-fn nd1nd2(inputs: &Inputs, normal: bool) -> (f64, f64) {
-    let sigma: f64 = match inputs.sigma {
+/// Tuple (T, T) of the nd1 and nd2 values for the given inputs.
+fn nd1nd2<T: BSFloat>(inputs: &Inputs<T>, n: bool) -> (T, T) {
+    let sigma: T = match inputs.sigma {
         Some(sigma) => sigma,
-        None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
+        None => panic!("Expected an Option(T) for inputs.sigma, received None"),
     };
 
     let nd1nd2 = {
         // Calculating numerator of d1
-        let numd1: f64 =
-            (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
+        let numd1: T = (inputs.s / inputs.k).ln()
+            + (inputs.r - inputs.q + (sigma.powi(2)) / <T as From<f32>>::from(2.0)) * inputs.t;
 
         // Calculating denominator of d1 and d2
-        let den: f64 = sigma * (inputs.t.sqrt());
+        let den: T = sigma * (inputs.t.sqrt());
 
-        let d1: f64 = numd1 / den;
-        let d2: f64 = d1 - den;
+        let d1: T = numd1 / den;
+        let d2: T = d1 - den;
 
-        let d1d2: (f64, f64) = (d1, d2);
+        let d1d2: (T, T) = (d1, d2);
 
-        // Returns d1 and d2 values if deriving from normal distribution is not necessary
+        // Returns d1 and d2 values if deriving from n distribution is not necessary
         //  (i.e. gamma, vega, and theta calculations)
-        if !normal {
+        if !n {
             return d1d2;
         }
 
-        // Creating normal distribution
-        let n: Normal = Normal::new(0.0, 1.0).unwrap();
+        let n: Normal = Normal::new(N_MEAN as f64, N_STD_DEV as f64).unwrap();
 
         // Calculates the nd1 and nd2 values
         // Checks if OptionType is Call or Put
-        let nd1nd2: (f64, f64) = match inputs.option_type {
-            OptionType::Call => (n.cdf(d1d2.0), n.cdf(d1d2.1)),
-            OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
+        let nd1nd2: (T, T) = match inputs.option_type {
+            OptionType::Call => (
+                NumCast::from(n.cdf(NumCast::from(d1d2.0).unwrap())).unwrap(),
+                NumCast::from(n.cdf(NumCast::from(d1d2.1).unwrap())).unwrap(),
+            ),
+            OptionType::Put => (
+                NumCast::from(n.cdf(NumCast::from(-d1d2.0).unwrap())).unwrap(),
+                NumCast::from(n.cdf(NumCast::from(-d1d2.1).unwrap())).unwrap(),
+            ),
         };
         nd1nd2
     };
     nd1nd2
 }
 
+/// Calculates the n probability density function (PDF) for the given input.
 /// # Returns
-/// f64 of the derivative of the nd1.
-fn calc_nprimed1(inputs: &Inputs) -> f64 {
-    let (d1, _): (f64, f64) = nd1nd2(&inputs, false);
+/// T of the value of the n probability density function.
+fn npdf<T: BSFloat>(x: T) -> T {
+    let d: T = (x - N_MEAN.into()) / N_STD_DEV.into();
+    (<T as From<f32>>::from(-HALF) * d * d).exp()
+        / (<T as From<f32>>::from(SQRT_2PI) * <T as From<f32>>::from(N_STD_DEV))
+}
 
-    // Generate normal probability distribution
-    let n: Normal = Normal::new(0.0, 1.0).unwrap();
+/// # Returns
+/// T of the derivative of the nd1.
+fn calc_nprimed1<T: BSFloat>(inputs: &Inputs<T>) -> T {
+    let (d1, _): (T, T) = nd1nd2(&inputs, false);
 
-    // Get the standard normal probability density function value of d1
-    let nprimed1: f64 = n.pdf(d1);
+    // Get the standard n probability density function value of d1
+    let nprimed1: T = npdf(d1);
     nprimed1
 }
 
 /// Methods for calculating the price, greeks, and implied volatility of an option.
-impl Inputs {
+impl<T: BSFloat> Inputs<T> {
     /// Creates instance ot the `Inputs` struct.
     /// # Arguments
     /// * `option_type` - The type of option to be priced.
@@ -144,19 +178,19 @@ impl Inputs {
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// ```
     /// # Returns
     /// An instance of the `Inputs` struct.
     pub fn new(
         option_type: OptionType,
-        s: f64,
-        k: f64,
-        p: Option<f64>,
-        r: f64,
-        q: f64,
-        t: f64,
-        sigma: Option<f64>,
+        s: T,
+        k: T,
+        p: Option<T>,
+        r: T,
+        q: T,
+        t: T,
+        sigma: Option<T>,
     ) -> Self {
         Self {
             option_type,
@@ -174,24 +208,26 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma.
     /// # Returns
-    /// f64 of the price of the option.
+    /// T of the price of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_price();
     /// ```
-    pub fn calc_price(&self) -> f64 {
+    pub fn calc_price(&self) -> T {
         // Calculates the price of the option
-        let (nd1, nd2): (f64, f64) = nd1nd2(&self, true);
-        let price: f64 = match self.option_type {
-            OptionType::Call => f64::max(
-                0.0,
-                nd1 * self.s * E.powf(-self.q * self.t) - nd2 * self.k * E.powf(-self.r * self.t),
+        let (nd1, nd2): (T, T) = nd1nd2(&self, true);
+        let price: T = match self.option_type {
+            OptionType::Call => T::max(
+                <T as From<f32>>::from(0.0),
+                nd1 * self.s * <T as From<f32>>::from(E).powf(-self.q * self.t)
+                    - nd2 * self.k * <T as From<f32>>::from(E).powf(-self.r * self.t),
             ),
-            OptionType::Put => f64::max(
-                0.0,
-                nd2 * self.k * E.powf(-self.r * self.t) - nd1 * self.s * E.powf(-self.q * self.t),
+            OptionType::Put => T::max(
+                <T as From<f32>>::from(0.0),
+                nd2 * self.k * <T as From<f32>>::from(E).powf(-self.r * self.t)
+                    - nd1 * self.s * <T as From<f32>>::from(E).powf(-self.q * self.t),
             ),
         };
         price
@@ -201,18 +237,18 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// f64 of the delta of the option.
+    /// T of the delta of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let delta = inputs.calc_delta();
     /// ```
-    pub fn calc_delta(&self) -> f64 {
-        let (nd1, _): (f64, f64) = nd1nd2(&self, true);
-        let delta: f64 = match self.option_type {
-            OptionType::Call => nd1 * E.powf(-self.q * self.t),
-            OptionType::Put => -nd1 * E.powf(-self.q * self.t),
+    pub fn calc_delta(&self) -> T {
+        let (nd1, _): (T, T) = nd1nd2(&self, true);
+        let delta: T = match self.option_type {
+            OptionType::Call => nd1 * <T as From<f32>>::from(E).powf(-self.q * self.t),
+            OptionType::Put => -nd1 * <T as From<f32>>::from(E).powf(-self.q * self.t),
         };
         delta
     }
@@ -221,21 +257,22 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// f64 of the gamma of the option.
+    /// T of the gamma of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let gamma = inputs.calc_gamma();
     /// ```
-    pub fn calc_gamma(&self) -> f64 {
-        let sigma: f64 = match self.sigma {
+    pub fn calc_gamma(&self) -> T {
+        let sigma: T = match self.sigma {
             Some(sigma) => sigma,
-            None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
+            None => panic!("Expected an Option(T) for inputs.sigma, received None"),
         };
 
-        let nprimed1: f64 = calc_nprimed1(&self);
-        let gamma: f64 = E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
+        let nprimed1: T = calc_nprimed1(&self);
+        let gamma: T = <T as From<f32>>::from(E).powf(-self.q * self.t) * nprimed1
+            / (self.s * sigma * self.t.sqrt());
         gamma
     }
 
@@ -244,35 +281,37 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// f64 of theta per day (not per year).
+    /// T of theta per day (not per year).
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let theta = inputs.calc_theta();
     /// ```
-    pub fn calc_theta(&self) -> f64 {
-        let sigma: f64 = match self.sigma {
+    pub fn calc_theta(&self) -> T {
+        let sigma: T = match self.sigma {
             Some(sigma) => sigma,
-            None => panic!("Expected an Option(f64) for inputs.sigma, received None"),
+            None => panic!("Expected an Option(T) for inputs.sigma, received None"),
         };
 
-        let nprimed1: f64 = calc_nprimed1(&self);
-        let (nd1, nd2): (f64, f64) = nd1nd2(&self, true);
+        let nprimed1: T = calc_nprimed1(&self);
+        let (nd1, nd2): (T, T) = nd1nd2(&self, true);
 
         // Calculation uses 365.25 for T: Time of days per year.
-        let theta: f64 = match self.option_type {
+        let theta: T = match self.option_type {
             OptionType::Call => {
-                (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * &self.t.sqrt()))
-                    - self.r * self.k * E.powf(-self.r * self.t) * nd2
-                    + self.q * self.s * E.powf(-self.q * self.t) * nd1)
-                    / 365.25
+                (-(self.s * sigma * <T as From<f32>>::from(E).powf(-self.q * self.t) * nprimed1
+                    / (<T as From<f32>>::from(2.0) * self.t.sqrt()))
+                    - self.r * self.k * <T as From<f32>>::from(E).powf(-self.r * self.t) * nd2
+                    + self.q * self.s * <T as From<f32>>::from(E).powf(-self.q * self.t) * nd1)
+                    / <T as From<f32>>::from(DAYS_PER_YEAR)
             }
             OptionType::Put => {
-                (-(&self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * &self.t.sqrt()))
-                    + self.r * self.k * E.powf(-self.r * self.t) * nd2
-                    - self.q * self.s * E.powf(-self.q * self.t) * nd1)
-                    / 365.25
+                (-(self.s * sigma * <T as From<f32>>::from(E).powf(-self.q * self.t) * nprimed1
+                    / (<T as From<f32>>::from(2.0) * self.t.sqrt()))
+                    + self.r * self.k * <T as From<f32>>::from(E).powf(-self.r * self.t) * nd2
+                    - self.q * self.s * <T as From<f32>>::from(E).powf(-self.q * self.t) * nd1)
+                    / <T as From<f32>>::from(DAYS_PER_YEAR)
             }
         };
         theta
@@ -282,16 +321,20 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// f64 of the vega of the option.
+    /// T of the vega of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vega = inputs.calc_vega();
     /// ```
-    pub fn calc_vega(&self) -> f64 {
-        let nprimed1: f64 = calc_nprimed1(&self);
-        let vega: f64 = 1.0 / 100.0 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
+    pub fn calc_vega(&self) -> T {
+        let nprimed1: T = calc_nprimed1(&self);
+        let vega: T = <T as From<f32>>::from(1.0) / <T as From<f32>>::from(100.0)
+            * self.s
+            * <T as From<f32>>::from(E).powf(-self.q * self.t)
+            * self.t.sqrt()
+            * nprimed1;
         vega
     }
 
@@ -299,18 +342,30 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// f64 of the rho of the option.
+    /// T of the rho of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0 / 365.25, Some(0.2));
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let rho = inputs.calc_rho();
     /// ```
-    pub fn calc_rho(&self) -> f64 {
-        let (_, nd2): (f64, f64) = nd1nd2(&self, true);
-        let rho: f64 = match &self.option_type {
-            OptionType::Call => 1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
-            OptionType::Put => -1.0 / 100.0 * self.k * &self.t * E.powf(-self.r * self.t) * nd2,
+    pub fn calc_rho(&self) -> T {
+        let (_, nd2): (T, T) = nd1nd2(&self, true);
+        let rho: T = match &self.option_type {
+            OptionType::Call => {
+                <T as From<f32>>::from(1.0) / <T as From<f32>>::from(100.0)
+                    * self.k
+                    * self.t
+                    * <T as From<f32>>::from(E).powf(-self.r * self.t)
+                    * nd2
+            }
+            OptionType::Put => {
+                <T as From<f32>>::from(-1.0) / <T as From<f32>>::from(100.0)
+                    * self.k
+                    * self.t
+                    * <T as From<f32>>::from(E).powf(-self.r * self.t)
+                    * nd2
+            }
         };
         rho
     }
@@ -324,24 +379,26 @@ impl Inputs {
     /// # Requires
     /// s, k, r, q, t, p
     /// # Returns
-    /// f64 of the implied volatility of the option.
+    /// T of the implied volatility of the option.
     /// # Example:
     /// ```
     /// use blackscholes::{Inputs, OptionType};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(10.0), 0.05, 0.02, 20.0 / 365.25, None);
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 0.2, 20.0/365.25, None);
     /// let iv = inputs.calc_iv(0.0001);
     /// ```
-    pub fn calc_iv(&self, tolerance: f64) -> f64 {
-        let mut inputs: Inputs = self.clone();
+    pub fn calc_iv(&self, tolerance: T) -> T {
+        let mut inputs: Inputs<T> = self.clone();
 
-        let p: f64 = match inputs.p {
+        let p: T = match inputs.p {
             Some(p) => p,
-            None => panic!("inputs.p must contain Some(f64), found None"),
+            None => panic!("inputs.p must contain Some(T), found None"),
         };
         // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
-        let mut sigma: f64 = (2.0 * PI / inputs.t).sqrt() * (p / inputs.s);
+        let mut sigma: T = (<T as From<f32>>::from(2.0) * <T as From<f32>>::from(PI) / inputs.t)
+            .sqrt()
+            * (p / inputs.s);
         // Initialize diff to 100 for use in while loop
-        let mut diff: f64 = 100.0;
+        let mut diff: T = <T as From<f32>>::from(100.0);
 
         // Uses Newton Raphson algorithm to calculate implied volatility.
         // Test if the difference between calculated option price and actual option price is > tolerance,
@@ -349,7 +406,7 @@ impl Inputs {
         while diff.abs() > tolerance {
             inputs.sigma = Some(sigma);
             diff = inputs.calc_price() - p;
-            sigma -= diff / (inputs.calc_vega() * 100.0);
+            sigma -= diff / (inputs.calc_vega() * <T as From<f32>>::from(100.0));
         }
         sigma
     }
