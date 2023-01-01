@@ -12,3 +12,4 @@ keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
 [dependencies]
 num-traits = "0.2.15"
+statrs = "0.16.0"

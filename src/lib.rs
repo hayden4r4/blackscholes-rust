@@ -14,6 +14,8 @@
 //! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a [npm WASM package](https://www.npmjs.com/package/@haydenr4/blackscholes_wasm) and a [python module](https://pypi.org/project/blackscholes/) are also available.
 
 use num_traits::float::Float;
+use num_traits::NumCast;
+use statrs::distribution::{ContinuousCDF, Normal};
 use std::f32::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
 
@@ -95,22 +97,10 @@ impl<T: BSFloat> Display for Inputs<T> {
     }
 }
 
-/// Calculates the normal cumulative distribution function (CDF) for the given input.
-/// # Returns
-/// T of the value of the normal cumulative density function.
-fn ncdf<T: BSFloat>(x: T) -> T {
-    let x: T = x.into();
-    let cdf: T = (<T as From<f32>>::from(1.0)
-        + (x - <T as From<f32>>::from(N_MEAN)) / <T as From<f32>>::from(N_STD_DEV)
-            * <T as From<f32>>::from(SQRT_2PI))
-    .powf(<T as From<f32>>::from(-HALF));
-    cdf
-}
-
 /// Calculates the d1, d2, nd1, and nd2 values for the option.
 /// # Returns
 /// Tuple (T, T) of the nd1 and nd2 values for the given inputs.
-fn nd1nd2<T: BSFloat>(inputs: &Inputs<T>, normal: bool) -> (T, T) {
+fn nd1nd2<T: BSFloat>(inputs: &Inputs<T>, n: bool) -> (T, T) {
     let sigma: T = match inputs.sigma {
         Some(sigma) => sigma,
         None => panic!("Expected an Option(T) for inputs.sigma, received None"),
@@ -129,26 +119,34 @@ fn nd1nd2<T: BSFloat>(inputs: &Inputs<T>, normal: bool) -> (T, T) {
 
         let d1d2: (T, T) = (d1, d2);
 
-        // Returns d1 and d2 values if deriving from normal distribution is not necessary
+        // Returns d1 and d2 values if deriving from n distribution is not necessary
         //  (i.e. gamma, vega, and theta calculations)
-        if !normal {
+        if !n {
             return d1d2;
         }
+
+        let n: Normal = Normal::new(N_MEAN as f64, N_STD_DEV as f64).unwrap();
 
         // Calculates the nd1 and nd2 values
         // Checks if OptionType is Call or Put
         let nd1nd2: (T, T) = match inputs.option_type {
-            OptionType::Call => (ncdf(d1d2.0), ncdf(d1d2.1)),
-            OptionType::Put => (ncdf(-d1d2.0), ncdf(-d1d2.1)),
+            OptionType::Call => (
+                NumCast::from(n.cdf(NumCast::from(d1d2.0).unwrap())).unwrap(),
+                NumCast::from(n.cdf(NumCast::from(d1d2.1).unwrap())).unwrap(),
+            ),
+            OptionType::Put => (
+                NumCast::from(n.cdf(NumCast::from(-d1d2.0).unwrap())).unwrap(),
+                NumCast::from(n.cdf(NumCast::from(-d1d2.1).unwrap())).unwrap(),
+            ),
         };
         nd1nd2
     };
     nd1nd2
 }
 
-/// Calculates the normal probability density function (PDF) for the given input.
+/// Calculates the n probability density function (PDF) for the given input.
 /// # Returns
-/// T of the value of the normal probability density function.
+/// T of the value of the n probability density function.
 fn npdf<T: BSFloat>(x: T) -> T {
     let d: T = (x - N_MEAN.into()) / N_STD_DEV.into();
     (<T as From<f32>>::from(-HALF) * d * d).exp()
@@ -160,7 +158,7 @@ fn npdf<T: BSFloat>(x: T) -> T {
 fn calc_nprimed1<T: BSFloat>(inputs: &Inputs<T>) -> T {
     let (d1, _): (T, T) = nd1nd2(&inputs, false);
 
-    // Get the standard normal probability density function value of d1
+    // Get the standard n probability density function value of d1
     let nprimed1: T = npdf(d1);
     nprimed1
 }
