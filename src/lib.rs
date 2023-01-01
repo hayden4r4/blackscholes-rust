@@ -3,6 +3,7 @@
 //!
 //! ## Usage
 //! Simply create an instance of the `Inputs` struct and call the desired method.
+//! This crate is generic over all floating point types (f32, f64)
 //!
 //! Example:
 //! ```
