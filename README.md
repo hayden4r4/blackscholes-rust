@@ -12,7 +12,9 @@ View the [docs](https://docs.rs/blackscholes) for usage and examples.
   
 - [ ] Finish doc tests
 - [ ] Finish unit tests
-- [ ] Add all second order greeks
+- [x] Add all second order greeks
+- [x] Add all third order greeks
+- [ ] Add proper error handling rather than panicking
 - [ ] Add Black76
   
 **Other packages available:**  
