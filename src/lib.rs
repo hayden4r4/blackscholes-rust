@@ -21,18 +21,11 @@ use std::f32::consts::{E, PI};
 use std::fmt::{Display, Formatter, Result};
 
 /// Trait alias for floats
-pub trait BSFloat:
-    Float
-    + From<f32>
-    + Display
-    + std::ops::SubAssign
-    + std::ops::AddAssign
-    + std::ops::MulAssign
-    + std::ops::DivAssign
+pub trait BSFloat: Float + From<f32> + Display + std::ops::SubAssign + std::ops::AddAssign {}
+impl<T> BSFloat for T where
+    T: Float + From<f32> + Display + std::ops::SubAssign + std::ops::AddAssign
 {
 }
-impl BSFloat for f32 {}
-impl BSFloat for f64 {}
 
 /// Constants
 const N_MEAN: f32 = 0.0;
