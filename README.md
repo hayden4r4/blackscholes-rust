@@ -14,8 +14,9 @@ View the [docs](https://docs.rs/blackscholes) for usage and examples.
 - [ ] Finish unit tests
 - [x] Add all second order greeks
 - [x] Add all third order greeks
-- [ ] Add proper error handling rather than panicking
-- [ ] Add Black76
+- [x] Add proper error handling rather than panicking
+- [x] Organize traits into seperate files
+- [ ] ~~Add Black76~~ (plan to create another package for this)
   
 **Other packages available:**  
 Python: [Pypi](https://pypi.org/project/blackscholes-python/)  
