@@ -1,8 +1,7 @@
-use crate::{Inputs, OptionType, common::*, constants::*};
+use crate::{common::*, constants::*, Inputs, OptionType};
 pub trait Pricing {
     fn calc_price(&self) -> Result<f32, String>;
 }
-
 
 impl Pricing for Inputs {
     /// Calculates the price of the option.
@@ -12,7 +11,7 @@ impl Pricing for Inputs {
     /// f32 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Inputs, OptionType, pricing::Pricing};
+    /// use blackscholes::{Inputs, OptionType, Pricing};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_price().unwrap();
     /// ```

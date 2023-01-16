@@ -18,6 +18,10 @@ pub mod greeks;
 pub mod implied_volatility;
 pub mod pricing;
 
+pub use greeks::Greeks;
+pub use implied_volatility::ImpliedVolatility;
+pub use pricing::Pricing;
+
 use std::fmt::{Display, Formatter, Result as fmtResult};
 
 /// The type of option to be priced.
