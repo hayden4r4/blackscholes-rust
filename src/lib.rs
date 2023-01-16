@@ -24,7 +24,7 @@ pub use pricing::Pricing;
 
 use std::fmt::{Display, Formatter, Result as fmtResult};
 
-/// The type of option to be priced.
+/// The type of option to be priced (call or put).
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OptionType {
     Call,
