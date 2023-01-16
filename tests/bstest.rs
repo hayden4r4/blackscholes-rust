@@ -1,6 +1,6 @@
 use blackscholes;
 
-const INPUTS_CALL_OTM: blackscholes::Inputs<f64> = blackscholes::Inputs {
+const INPUTS_CALL_OTM: blackscholes::Inputs<f32> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Call,
     s: 100.0,
     k: 110.0,
@@ -10,7 +10,7 @@ const INPUTS_CALL_OTM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_CALL_ITM: blackscholes::Inputs<f64> = blackscholes::Inputs {
+const INPUTS_CALL_ITM: blackscholes::Inputs<f32> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Call,
     s: 100.0,
     k: 90.0,
@@ -20,7 +20,7 @@ const INPUTS_CALL_ITM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_OTM: blackscholes::Inputs<f64> = blackscholes::Inputs {
+const INPUTS_PUT_OTM: blackscholes::Inputs<f32> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Put,
     s: 100.0,
     k: 90.0,
@@ -30,7 +30,7 @@ const INPUTS_PUT_OTM: blackscholes::Inputs<f64> = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_ITM: blackscholes::Inputs<f64> = blackscholes::Inputs {
+const INPUTS_PUT_ITM: blackscholes::Inputs<f32> = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Put,
     s: 100.0,
     k: 110.0,
