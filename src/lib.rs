@@ -82,44 +82,45 @@ impl Display for Inputs {
     }
 }
 
-/// Calculates the d1, d2, nd1, and nd2 values for the option.
+/// Calculates the d1 and d2 values for the option.
 /// # Requires
-/// * inputs: &Inputs - The inputs to the Black-Scholes-Merton model
-/// * n: bool - Whether or not to calculate the nd1 and nd2 values, if false, only d1 and d2 are calculated and returned
+/// s, k, r, q, t, sigma.
 /// # Returns
-/// Tuple (f32, f32) of either (nd1, nd2) if n==True or (d1, d2) if n==false
-fn calc_nd1nd2(inputs: &Inputs, n: bool) -> Result<(f32, f32), String> {
+/// Tuple (f32, f32) of (d1, d2)
+fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
     let sigma = if let Some(sigma) = inputs.sigma {
         sigma
     } else {
         return Err("Expected Some(f32) for inputs.sigma, received None".into());
     };
+    // Calculating numerator of d1
+    let numd1 =
+        (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
 
+    // Calculating denominator of d1 and d2
+    let den = sigma * (inputs.t.sqrt());
+
+    let d1 = numd1 / den;
+    let d2 = d1 - den;
+
+    Ok((d1, d2))
+}
+
+/// Calculates the nd1 and nd2 values for the option.
+/// # Requires
+/// s, k, r, q, t, sigma
+/// # Returns
+/// Tuple (f32, f32) of (nd1, nd2)
+fn calc_nd1nd2(inputs: &Inputs) -> Result<(f32, f32), String> {
     let nd1nd2 = {
-        // Calculating numerator of d1
-        let numd1 =
-            (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
-
-        // Calculating denominator of d1 and d2
-        let den = sigma * (inputs.t.sqrt());
-
-        let d1 = numd1 / den;
-        let d2 = d1 - den;
-
-        let d1d2 = (d1, d2);
-
-        // Returns d1 and d2 values if deriving from n distribution is not necessary
-        //  (i.e. gamma, vega, and theta calculations)
-        if !n {
-            return Ok(d1d2);
-        }
+        let d1d2 = calc_d1d2(inputs)?;
 
         let n: Normal = Normal::new(N_MEAN as f64, N_STD_DEV as f64).unwrap();
 
         let num_cast_err: String = "Failed to cast f64 to f32".into();
         // Calculates the nd1 and nd2 values
         // Checks if OptionType is Call or Put
-        let nd1nd2 = match inputs.option_type {
+        match inputs.option_type {
             OptionType::Call => (
                 NumCast::from(n.cdf(NumCast::from(d1d2.0).ok_or(&num_cast_err)?))
                     .ok_or(&num_cast_err)?,
@@ -132,8 +133,7 @@ fn calc_nd1nd2(inputs: &Inputs, n: bool) -> Result<(f32, f32), String> {
                 NumCast::from(n.cdf(NumCast::from(-d1d2.1).ok_or(&num_cast_err)?))
                     .ok_or(&num_cast_err)?,
             ),
-        };
-        nd1nd2
+        }
     };
     Ok(nd1nd2)
 }
@@ -149,7 +149,7 @@ fn calc_npdf(x: f32) -> f32 {
 /// # Returns
 /// f32 of the derivative of the nd1.
 fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
-    let (d1, _) = calc_nd1nd2(&inputs, false)?;
+    let (d1, _) = calc_d1d2(&inputs)?;
 
     // Get the standard n probability density function value of d1
     let nprimed1 = calc_npdf(d1);
@@ -159,7 +159,7 @@ fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
 /// # Returns
 /// f32 of the derivative of the nd2.
 fn calc_nprimed2(inputs: &Inputs) -> Result<f32, String> {
-    let (_, d2) = calc_nd1nd2(&inputs, false)?;
+    let (_, d2) = calc_d1d2(&inputs)?;
 
     // Get the standard n probability density function value of d1
     let nprimed2 = calc_npdf(d2);
@@ -220,7 +220,7 @@ impl Inputs {
     /// ```
     pub fn calc_price(&self) -> Result<f32, String> {
         // Calculates the price of the option
-        let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self, true)?;
+        let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self)?;
         let price: f32 = match self.option_type {
             OptionType::Call => f32::max(
                 0.0,
@@ -246,7 +246,7 @@ impl Inputs {
     /// let delta = inputs.calc_delta().unwrap();
     /// ```
     pub fn calc_delta(&self) -> Result<f32, String> {
-        let (nd1, _): (f32, f32) = calc_nd1nd2(&self, true)?;
+        let (nd1, _): (f32, f32) = calc_nd1nd2(&self)?;
         let delta: f32 = match self.option_type {
             OptionType::Call => nd1 * E.powf(-self.q * self.t),
             OptionType::Put => -nd1 * E.powf(-self.q * self.t),
@@ -297,7 +297,7 @@ impl Inputs {
         };
 
         let nprimed1: f32 = calc_nprimed1(&self)?;
-        let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self, true)?;
+        let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self)?;
 
         // Calculation uses 365.25 for f32: Time of days per year.
         let theta: f32 = match self.option_type {
@@ -346,7 +346,7 @@ impl Inputs {
     /// let rho = inputs.calc_rho().unwrap();
     /// ```
     pub fn calc_rho(&self) -> Result<f32, String> {
-        let (_, nd2): (f32, f32) = calc_nd1nd2(&self, true)?;
+        let (_, nd2): (f32, f32) = calc_nd1nd2(&self)?;
         let rho: f32 = match &self.option_type {
             OptionType::Call => 1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
             OptionType::Put => -1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
@@ -372,7 +372,7 @@ impl Inputs {
     /// let epsilon = inputs.calc_epsilon().unwrap();
     /// ```
     pub fn calc_epsilon(&self) -> Result<f32, String> {
-        let (nd1, _) = calc_nd1nd2(&self, true)?;
+        let (nd1, _) = calc_nd1nd2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
         let epsilon: f32 = match &self.option_type {
             OptionType::Call => -self.s * self.t * e_negqt * nd1,
@@ -400,7 +400,7 @@ impl Inputs {
         };
 
         let nprimed1 = calc_nprimed1(&self)?;
-        let (_, d2) = calc_nd1nd2(&self, false)?;
+        let (_, d2) = calc_d1d2(&self)?;
         let vanna: f32 = d2 * E.powf(-self.q * self.t) * nprimed1 * -0.01 / sigma;
         Ok(vanna)
     }
@@ -424,8 +424,8 @@ impl Inputs {
         };
 
         let nprimed1 = calc_nprimed1(&self)?;
-        let (nd1, _) = calc_nd1nd2(&self, true)?;
-        let (_, d2) = calc_nd1nd2(&self, false)?;
+        let (nd1, _) = calc_nd1nd2(&self)?;
+        let (_, d2) = calc_d1d2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let charm = match &self.option_type {
@@ -460,7 +460,7 @@ impl Inputs {
         };
 
         let nprimed1 = calc_nprimed1(&self)?;
-        let (d1, d2) = calc_nd1nd2(&self, false)?;
+        let (d1, d2) = calc_d1d2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let veta = -self.s
@@ -490,7 +490,7 @@ impl Inputs {
             return Err("Expected Some(f32) for inputs.sigma, received None".into());
         };
 
-        let (d1, d2) = calc_nd1nd2(&self, false)?;
+        let (d1, d2) = calc_d1d2(&self)?;
 
         let vomma = self.calc_vega()? * ((d1 * d2) / sigma);
         Ok(vomma)
@@ -514,7 +514,7 @@ impl Inputs {
             return Err("Expected Some(f32) for inputs.sigma, received None".into());
         };
 
-        let (d1, _) = calc_nd1nd2(&self, false)?;
+        let (d1, _) = calc_d1d2(&self)?;
         let gamma = self.calc_gamma()?;
 
         let speed = -gamma / self.s * (d1 / (sigma * self.t.sqrt()) + 1.0);
@@ -539,7 +539,7 @@ impl Inputs {
             return Err("Expected Some(f32) for inputs.sigma, received None".into());
         };
 
-        let (d1, d2) = calc_nd1nd2(&self, false)?;
+        let (d1, d2) = calc_d1d2(&self)?;
         let gamma = self.calc_gamma()?;
 
         let zomma = gamma * ((d1 * d2 - 1.0) / sigma);
@@ -564,7 +564,7 @@ impl Inputs {
             return Err("Expected Some(f32) for inputs.sigma, received None".into());
         };
 
-        let (d1, d2) = calc_nd1nd2(&self, false)?;
+        let (d1, d2) = calc_d1d2(&self)?;
         let nprimed1 = calc_nprimed1(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
@@ -596,7 +596,7 @@ impl Inputs {
             return Err("Expected Some(f32) for inputs.sigma, received None".into());
         };
 
-        let (d1, d2) = calc_nd1nd2(&self, false)?;
+        let (d1, d2) = calc_d1d2(&self)?;
         let vega = self.calc_vega()?;
 
         let ultima =
@@ -616,7 +616,7 @@ impl Inputs {
     /// let dual_delta = inputs.calc_dual_delta().unwrap();
     /// ```
     pub fn calc_dual_delta(&self) -> Result<f32, String> {
-        let (_, nd2) = calc_nd1nd2(&self, true)?;
+        let (_, nd2) = calc_nd1nd2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let dual_delta = match self.option_type {
