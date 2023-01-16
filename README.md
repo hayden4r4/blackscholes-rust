@@ -6,8 +6,6 @@ Includes all first, second, and third order Greeks.
   
 ## Usage  
   
-Simply create an instance of the `Inputs` struct and call the desired method.  
-  
 View the [docs](https://docs.rs/blackscholes) for usage and examples.  
   
 ### TODO  
