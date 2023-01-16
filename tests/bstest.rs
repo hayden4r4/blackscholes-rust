@@ -1,4 +1,4 @@
-use blackscholes;
+use blackscholes::{greeks::Greeks, implied_volatility::ImpliedVolatility, pricing::Pricing};
 
 const INPUTS_CALL_OTM: blackscholes::Inputs = blackscholes::Inputs {
     option_type: blackscholes::OptionType::Call,
