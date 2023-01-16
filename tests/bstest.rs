@@ -43,19 +43,18 @@ const INPUTS_PUT_ITM: blackscholes::Inputs = blackscholes::Inputs {
 
 #[test]
 fn price_call_otm() {
-    println!("{}", INPUTS_CALL_OTM.calc_price());
-    assert!((INPUTS_CALL_OTM.calc_price() - 0.0376).abs() < 0.001);
+    assert!((INPUTS_CALL_OTM.calc_price().unwrap() - 0.0376).abs() < 0.001);
 }
 #[test]
 fn price_call_itm() {
-    assert!((INPUTS_CALL_ITM.calc_price() - 9.9913).abs() < 0.001);
+    assert!((INPUTS_CALL_ITM.calc_price().unwrap() - 9.9913).abs() < 0.001);
 }
 
 #[test]
 fn price_put_otm() {
-    assert!((INPUTS_PUT_OTM.calc_price() - 0.01867).abs() < 0.001);
+    assert!((INPUTS_PUT_OTM.calc_price().unwrap() - 0.01867).abs() < 0.001);
 }
 #[test]
 fn price_put_itm() {
-    assert!((INPUTS_PUT_ITM.calc_price() - 10.0103).abs() < 0.001);
+    assert!((INPUTS_PUT_ITM.calc_price().unwrap() - 10.0103).abs() < 0.001);
 }
