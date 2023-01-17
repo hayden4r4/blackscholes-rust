@@ -1,4 +1,4 @@
-use crate::{Inputs, OptionType, constants::*};
+use crate::{constants::*, Inputs, OptionType};
 use num_traits::NumCast;
 use statrs::distribution::{ContinuousCDF, Normal};
 
@@ -8,11 +8,9 @@ use statrs::distribution::{ContinuousCDF, Normal};
 /// # Returns
 /// Tuple (f32, f32) of (d1, d2)
 pub fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
-    let sigma = if let Some(sigma) = inputs.sigma {
-        sigma
-    } else {
-        return Err("Expected Some(f32) for inputs.sigma, received None".into());
-    };
+    let sigma = inputs
+        .sigma
+        .ok_or("Expected Some(f32) for self.sigma, received None")?;
     // Calculating numerator of d1
     let numd1 =
         (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;

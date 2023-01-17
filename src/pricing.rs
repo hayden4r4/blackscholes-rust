@@ -1,9 +1,13 @@
 use crate::{common::*, constants::*, Inputs, OptionType};
-pub trait Pricing {
-    fn calc_price(&self) -> Result<f32, String>;
+use num_traits::Float;
+pub trait Pricing<T>
+where
+    T: Float,
+{
+    fn calc_price(&self) -> Result<T, String>;
 }
 
-impl Pricing for Inputs {
+impl Pricing<f32> for Inputs {
     /// Calculates the price of the option.
     /// # Requires
     /// s, k, r, q, t, sigma.

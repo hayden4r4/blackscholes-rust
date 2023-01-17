@@ -1,9 +1,13 @@
 use crate::{constants::*, greeks::Greeks, pricing::Pricing, Inputs};
-pub trait ImpliedVolatility {
-    fn calc_iv(&self, tolerance: f32) -> Result<f32, String>;
+use num_traits::Float;
+pub trait ImpliedVolatility<T>
+where
+    T: Float,
+{
+    fn calc_iv(&self, tolerance: T) -> Result<T, String>;
 }
 
-impl ImpliedVolatility for Inputs {
+impl ImpliedVolatility<f32> for Inputs {
     /// Calculates the implied volatility of the option.
     /// Tolerance is the max error allowed for the implied volatility,
     /// the lower the tolerance the more iterations will be required.
@@ -23,11 +27,9 @@ impl ImpliedVolatility for Inputs {
     fn calc_iv(&self, tolerance: f32) -> Result<f32, String> {
         let mut inputs: Inputs = self.clone();
 
-        let p = if let Some(p) = self.p {
-            p
-        } else {
-            panic!("inputs.p must contain Some(f32), found None")
-        };
+        let p = self
+            .p
+            .ok_or("inputs.p must contain Some(f32), found None".to_string())?;
         // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
         let mut sigma: f32 = (2.0 * PI / inputs.t).sqrt() * (p / inputs.s);
         // Initialize diff to 100 for use in while loop

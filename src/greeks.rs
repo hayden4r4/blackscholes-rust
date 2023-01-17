@@ -1,27 +1,31 @@
 use crate::{common::*, constants::*, Inputs, OptionType};
+use num_traits::Float;
 use std::collections::HashMap;
 
-pub trait Greeks {
-    fn calc_delta(&self) -> Result<f32, String>;
-    fn calc_gamma(&self) -> Result<f32, String>;
-    fn calc_theta(&self) -> Result<f32, String>;
-    fn calc_vega(&self) -> Result<f32, String>;
-    fn calc_rho(&self) -> Result<f32, String>;
-    fn calc_epsilon(&self) -> Result<f32, String>;
-    fn calc_vanna(&self) -> Result<f32, String>;
-    fn calc_charm(&self) -> Result<f32, String>;
-    fn calc_veta(&self) -> Result<f32, String>;
-    fn calc_vomma(&self) -> Result<f32, String>;
-    fn calc_speed(&self) -> Result<f32, String>;
-    fn calc_zomma(&self) -> Result<f32, String>;
-    fn calc_color(&self) -> Result<f32, String>;
-    fn calc_ultima(&self) -> Result<f32, String>;
-    fn calc_dual_delta(&self) -> Result<f32, String>;
-    fn calc_dual_gamma(&self) -> Result<f32, String>;
-    fn calc_all_greeks(&self) -> Result<HashMap<String, f32>, String>;
+pub trait Greeks<T>
+where
+    T: Float,
+{
+    fn calc_delta(&self) -> Result<T, String>;
+    fn calc_gamma(&self) -> Result<T, String>;
+    fn calc_theta(&self) -> Result<T, String>;
+    fn calc_vega(&self) -> Result<T, String>;
+    fn calc_rho(&self) -> Result<T, String>;
+    fn calc_epsilon(&self) -> Result<T, String>;
+    fn calc_vanna(&self) -> Result<T, String>;
+    fn calc_charm(&self) -> Result<T, String>;
+    fn calc_veta(&self) -> Result<T, String>;
+    fn calc_vomma(&self) -> Result<T, String>;
+    fn calc_speed(&self) -> Result<T, String>;
+    fn calc_zomma(&self) -> Result<T, String>;
+    fn calc_color(&self) -> Result<T, String>;
+    fn calc_ultima(&self) -> Result<T, String>;
+    fn calc_dual_delta(&self) -> Result<T, String>;
+    fn calc_dual_gamma(&self) -> Result<T, String>;
+    fn calc_all_greeks(&self) -> Result<HashMap<String, T>, String>;
 }
 
-impl Greeks for Inputs {
+impl Greeks<f32> for Inputs {
     /// Calculates the delta of the option.
     /// # Requires
     /// s, k, r, q, t, sigma
@@ -54,11 +58,9 @@ impl Greeks for Inputs {
     /// let gamma = inputs.calc_gamma().unwrap();
     /// ```
     fn calc_gamma(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            panic!("Expected Some(f32) for self.sigma, received None")
-        };
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
         let nprimed1: f32 = calc_nprimed1(&self)?;
         let gamma: f32 = E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
@@ -78,11 +80,9 @@ impl Greeks for Inputs {
     /// let theta = inputs.calc_theta().unwrap();
     /// ```
     fn calc_theta(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            panic!("Expected Some(f32) for self.sigma, received None")
-        };
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
         let nprimed1: f32 = calc_nprimed1(&self)?;
         let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self)?;
@@ -181,11 +181,9 @@ impl Greeks for Inputs {
     /// let vanna = inputs.calc_vanna().unwrap();
     /// ```
     fn calc_vanna(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
         let nprimed1 = calc_nprimed1(&self)?;
         let (_, d2) = calc_d1d2(&self)?;
@@ -205,12 +203,9 @@ impl Greeks for Inputs {
     /// let charm = inputs.calc_charm().unwrap();
     /// ```
     fn calc_charm(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            panic!("Expected Some(f32) for self.sigma, received None")
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let nprimed1 = calc_nprimed1(&self)?;
         let (nd1, _) = calc_nd1nd2(&self)?;
         let (_, d2) = calc_d1d2(&self)?;
@@ -247,12 +242,9 @@ impl Greeks for Inputs {
     /// let veta = inputs.calc_veta().unwrap();
     /// ```
     fn calc_veta(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            panic!("Expected Some(f32) for self.sigma, received None")
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let nprimed1 = calc_nprimed1(&self)?;
         let (d1, d2) = calc_d1d2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
@@ -278,12 +270,9 @@ impl Greeks for Inputs {
     /// let vomma = inputs.calc_vomma().unwrap();
     /// ```
     fn calc_vomma(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(&self)?;
 
         let vomma = Inputs::calc_vega(&self)? * ((d1 * d2) / sigma);
@@ -302,12 +291,9 @@ impl Greeks for Inputs {
     /// let speed = inputs.calc_speed().unwrap();
     /// ```
     fn calc_speed(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, _) = calc_d1d2(&self)?;
         let gamma = Inputs::calc_gamma(&self)?;
 
@@ -327,12 +313,9 @@ impl Greeks for Inputs {
     /// let zomma = inputs.calc_zomma().unwrap();
     /// ```
     fn calc_zomma(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(&self)?;
         let gamma = Inputs::calc_gamma(&self)?;
 
@@ -352,12 +335,9 @@ impl Greeks for Inputs {
     /// let color = inputs.calc_color().unwrap();
     /// ```
     fn calc_color(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(&self)?;
         let nprimed1 = calc_nprimed1(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
@@ -384,12 +364,9 @@ impl Greeks for Inputs {
     /// let ultima = inputs.calc_ultima().unwrap();
     /// ```
     fn calc_ultima(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(&self)?;
         let vega = Inputs::calc_vega(&self)?;
 
@@ -432,12 +409,9 @@ impl Greeks for Inputs {
     /// let dual_gamma = inputs.calc_dual_gamma().unwrap();
     /// ```
     fn calc_dual_gamma(&self) -> Result<f32, String> {
-        let sigma = if let Some(sigma) = self.sigma {
-            sigma
-        } else {
-            return Err("Expected Some(f32) for self.sigma, received None".into());
-        };
-
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let nprimed2 = calc_nprimed2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
