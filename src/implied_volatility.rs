@@ -1,6 +1,6 @@
 use crate::{constants::*, greeks::Greeks, pricing::Pricing, Inputs};
 use num_traits::Float;
-pub trait ImpliedVolatility<T>
+pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
     T: Float,
 {
