@@ -10,6 +10,13 @@ readme = "README.md"
 authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
+[[bench]]
+name = "pricing"
+harness = false
+
+[dev-dependencies]
+criterion = "0.4.0"
+
 [dependencies]
 num-traits = "0.2.15"
 statrs = "0.16.0"
