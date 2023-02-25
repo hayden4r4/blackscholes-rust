@@ -1,4 +1,4 @@
-use crate::{common::*, constants::*, Inputs, OptionType};
+use crate::{common::*, constants::*, Inputs, OptionType, Pricing};
 use num_traits::Float;
 use std::collections::HashMap;
 
@@ -12,6 +12,7 @@ where
     fn calc_vega(&self) -> Result<T, String>;
     fn calc_rho(&self) -> Result<T, String>;
     fn calc_epsilon(&self) -> Result<T, String>;
+    fn calc_lambda(&self) -> Result<T, String>;
     fn calc_vanna(&self) -> Result<T, String>;
     fn calc_charm(&self) -> Result<T, String>;
     fn calc_veta(&self) -> Result<T, String>;
@@ -167,6 +168,22 @@ impl Greeks<f32> for Inputs {
             OptionType::Put => self.s * self.t * e_negqt * nd1,
         };
         Ok(epsilon)
+    }
+
+    /// Calculates the lambda of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma
+    /// # Returns
+    /// f32 of the lambda of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::{Inputs, OptionType, Greeks, Pricing};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
+    /// let lambda = inputs.calc_lambda().unwrap();
+    /// ```
+    fn calc_lambda(&self) -> Result<f32, String> {
+        let delta = self.calc_delta()?;
+        Ok(delta * self.s / self.calc_price()?)
     }
 
     /// Calculates the vanna of the option.
@@ -431,13 +448,14 @@ impl Greeks<f32> for Inputs {
     /// let greeks = inputs.calc_all_greeks().unwrap();
     /// ```
     fn calc_all_greeks(&self) -> Result<HashMap<String, f32>, String> {
-        let mut greeks: HashMap<String, f32> = HashMap::with_capacity(16);
+        let mut greeks: HashMap<String, f32> = HashMap::with_capacity(17);
         greeks.insert("delta".into(), self.calc_delta()?);
         greeks.insert("gamma".into(), self.calc_gamma()?);
         greeks.insert("theta".into(), self.calc_theta()?);
         greeks.insert("vega".into(), self.calc_vega()?);
         greeks.insert("rho".into(), self.calc_rho()?);
         greeks.insert("epsilon".into(), self.calc_epsilon()?);
+        greeks.insert("lambda".into(), self.calc_lambda()?);
         greeks.insert("vanna".into(), self.calc_vanna()?);
         greeks.insert("charm".into(), self.calc_charm()?);
         greeks.insert("veta".into(), self.calc_veta()?);
