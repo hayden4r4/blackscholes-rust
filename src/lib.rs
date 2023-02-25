@@ -1,13 +1,17 @@
-//! # blackscholes
 //! This library provides an simple, lightweight, and efficient (though not heavily optimized) implementation of the Black-Scholes-Merton model for pricing European options.
 //!
 //! Provides methods for pricing options, calculating implied volatility, and calculating the first, second, and third order Greeks.
 //!
-//! Example:
+//! ### Example:
 //! ```
 //! use blackscholes::{Inputs, OptionType, Pricing};
 //! let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
 //! let price: f32 = inputs.calc_price().unwrap();
+//! ```
+//!
+//! Criterion benchmark can be ran by running:
+//! ```
+//! cargo bench
 //! ```
 //!
 //! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a [npm WASM package](https://www.npmjs.com/package/@haydenr4/blackscholes_wasm) and a [python module](https://pypi.org/project/blackscholes/) are also available.
