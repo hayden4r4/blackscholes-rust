@@ -2,7 +2,7 @@ use crate::{common::*, constants::*, Inputs, OptionType, Pricing};
 use num_traits::Float;
 use std::collections::HashMap;
 
-pub trait Greeks<T>
+pub trait Greeks<T>: Pricing<T>
 where
     T: Float,
 {
