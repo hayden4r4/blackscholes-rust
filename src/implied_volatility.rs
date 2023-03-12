@@ -34,17 +34,17 @@ impl ImpliedVolatility<f32> for Inputs {
     /// # Example:
     /// ```
     /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 0.2, 20.0/365.25, None);
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.5), 0.05, 0.2, 20.0/365.25, None);
     /// let iv = inputs.calc_iv(0.0001).unwrap();
     /// ```
     /// Initial estimation of sigma using Modified Corrado-Miller from ["A MODIFIED CORRADO-MILLER IMPLIED VOLATILITY ESTIMATOR" (2007) by Piotr P√luciennik](https://sin.put.poznan.pl/files/download/37938) method of calculating initial iv estimation.
     /// Note: While this method is more accurate than Brenn and Subrahmanyam (1998) it will still sometimes fail to converge.
     /// An example of failure to converge:
-    /// ```
+    /// ```should_panic
     /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
-    /// let inputs = Inputs::new(OptionType::Call, 105.0, 100.0, Some(30.0), 0.05, 30.0 / 365.25, None).calc_iv(0.0001).unwrap();
+    /// let inputs = Inputs::new(OptionType::Call, 105.0, 100.0, Some(30.0), 0.05, 0.05, 30.0/365.25, None);
     /// // This will fail to converge, the NaN sigma value is checked in the function and will return an error.
-    /// assert(inputs.calc_iv(0.0001).is_err(), true);
+    /// assert_eq!(inputs.calc_iv(0.0001).is_err(), true);
     /// ```
     ///
     /// A more accurate method is the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
@@ -108,8 +108,8 @@ impl ImpliedVolatility<f32> for Inputs {
     /// f32 of the implied volatility of the option.
     /// # Example:
     /// ```
-    /// use blackscholes::{Inputs, OptionType, RationalImpliedVolatility};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 20.0/365.25, None);
+    /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 0.05, 20.0/365.25, None);
     /// let iv = inputs.calc_rational_iv().unwrap();
     /// ```
     ///

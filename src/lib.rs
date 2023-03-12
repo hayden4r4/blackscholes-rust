@@ -10,7 +10,7 @@
 //! ```
 //!
 //! Criterion benchmark can be ran by running:
-//! ```
+//! ```bash
 //! cargo bench
 //! ```
 //!
