@@ -20,12 +20,10 @@ mod common;
 mod constants;
 mod greeks;
 mod implied_volatility;
-mod rational_implied_volatility;
 mod inputs;
 mod pricing;
 
 pub use greeks::Greeks;
 pub use implied_volatility::ImpliedVolatility;
-pub use rational_implied_volatility::RationalImpliedVolatility;
 pub use inputs::{Inputs, OptionType};
 pub use pricing::Pricing;
