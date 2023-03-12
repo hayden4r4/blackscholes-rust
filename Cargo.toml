@@ -1,6 +1,6 @@
 [package]
 name = "blackscholes"
-version = "0.18.0"
+version = "0.22.1"
 edition = "2021"
 license = "MIT"
 description = "Black-Scholes option pricing model calculator"
@@ -14,9 +14,13 @@ keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 name = "pricing"
 harness = false
 
+[build-dependencies]
+cc = { version="1.0", features=["parallel"] }
+
 [dev-dependencies]
 criterion = "0.4.0"
 
 [dependencies]
 num-traits = "0.2.15"
 statrs = "0.16.0"
+libc = "0.2"
