@@ -3,7 +3,7 @@
 //
 // ======================================================================================
 // Copyright © 2013-2014 Peter Jäckel.
-// 
+//
 // Permission to use, copy, modify, and distribute this software is freely granted,
 // provided that this notice is preserved.
 //
@@ -13,8 +13,8 @@
 // merchantability, fitness for a particular purpose, or non-infringement.
 // ======================================================================================
 //
-#ifndef   RATIONAL_CUBIC_H
-#define   RATIONAL_CUBIC_H
+#ifndef RATIONAL_CUBIC_H
+#define RATIONAL_CUBIC_H
 
 // Based on
 //

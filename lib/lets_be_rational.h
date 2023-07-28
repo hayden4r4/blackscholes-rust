@@ -3,7 +3,7 @@
 //
 // ======================================================================================
 // Copyright © 2013-2014 Peter Jäckel.
-// 
+//
 // Permission to use, copy, modify, and distribute this software is freely granted,
 // provided that this notice is preserved.
 //
@@ -13,8 +13,8 @@
 // merchantability, fitness for a particular purpose, or non-infringement.
 // ======================================================================================
 //
-#ifndef   LETS_BE_RATIONAL_H
-#define   LETS_BE_RATIONAL_H
+#ifndef LETS_BE_RATIONAL_H
+#define LETS_BE_RATIONAL_H
 
 #include "importexport.h"
 

@@ -3,7 +3,7 @@
 //
 // ======================================================================================
 // Copyright © 2013-2014 Peter Jäckel.
-// 
+//
 // Permission to use, copy, modify, and distribute this software is freely granted,
 // provided that this notice is preserved.
 //
@@ -17,20 +17,20 @@
 #define IMPORTEXPORT_H
 
 #if defined(_WIN32) || defined(_WIN64)
-#   define EXPORT __declspec(dllexport)
-#   define IMPORT __declspec(dllimport)
-# else
-#   define EXPORT
-#   define IMPORT
+#define EXPORT __declspec(dllexport)
+#define IMPORT __declspec(dllimport)
+#else
+#define EXPORT
+#define IMPORT
 #endif
 
 #ifdef __cplusplus
-#   define EXTERN_C extern "C"
+#define EXTERN_C extern "C"
 #else
-#   define EXTERN_C
+#define EXTERN_C
 #endif
 
-#   define EXPORT_EXTERN_C EXTERN_C EXPORT
-#   define IMPORT_EXTERN_C EXTERN_C IMPORT
+#define EXPORT_EXTERN_C EXTERN_C EXPORT
+#define IMPORT_EXTERN_C EXTERN_C IMPORT
 
 #endif // IMPORTEXPORT_H

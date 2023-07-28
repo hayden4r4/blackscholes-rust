@@ -1,0 +1,6 @@
+{
+    // Whitelist NumPy to remove lint errors
+    "python.linting.pylintArgs": [
+        "--extension-pkg-allow-list=blackscholes_python"
+    ]
+}
