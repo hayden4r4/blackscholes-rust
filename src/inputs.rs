@@ -17,7 +17,7 @@ impl Display for OptionType {
 }
 
 /// The inputs to the Black-Scholes-Merton model.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Inputs {
     /// The type of the option (call or put)
     pub option_type: OptionType,
