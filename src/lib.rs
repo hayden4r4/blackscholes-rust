@@ -22,7 +22,7 @@ mod greeks;
 mod implied_volatility;
 mod inputs;
 mod pricing;
-mod lets_be_rational;
+pub mod lets_be_rational;
 
 pub use greeks::Greeks;
 pub use implied_volatility::ImpliedVolatility;
