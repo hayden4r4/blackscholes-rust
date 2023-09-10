@@ -1,5 +1,4 @@
-use crate::{constants::*, greeks::Greeks, pricing::Pricing, Inputs, OptionType};
-use libc::c_double;
+use crate::{constants::*, greeks::Greeks, pricing::Pricing, Inputs, OptionType, lets_be_rational::implied_volatility_from_a_transformed_rational_guess};
 use num_traits::Float;
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
@@ -7,17 +6,6 @@ where
 {
     fn calc_iv(&self, tolerance: T) -> Result<T, String>;
     fn calc_rational_iv(&self) -> Result<f64, String>;
-}
-
-#[link(name = "liblets_be_rational")]
-extern "C" {
-    fn implied_volatility_from_a_transformed_rational_guess(
-        price: c_double,
-        F: c_double,
-        K: c_double,
-        T: c_double,
-        q: c_double,
-    ) -> c_double;
 }
 
 impl ImpliedVolatility<f32> for Inputs {
@@ -120,17 +108,13 @@ impl ImpliedVolatility<f32> for Inputs {
         // The Black-Scholes-Merton formula takes into account dividend yield by setting S = S * e^{-qt}, do this here with the forward
         let f = f * (- self.q * self.t).exp();
         
-        // now convert into c_double for ffi
-        let p: c_double = p.into();
-        let f: c_double = f.into();
-        let k: c_double = self.k.into();
-        let t: c_double = self.t.into();
-        let q: c_double = match self.option_type {
+        // convert the option type into \theta
+        let q: f64 = match self.option_type {
             OptionType::Call => 1.0,
             OptionType::Put => -1.0,
         };
 
-        let sigma = unsafe { implied_volatility_from_a_transformed_rational_guess(p, f, k, t, q) };
+        let sigma = implied_volatility_from_a_transformed_rational_guess(p as f64, f as f64, self.k as f64, self.t as f64, q as f64);
 
         if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
             Err("Implied volatility failed to converge".to_string())?
