@@ -37,27 +37,27 @@ impl From<OptionType> for f64 {
 
 /// The inputs to the Black-Scholes-Merton model.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Inputs {
+pub struct Inputs<T> {
     /// The type of the option (call or put)
     pub option_type: OptionType,
     /// Stock price
-    pub s: f32,
+    pub s: T,
     /// Strike price
-    pub k: f32,
+    pub k: T,
     /// Option price
-    pub p: Option<f32>,
+    pub p: Option<T>,
     /// Risk-free rate
-    pub r: f32,
+    pub r: T,
     /// Dividend yield
-    pub q: f32,
+    pub q: T,
     /// Time to maturity in years
-    pub t: f32,
+    pub t: T,
     /// Volatility
-    pub sigma: Option<f32>,
+    pub sigma: Option<T>,
 }
 
 /// Methods for calculating the price, greeks, and implied volatility of an option.
-impl Inputs {
+impl<T> Inputs<T> {
     /// Creates instance ot the `Inputs` struct.
     /// # Arguments
     /// * `option_type` - The type of option to be priced.
@@ -78,13 +78,13 @@ impl Inputs {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         option_type: OptionType,
-        s: f32,
-        k: f32,
-        p: Option<f32>,
-        r: f32,
-        q: f32,
-        t: f32,
-        sigma: Option<f32>,
+        s: T,
+        k: T,
+        p: Option<T>,
+        r: T,
+        q: T,
+        t: T,
+        sigma: Option<T>,
     ) -> Self {
         Self {
             option_type,
@@ -99,7 +99,10 @@ impl Inputs {
     }
 }
 
-impl Display for Inputs {
+impl<T> Display for Inputs<T>
+where
+    T: std::fmt::Display + Copy,
+{
     fn fmt(&self, f: &mut Formatter) -> fmtResult {
         writeln!(f, "Option type: {}", self.option_type)?;
         writeln!(f, "Stock price: {:.2}", self.s)?;
