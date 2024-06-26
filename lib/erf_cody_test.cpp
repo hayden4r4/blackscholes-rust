@@ -1,4 +1,4 @@
-#include "erf_cody.h"
+#include "erf_cody.cpp"
 #include <cmath>
 #include <cassert>
 #include <cstdio>

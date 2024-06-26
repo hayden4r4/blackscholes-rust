@@ -10,7 +10,8 @@ set(HEADER_FILES ${DIRECTORY}/rationalcubic.h ${DIRECTORY}/normaldistribution.h
 set(SOURCE_FILES
     ${DIRECTORY}/erf_cody.cpp ${DIRECTORY}/rationalcubic.cpp
     ${DIRECTORY}/normaldistribution.cpp ${DIRECTORY}/lets_be_rational.cpp
-        erf_cody_test.cpp)
+        erf_cody_test.cpp
+        erf_std.cpp)
 add_library(lets_be_rational STATIC ${HEADER_FILES} ${SOURCE_FILES})
 target_include_directories(lets_be_rational PRIVATE ${DIRECTORY})
 add_definitions(-fPIC -DNDEBUG -Ofast)
