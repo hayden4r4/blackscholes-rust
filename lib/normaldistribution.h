@@ -24,9 +24,9 @@
 #define ONE_OVER_SQRT_TWO_PI 0.3989422804014326779399460599343818684758586311649
 #define SQRT_TWO_PI 2.506628274631000502415765284811045253006986740610
 
-EXPORT_EXTERN_C double erf_cody(double z);
-EXPORT_EXTERN_C double erfc_cody(double z);
-EXPORT_EXTERN_C double erfcx_cody(double z);
+EXPORT_EXTERN_C double erf_std(double z);
+EXPORT_EXTERN_C double erfc_std(double z);
+EXPORT_EXTERN_C double erfcx_std(double z);
 EXPORT_EXTERN_C double norm_cdf(double z);
 inline double norm_pdf(double x) {
     return ONE_OVER_SQRT_TWO_PI * exp(-.5 * x * x);

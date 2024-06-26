@@ -17,7 +17,6 @@
 #define LETS_BE_RATIONAL_H
 
 #include "importexport.h"
-#include "erf_std.cpp"
 
 #define ENABLE_SWITCHING_THE_OUTPUT_TO_ITERATION_COUNT
 #define ENABLE_CHANGING_THE_HOUSEHOLDER_METHOD_ORDER
