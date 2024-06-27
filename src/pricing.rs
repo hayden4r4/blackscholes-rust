@@ -1,5 +1,9 @@
-use crate::{common::*, constants::*, Inputs, OptionType, lets_be_rational};
+use std::f32::consts::E;
+
 use num_traits::Float;
+
+use crate::{*, Inputs, lets_be_rational, OptionType};
+
 pub trait Pricing<T>
 where
     T: Float,
@@ -51,7 +55,7 @@ impl Pricing<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        
+
         // let's be rational wants the forward price, not the spot price.
         let forward = self.s * ((self.r - self.q) * self.t).exp();
 
@@ -74,5 +78,4 @@ impl Pricing<f32> for Inputs {
         let price = undiscounted_price * (-self.r as f64 * self.t as f64).exp();
         Ok(price)
     }
-
 }

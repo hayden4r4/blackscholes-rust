@@ -1,6 +1,8 @@
-use crate::{common::*, constants::*, Inputs, OptionType, Pricing};
-use num_traits::Float;
 use std::collections::HashMap;
+
+use num_traits::Float;
+
+use crate::{*, Inputs, OptionType, Pricing};
 
 pub trait Greeks<T>: Pricing<T>
 where
@@ -232,16 +234,16 @@ impl Greeks<f32> for Inputs {
             OptionType::Call => {
                 self.q * e_negqt * nd1
                     - e_negqt
-                        * nprimed1
-                        * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-                        / (2.0 * self.t * sigma * self.t.sqrt())
+                    * nprimed1
+                    * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
+                    / (2.0 * self.t * sigma * self.t.sqrt())
             }
             OptionType::Put => {
                 -self.q * e_negqt * nd1
                     - e_negqt
-                        * nprimed1
-                        * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-                        / (2.0 * self.t * sigma * self.t.sqrt())
+                    * nprimed1
+                    * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
+                    / (2.0 * self.t * sigma * self.t.sqrt())
             }
         };
         Ok(charm)
@@ -271,7 +273,7 @@ impl Greeks<f32> for Inputs {
             * nprimed1
             * self.t.sqrt()
             * (self.q + ((self.r - self.q) * d1) / (sigma * self.t.sqrt())
-                - ((1.0 + d1 * d2) / (2.0 * self.t)));
+            - ((1.0 + d1 * d2) / (2.0 * self.t)));
         Ok(veta)
     }
 
@@ -362,10 +364,10 @@ impl Greeks<f32> for Inputs {
         let color = -e_negqt
             * (nprimed1 / (2.0 * self.s * self.t * sigma * self.t.sqrt()))
             * (2.0 * self.q * self.t
-                + 1.0
-                + (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-                    / (sigma * self.t.sqrt())
-                    * d1);
+            + 1.0
+            + (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
+            / (sigma * self.t.sqrt())
+            * d1);
         Ok(color)
     }
 
