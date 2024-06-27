@@ -232,7 +232,7 @@ double normalised_black_call_using_erfcx(double h, double t) {
     // square bracket is between the evaluation of two rational functions, which, typically, according to Marsaglia,
     // retains the full 16 digits of accuracy (or just a little less than that).
     //
-    const double b = 0.5 * exp(-0.5 * (h * h + t * t)) * (erfcx_cody(-ONE_OVER_SQRT_TWO * (h + t)) - erfcx_cody(-ONE_OVER_SQRT_TWO * (h - t)));
+    const double b = 0.5 * exp(-0.5 * (h * h + t * t)) * (erfcx_std(-ONE_OVER_SQRT_TWO * (h + t)) - erfcx_std(-ONE_OVER_SQRT_TWO * (h - t)));
     return fabs(std::max(b, 0.0));
 }
 
@@ -253,7 +253,7 @@ double small_t_expansion_of_normalised_black_call(double h, double t) {
     // Y(h) := Φ(h)/φ(h) = √(π/2)·erfcx(-h/√2)
     // a := 1+h·Y(h)  --- Note that due to h<0, and h·Y(h) -> -1 (from above) as h -> -∞, we also have that a>0 and a -> 0 as h -> -∞
     // w := t² , h2 := h²
-    const double a = 1 + h * (0.5 * SQRT_TWO_PI) * erfcx_cody(-ONE_OVER_SQRT_TWO * h), w = t * t, h2 = h * h;
+    const double a = 1 + h * (0.5 * SQRT_TWO_PI) * erfcx_std(-ONE_OVER_SQRT_TWO * h), w = t * t, h2 = h * h;
     const double expansion = 2 * t * (a + w * ((-1 + 3 * a + a * h2) / 6 + w * ((-7 + 15 * a + h2 * (-1 + 10 * a + a * h2)) / 120 + w * ((-57 + 105 * a + h2 * (-18 + 105 * a + h2 * (-1 + 21 * a + a * h2))) / 5040 + w * ((-561 + 945 * a + h2 * (-285 + 1260 * a + h2 * (-33 + 378 * a + h2 * (-1 + 36 * a + a * h2)))) / 362880 + w * ((-6555 + 10395 * a + h2 * (-4680 + 17325 * a + h2 * (-840 + 6930 * a + h2 * (-52 + 990 * a + h2 * (-1 + 55 * a + a * h2))))) / 39916800 + ((-89055 + 135135 * a + h2 * (-82845 + 270270 * a + h2 * (-20370 + 135135 * a + h2 * (-1926 + 25740 * a + h2 * (-75 + 2145 * a + h2 * (-1 + 78 * a + a * h2)))))) * w) / 6227020800.0))))));
     const double b = ONE_OVER_SQRT_TWO_PI * exp((-0.5 * (h * h + t * t))) * expansion;
     return fabs(std::max(b, 0.0));
@@ -297,13 +297,13 @@ double normalised_black_call_with_optimal_use_of_codys_functions(double x, doubl
     double two_b;
     if (q1 < codys_threshold)
         if (q2 < codys_threshold)
-            two_b = exp(0.5 * x) * erfc_cody(q1) - exp(-0.5 * x) * erfc_cody(q2);
+            two_b = exp(0.5 * x) * erfc_std(q1) - exp(-0.5 * x) * erfc_std(q2);
         else
-            two_b = exp(0.5 * x) * erfc_cody(q1) - exp(-0.5 * (h * h + t * t)) * erfcx_cody(q2);
+            two_b = exp(0.5 * x) * erfc_std(q1) - exp(-0.5 * (h * h + t * t)) * erfcx_std(q2);
     else if (q2 < codys_threshold)
-        two_b = exp(-0.5 * (h * h + t * t)) * erfcx_cody(q1) - exp(-0.5 * x) * erfc_cody(q2);
+        two_b = exp(-0.5 * (h * h + t * t)) * erfcx_std(q1) - exp(-0.5 * x) * erfc_std(q2);
     else
-        two_b = exp(-0.5 * (h * h + t * t)) * (erfcx_cody(q1) - erfcx_cody(q2));
+        two_b = exp(-0.5 * (h * h + t * t)) * (erfcx_std(q1) - erfcx_std(q2));
     return fabs(std::max(0.5 * two_b, 0.0));
 }
 

@@ -9,7 +9,7 @@ fn main() {
 
     cc::Build::new()
         .files(&[
-            dir.join("erf_cody.cpp"),
+            dir.join("erf_std.cpp"),
             dir.join("rationalcubic.cpp"),
             dir.join("normaldistribution.cpp"),
             dir.join("lets_be_rational.cpp"),

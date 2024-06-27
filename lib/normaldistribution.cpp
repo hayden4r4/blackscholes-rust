@@ -13,6 +13,7 @@
 
 #include "normaldistribution.h"
 #include <float.h>
+#include "erf_std.cpp"
 
 namespace {
 // The asymptotic expansion  Φ(z) = φ(z)/|z|·[1-1/z^2+...],  Abramowitz & Stegun (26.2.12), suffices for Φ(z) to have
@@ -47,7 +48,7 @@ double norm_cdf(double z) {
         }
         return -norm_pdf(z) * sum / z;
     }
-    return 0.5 * erfc_cody(-z * ONE_OVER_SQRT_TWO);
+    return 0.5 * erfc_std(-z * ONE_OVER_SQRT_TWO);
 }
 
 double inverse_norm_cdf(double u) {
