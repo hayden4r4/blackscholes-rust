@@ -1,5 +1,7 @@
-use crate::{constants::*, greeks::Greeks, pricing::Pricing, Inputs, OptionType, lets_be_rational::implied_volatility_from_a_transformed_rational_guess};
 use num_traits::Float;
+
+use crate::{*, greeks::Greeks, Inputs, lets_be_rational::implied_volatility_from_a_transformed_rational_guess, OptionType, pricing::Pricing};
+
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
     T: Float,
@@ -106,8 +108,8 @@ impl ImpliedVolatility<f32> for Inputs {
         // compute the forward price
         let f = self.s * rate_inv_discount;
         // The Black-Scholes-Merton formula takes into account dividend yield by setting S = S * e^{-qt}, do this here with the forward
-        let f = f * (- self.q * self.t).exp();
-        
+        let f = f * (-self.q * self.t).exp();
+
         // convert the option type into \theta
         let q: f64 = match self.option_type {
             OptionType::Call => 1.0,
