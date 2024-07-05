@@ -89,8 +89,24 @@ mod tests {
         let t = 1.0;
         let q = OptionType::Call;
 
-        // You will need to replace this with the expected result
         let expected_result = 7.965_567_455_405_798;
+
+        // act
+        let result = black(f, k, sigma, t, q);
+
+        // assert
+        assert!(prop_approx_eq(result, expected_result, 1e-13));
+    }
+
+    #[test]
+    fn test_black_zero_values() {
+        // arrange
+        let f = 0.0;
+        let k = 0.0;
+        let sigma = 0.0;
+        let t = 0.0;
+        let q = OptionType::Call;
+        let expected_result = 0.0;
 
         // act
         let result = black(f, k, sigma, t, q);
@@ -100,50 +116,36 @@ mod tests {
     }
 
     #[test]
-    fn test_black_zero_values() {
-        let f = 0.0;
-        let k = 0.0;
-        let sigma = 0.0;
-        let t = 0.0;
-        let q = OptionType::Call;
-
-        let result = black(f, k, sigma, t, q);
-
-        // You will need to replace this with the expected result
-        let expected_result = 0.0;
-
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
     fn test_black_negative_values() {
+        // arrange
         let f = -100.0;
         let k = -100.0;
         let sigma = -0.2;
         let t = -1.0;
         let q = OptionType::Put;
-
-        let result = black(f, k, sigma, t, q);
-
-        // You will need to replace this with the expected result
         let expected_result = 0.0;
 
+        // act
+        let result = black(f, k, sigma, t, q);
+
+        // assert
         assert_eq!(result, expected_result);
     }
 
     #[test]
     fn test_black_high_sigma() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let sigma = 100.0;
         let t = 1.0;
         let q = OptionType::Call;
-
-        let result = black(f, k, sigma, t, q);
-
-        // You will need to replace this with the expected result
         let expected_result = 0.0;
 
+        // act
+        let result = black(f, k, sigma, t, q);
+
+        // assert
         assert_eq!(result, expected_result);
     }
 
@@ -162,7 +164,7 @@ mod tests {
         let expected_result = 68.26894921370861;
 
         // assert
-        assert_eq!(result, expected_result);
+        assert!(prop_approx_eq(result, expected_result, 1e-13));
     }
 
     fn prop_approx_eq(a: f64, b: f64, epsilon: f64) -> bool {
@@ -171,89 +173,129 @@ mod tests {
 
     #[test]
     fn test_black_function() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let sigma = 0.2;
         let t = 1.0;
         let q = OptionType::Call;
+
+        // act
         let price = black(f, k, sigma, t, q);
+
+        // assert
         assert!(prop_approx_eq(price, 7.965567455405804, 1e-9));
     }
 
     #[test]
     fn test_implied_volatility() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let price = 7.965567455405804;
         let t = 1.0;
         let q = OptionType::Put;
+
+        // act
         let sigma = implied_volatility_from_a_transformed_rational_guess(price, f, k, t, q);
+
+        // assert
         assert!(prop_approx_eq(sigma, 0.2, 1e-9));
     }
 
     #[test]
     fn test_black_function_typical_values() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let sigma = 0.2;
         let t = 1.0;
         let q = OptionType::Call;
+
+        // act
         let price = black(f, k, sigma, t, q);
+
+        // assert
         assert!(prop_approx_eq(price, 7.965567455405804, 1e-9));
     }
 
     #[test]
     fn test_black_function_edge_case_high_volatility() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let sigma = 5.0;
         let t = 1.0;
         let q = OptionType::Put;
+
+        // act
         let price = black(f, k, sigma, t, q);
+
+        // assert
         assert!(price > 0.0);
     }
 
     #[test]
     fn test_black_function_edge_case_zero_time() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let sigma = 0.2;
         let t = 0.0;
         let q = OptionType::Put;
+
+        // act
         let price = black(f, k, sigma, t, q);
+
+        // assert
         assert_eq!(price, 0.0);
     }
 
     #[test]
     fn test_implied_volatility_typical_values() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let price = 7.965567455405804;
         let t = 1.0;
         let q = OptionType::Call;
+
+        // act
         let result = implied_volatility_from_a_transformed_rational_guess(price, f, k, t, q);
+
+        // assert
         assert!(prop_approx_eq(result, 0.2, 1e-9));
     }
 
     #[test]
     fn test_implied_volatility_edge_case_high_price() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let price = 50.0;
         let t = 1.0;
         let q = OptionType::Put;
+
+        // act
         let result = implied_volatility_from_a_transformed_rational_guess(price, f, k, t, q);
+
+        // assert
         assert!(result > 0.0);
     }
 
     #[test]
     fn test_implied_volatility_edge_case_zero_price() {
+        // arrange
         let f = 100.0;
         let k = 100.0;
         let price = 0.01;
         let t = 1.0;
         let q = OptionType::Call;
+
+        // act
         let result = implied_volatility_from_a_transformed_rational_guess(price, f, k, t, q);
+
+        // assert
         assert!(result > 0.0);
     }
 
