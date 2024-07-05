@@ -55,7 +55,6 @@ name = "blackscholes"
 version = "0.24.0"
 dependencies = [
  "approx",
- "cc",
  "criterion",
  "log",
  "num-traits",
@@ -81,15 +80,6 @@ name = "cast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
-
-[[package]]
-name = "cc"
-version = "1.0.79"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50d30906286121d95be3d479533b458f87493b30a4b5f79a607db8f5d11aa91f"
-dependencies = [
- "jobserver",
-]
 
 [[package]]
 name = "cfg-if"
@@ -313,15 +303,6 @@ name = "itoa"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fad582f4b9e86b6caa621cabeb0963332d92eea04729ab12892c2533951e6440"
-
-[[package]]
-name = "jobserver"
-version = "0.1.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "936cfd212a0155903bcbc060e316fb6cc7cbf2e1907329391ebadc1fe0ce77c2"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "js-sys"
