@@ -1,6 +1,6 @@
 use std::f64::consts::FRAC_1_SQRT_2;
 
-use num_traits::{Float, FloatConst};
+use num_traits::{Float};
 use num_traits::float::FloatCore;
 use statrs::function::erf::erfc;
 
@@ -8,7 +8,7 @@ use crate::lets_be_rational::normal_distribution::{inverse_f_upper_map, inverse_
 use crate::lets_be_rational::rational_cubic::{convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side, convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side, rational_cubic_interpolation};
 
 const DENORMALISATION_CUTOFF: f64 = 0.0;
-const SQRT_TWO_PI: f64 = 2.506628274631000502415765284811045253006986740609938316629; // (2.0 * f64::PI).sqrt();
+const SQRT_TWO_PI: f64 = 2.506_628_274_631_000_7; // (2.0 * f64::PI).sqrt();
 const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_TWO_PI;
 const FOURTH_ROOT_DBL_EPSILON: f64 = 0.0001220703125; //f64::EPSILON.sqrt().sqrt();
 const CODYS_THRESHOLD: f64 = 0.46875;
@@ -24,15 +24,15 @@ const SIXTEENTH_ROOT_DBL_EPSILON: f64 = 0.10566243270259357;
 const SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD: f64 = 2.0 * SIXTEENTH_ROOT_DBL_EPSILON;
 
 const SQRT_DBL_MIN: f64 = 1.4916681462400413e-154;
-const SQRT_DBL_MAX: f64 = 1.3407807929942596e+154;
+const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_6e154;
 
-const SQRT_THREE: f64 = 1.732050807568877293527446341505872366942805253810380628055306574488224239176368124152587146882386098370876516080864050561133161030243632287631641095813262664606505861249363489202374606600104219636053990903601648733098918128239135150299961463349308629027485120133662451575287213994151286288083005230609588145324174024960379618947348733697693579145022665727900298699965500330890751515782317921606598059528468836133326418907279187175711455870352626581198387713319591703303692823799916947243556415176209012452067499974303568123612417035548455561866276839450916068379278828899631365944392361336826952975374391106888410166391634587273763460245874395560464854682096878369883028110966312462508704392479088787203036364421078199531506227002918818762054635940123089072870990586175525118322114023883342793476470058693104644924689438416163211199109648690144720435570798038415981006315963508178430264235329381197873316658791754547017972791820681248722370232732823946056970443383936346486841914547555131264007056684804017514881057964360086931317768578763966207052794704816961217629843535885879409760401594350157051665524873534366971173293027627842302855219642037125525746415270617159336260235005215071761519369373339722572711247553530622015319628967322293398558293583222071378399620836836730444130812748789021951429504343597617024110049649251591; //3.0_f64.sqrt();
+const SQRT_THREE: f64 = 1.732_050_807_568_877_2; //3.0_f64.sqrt();
 
-const TWO_PI_OVER_SQRT_TWENTY_SEVEN: f64 = 1.209199576156145233729385505094770488189377498728; // f64::PI() * 2.0 / sqrt(27.0);
+const TWO_PI_OVER_SQRT_TWENTY_SEVEN: f64 = 1.209_199_576_156_145_2; // f64::PI() * 2.0 / sqrt(27.0);
 
-const SQRT_PI_OVER_TWO: f64 = 1.253314137315500251207882642405522626503493370305; //sqrt(f64::PI() / 2.0_f64);
+const SQRT_PI_OVER_TWO: f64 = 1.253_314_137_315_500_3; //sqrt(f64::PI() / 2.0_f64);
 
-const SQRT_ONE_OVER_THREE: f64 = 0.577350269189625764509148780501957455647601751270; // sqrt(1.0 / 3.0_f64);
+const SQRT_ONE_OVER_THREE: f64 = 0.577_350_269_189_625_7; // sqrt(1.0 / 3.0_f64);
 
 const PI_OVER_SIX: f64 = std::f64::consts::PI / 6.0;
 
@@ -168,7 +168,7 @@ pub fn normalised_black_call(x: f64, s: f64) -> f64 {
         return small_t_expansion_of_normalised_black_call(x / s, 0.5 * s);
     }
 
-    return normalised_black_call_with_optimal_use_of_codys_functions(x, s);
+    normalised_black_call_with_optimal_use_of_codys_functions(x, s)
 }
 
 
@@ -218,7 +218,7 @@ fn compute_f_lower_map_and_first_two_derivatives(x: f64, s: f64) -> (f64, f64, f
     let s2 = s * s;
     let phi = standard_normal_cdf(z);
     let phi_ = standard_normal_cdf(-z);
-    let mut fpp = PI_OVER_SIX * y / (s2 * s) * phi_ * (8.0 * SQRT_THREE * s * ax + (3.0 * s2 * (s2 - 8.0) - 8.0 * x * x) * phi_ / phi) * (2.0 * y + 0.25 * s2).exp();
+    let fpp = PI_OVER_SIX * y / (s2 * s) * phi_ * (8.0 * SQRT_THREE * s * ax + (3.0 * s2 * (s2 - 8.0) - 8.0 * x * x) * phi_ / phi) * (2.0 * y + 0.25 * s2).exp();
 
     let (fp, f);
 
@@ -269,11 +269,11 @@ fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_
     // Map in-the-money to out-of-the-money
     let mut beta = beta;
     let mut q = q;
-    if (q * x > 0.0) {
+    if q * x > 0.0 {
         beta -= normalised_intrinsic(x, q);
         q = -q;
     }
-    if (beta < 0.0) {
+    if beta < 0.0 {
         return implied_volatility_output(0, VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC);
     }
 
@@ -301,7 +301,7 @@ pub fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess
     if beta >= b_max {
         return implied_volatility_output(0, VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM);
     }
-    let mut iterations = 0;
+    let iterations = 0;
     let mut direction_reversal_count = 0;
     let mut f = -f64::MAX;
     let mut s = -f64::MAX;
