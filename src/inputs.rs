@@ -1,7 +1,8 @@
+use libc::c_double;
 use std::fmt::{Display, Formatter, Result as fmtResult};
 
 /// The type of option to be priced (call or put).
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Copy)]
 pub enum OptionType {
     Call,
     Put,
@@ -12,6 +13,24 @@ impl Display for OptionType {
         match self {
             OptionType::Call => write!(f, "Call"),
             OptionType::Put => write!(f, "Put"),
+        }
+    }
+}
+
+impl Into<f32> for OptionType {
+    fn into(self) -> f32 {
+        match self {
+            OptionType::Call => 1.0,
+            OptionType::Put => -1.0,
+        }
+    }
+}
+
+impl Into<c_double> for OptionType {
+    fn into(self) -> c_double {
+        match self {
+            OptionType::Call => 1.0,
+            OptionType::Put => -1.0,
         }
     }
 }

@@ -29,8 +29,8 @@ pub use pricing::Pricing;
 mod greeks;
 mod implied_volatility;
 mod inputs;
-mod pricing;
 pub mod lets_be_rational;
+mod pricing;
 
 pub(crate) const N_MEAN: f32 = 0.0;
 pub(crate) const N_STD_DEV: f32 = 1.0;
@@ -45,7 +45,6 @@ pub(crate) const D: f32 = 7.53502261e-05;
 pub(crate) const _E: f32 = 1.42451646e-05;
 pub(crate) const F: f32 = -2.10237683e-05;
 
-
 /// Calculates the d1 and d2 values for the option.
 /// # Requires
 /// s, k, r, q, t, sigma.
@@ -56,10 +55,20 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
         .sigma
         .ok_or("Expected Some(f32) for self.sigma, received None")?;
     // Calculating numerator of d1
-    let numd1 =
-        (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
+    let part1 = (inputs.s / inputs.k).ln();
+
+    if part1.is_infinite() {
+        return Err("Log from s/k is infinity".to_string());
+    }
+
+    let part2 = (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
+    let numd1 = part1 + part2;
 
     // Calculating denominator of d1 and d2
+    if inputs.t == 0.0 {
+        return Err("Time to maturity is 0".to_string());
+    }
+
     let den = sigma * (inputs.t.sqrt());
 
     let d1 = numd1 / den;

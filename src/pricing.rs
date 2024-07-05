@@ -2,7 +2,7 @@ use std::f32::consts::E;
 
 use num_traits::Float;
 
-use crate::{*, Inputs, lets_be_rational, OptionType};
+use crate::{lets_be_rational, Inputs, OptionType, *};
 
 pub trait Pricing<T>
 where
@@ -59,19 +59,13 @@ impl Pricing<f32> for Inputs {
         // let's be rational wants the forward price, not the spot price.
         let forward = self.s * ((self.r - self.q) * self.t).exp();
 
-        // convert the option type into \theta
-        let q: f64 = match self.option_type {
-            OptionType::Call => 1.0,
-            OptionType::Put => -1.0,
-        };
-
         // price using `black`
         let undiscounted_price = lets_be_rational::black(
             forward as f64,
             self.k as f64,
             sigma as f64,
             self.t as f64,
-            q,
+            self.option_type.clone(),
         );
 
         // discount the price

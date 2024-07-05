@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use num_traits::Float;
 
-use crate::{*, Inputs, OptionType, Pricing};
+use crate::{Inputs, OptionType, Pricing, *};
 
 pub trait Greeks<T>: Pricing<T>
 where
@@ -42,10 +42,10 @@ impl Greeks<f32> for Inputs {
     /// ```
     fn calc_delta(&self) -> Result<f32, String> {
         let (nd1, _): (f32, f32) = calc_nd1nd2(&self)?;
-        let delta: f32 = match self.option_type {
-            OptionType::Call => nd1 * E.powf(-self.q * self.t),
-            OptionType::Put => -nd1 * E.powf(-self.q * self.t),
-        };
+
+        let option_type: f32 = self.option_type.into();
+        let delta = option_type * E.powf(-self.q * self.t) * nd1;
+
         Ok(delta)
     }
 
@@ -91,20 +91,13 @@ impl Greeks<f32> for Inputs {
         let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self)?;
 
         // Calculation uses 365.25 for f32: Time of days per year.
-        let theta: f32 = match self.option_type {
-            OptionType::Call => {
-                (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * self.t.sqrt()))
-                    - self.r * self.k * E.powf(-self.r * self.t) * nd2
-                    + self.q * self.s * E.powf(-self.q * self.t) * nd1)
-                    / DAYS_PER_YEAR
-            }
-            OptionType::Put => {
-                (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1 / (2.0 * self.t.sqrt()))
-                    + self.r * self.k * E.powf(-self.r * self.t) * nd2
-                    - self.q * self.s * E.powf(-self.q * self.t) * nd1)
-                    / DAYS_PER_YEAR
-            }
-        };
+        let option_type: f32 = self.option_type.into();
+        let theta = (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
+            / (2.0 * self.t.sqrt()))
+            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * option_type
+            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * option_type)
+            / DAYS_PER_YEAR;
+
         Ok(theta)
     }
 
@@ -138,10 +131,10 @@ impl Greeks<f32> for Inputs {
     /// ```
     fn calc_rho(&self) -> Result<f32, String> {
         let (_, nd2): (f32, f32) = calc_nd1nd2(&self)?;
-        let rho: f32 = match &self.option_type {
-            OptionType::Call => 1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
-            OptionType::Put => -1.0 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2,
-        };
+
+        let option_type: f32 = self.option_type.into();
+        let rho = option_type / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2;
+
         Ok(rho)
     }
 
@@ -165,10 +158,10 @@ impl Greeks<f32> for Inputs {
     fn calc_epsilon(&self) -> Result<f32, String> {
         let (nd1, _) = calc_nd1nd2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
-        let epsilon: f32 = match &self.option_type {
-            OptionType::Call => -self.s * self.t * e_negqt * nd1,
-            OptionType::Put => self.s * self.t * e_negqt * nd1,
-        };
+
+        let option_type: f32 = self.option_type.into();
+        let epsilon: f32 = -self.s * self.t * e_negqt * nd1 * option_type;
+
         Ok(epsilon)
     }
 
@@ -230,22 +223,11 @@ impl Greeks<f32> for Inputs {
         let (_, d2) = calc_d1d2(&self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
-        let charm = match &self.option_type {
-            OptionType::Call => {
-                self.q * e_negqt * nd1
-                    - e_negqt
-                    * nprimed1
-                    * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-                    / (2.0 * self.t * sigma * self.t.sqrt())
-            }
-            OptionType::Put => {
-                -self.q * e_negqt * nd1
-                    - e_negqt
-                    * nprimed1
-                    * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-                    / (2.0 * self.t * sigma * self.t.sqrt())
-            }
-        };
+        let option_type: f32 = self.option_type.into();
+        let charm: f32 = option_type * self.q * e_negqt * nd1
+            - e_negqt * nprimed1 * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
+                / (2.0 * self.t * sigma * self.t.sqrt());
+
         Ok(charm)
     }
 
@@ -273,7 +255,7 @@ impl Greeks<f32> for Inputs {
             * nprimed1
             * self.t.sqrt()
             * (self.q + ((self.r - self.q) * d1) / (sigma * self.t.sqrt())
-            - ((1.0 + d1 * d2) / (2.0 * self.t)));
+                - ((1.0 + d1 * d2) / (2.0 * self.t)));
         Ok(veta)
     }
 
@@ -364,10 +346,10 @@ impl Greeks<f32> for Inputs {
         let color = -e_negqt
             * (nprimed1 / (2.0 * self.s * self.t * sigma * self.t.sqrt()))
             * (2.0 * self.q * self.t
-            + 1.0
-            + (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-            / (sigma * self.t.sqrt())
-            * d1);
+                + 1.0
+                + (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
+                    / (sigma * self.t.sqrt())
+                    * d1);
         Ok(color)
     }
 
