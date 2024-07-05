@@ -2,7 +2,7 @@ use std::f32::consts::E;
 
 use num_traits::Float;
 
-use crate::{lets_be_rational, Inputs, OptionType, *};
+use crate::{*, Inputs, lets_be_rational, OptionType};
 
 pub trait Pricing<T>
 where
@@ -65,7 +65,7 @@ impl Pricing<f32> for Inputs {
             self.k as f64,
             sigma as f64,
             self.t as f64,
-            self.option_type,
+            self.option_type.into(),
         );
 
         // discount the price

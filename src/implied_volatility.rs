@@ -1,9 +1,7 @@
 use num_traits::Float;
 
-use crate::{
-    greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
-    pricing::Pricing, Inputs, *,
-};
+use crate::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
+use crate::{greeks::Greeks, pricing::Pricing, Inputs, *};
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
@@ -118,7 +116,7 @@ impl ImpliedVolatility<f32> for Inputs {
             f as f64,
             self.k as f64,
             self.t as f64,
-            self.option_type,
+            self.option_type.into(),
         );
 
         if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
