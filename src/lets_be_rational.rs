@@ -36,10 +36,10 @@ pub fn implied_volatility_from_a_transformed_rational_guess(
     t: f64,
     q: OptionType,
 ) -> f64 {
-    let price: c_double = price.into();
-    let f: c_double = f.into();
-    let k: c_double = k.into();
-    let t: c_double = t.into();
+    let price: c_double = price;
+    let f: c_double = f;
+    let k: c_double = k;
+    let t: c_double = t;
     let q: c_double = match q {
         OptionType::Call => 1.0,
         OptionType::Put => -1.0,
@@ -52,9 +52,9 @@ pub fn implied_volatility_from_a_transformed_rational_guess(
             0.0
         } else if result.is_sign_negative() {
             error!("Implied volatility has failed in the calculation - Negative value");
-            result.into()
+            result
         } else {
-            result.into()
+            result
         }
     }
 }
@@ -66,10 +66,10 @@ pub fn implied_volatility_from_a_transformed_rational_guess(
 /// # Returns
 /// f64 of the price of the option.
 pub fn black(f: f64, k: f64, sigma: f64, t: f64, q: OptionType) -> f64 {
-    let f: c_double = f.into();
-    let k: c_double = k.into();
-    let sigma: c_double = sigma.into();
-    let t: c_double = t.into();
+    let f: c_double = f;
+    let k: c_double = k;
+    let sigma: c_double = sigma;
+    let t: c_double = t;
 
     unsafe { black_ffi(f, k, sigma, t, q.into()) }
 }
@@ -90,7 +90,7 @@ mod tests {
         let q = OptionType::Call;
 
         // You will need to replace this with the expected result
-        let expected_result = 7.9655674554057975;
+        let expected_result = 7.965_567_455_405_798;
 
         // act
         let result = black(f, k, sigma, t, q);
@@ -257,11 +257,6 @@ mod tests {
         assert!(result > 0.0);
     }
 
-    fn round_to(value: f64, places: u32) -> f64 {
-        let factor = 10_f64.powi(places as i32);
-        (value * factor).round() / factor
-    }
-
     proptest! {
         #[test]
         fn test_black_function_random(f in 50.0_f64..150.0_f64, k in 50.0_f64..150.0_f64, sigma in 0.01_f64..2.0_f64, t in 0.1_f64..2.0_f64, q in any::<u8>().prop_map(|x| if x % 2 == 0 { OptionType::Call } else { OptionType::Put })) {
@@ -284,6 +279,7 @@ mod tests {
 
     // TODO: to discuss how to fix this test. Correspond to issue #8
     // #[test]
+    #[allow(dead_code)]
     fn test_implied_volatility_specific() {
         let f = 137.9331040666909;
         let k = 50.0;
@@ -293,6 +289,6 @@ mod tests {
 
         let result = implied_volatility_from_a_transformed_rational_guess(price, f, k, t, q);
 
-        assert!(result.is_sign_negative() == false);
+        assert!(!result.is_sign_negative());
     }
 }

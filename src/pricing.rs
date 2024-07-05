@@ -26,7 +26,7 @@ impl Pricing<f32> for Inputs {
     /// ```
     fn calc_price(&self) -> Result<f32, String> {
         // Calculates the price of the option
-        let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self)?;
+        let (nd1, nd2): (f32, f32) = calc_nd1nd2(self)?;
         let price: f32 = match self.option_type {
             OptionType::Call => f32::max(
                 0.0,
@@ -65,7 +65,7 @@ impl Pricing<f32> for Inputs {
             self.k as f64,
             sigma as f64,
             self.t as f64,
-            self.option_type.clone(),
+            self.option_type,
         );
 
         // discount the price

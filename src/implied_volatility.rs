@@ -118,7 +118,7 @@ impl ImpliedVolatility<f32> for Inputs {
             f as f64,
             self.k as f64,
             self.t as f64,
-            self.option_type.clone(),
+            self.option_type,
         );
 
         if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {

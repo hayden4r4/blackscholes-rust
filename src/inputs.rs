@@ -17,18 +17,18 @@ impl Display for OptionType {
     }
 }
 
-impl Into<f32> for OptionType {
-    fn into(self) -> f32 {
-        match self {
+impl From<OptionType> for f32 {
+    fn from(val: OptionType) -> Self {
+        match val {
             OptionType::Call => 1.0,
             OptionType::Put => -1.0,
         }
     }
 }
 
-impl Into<c_double> for OptionType {
-    fn into(self) -> c_double {
-        match self {
+impl From<OptionType> for c_double {
+    fn from(val: OptionType) -> Self {
+        match val {
             OptionType::Call => 1.0,
             OptionType::Put => -1.0,
         }
@@ -75,6 +75,7 @@ impl Inputs {
     /// ```
     /// # Returns
     /// An instance of the `Inputs` struct.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         option_type: OptionType,
         s: f32,

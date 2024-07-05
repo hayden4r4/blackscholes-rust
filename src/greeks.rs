@@ -41,7 +41,7 @@ impl Greeks<f32> for Inputs {
     /// let delta = inputs.calc_delta().unwrap();
     /// ```
     fn calc_delta(&self) -> Result<f32, String> {
-        let (nd1, _): (f32, f32) = calc_nd1nd2(&self)?;
+        let (nd1, _): (f32, f32) = calc_nd1nd2(self)?;
 
         let option_type: f32 = self.option_type.into();
         let delta = option_type * E.powf(-self.q * self.t) * nd1;
@@ -65,7 +65,7 @@ impl Greeks<f32> for Inputs {
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
-        let nprimed1: f32 = calc_nprimed1(&self)?;
+        let nprimed1: f32 = calc_nprimed1(self)?;
         let gamma: f32 = E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
         Ok(gamma)
     }
@@ -87,8 +87,8 @@ impl Greeks<f32> for Inputs {
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
-        let nprimed1: f32 = calc_nprimed1(&self)?;
-        let (nd1, nd2): (f32, f32) = calc_nd1nd2(&self)?;
+        let nprimed1: f32 = calc_nprimed1(self)?;
+        let (nd1, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
         // Calculation uses 365.25 for f32: Time of days per year.
         let option_type: f32 = self.option_type.into();
@@ -113,7 +113,7 @@ impl Greeks<f32> for Inputs {
     /// let vega = inputs.calc_vega().unwrap();
     /// ```
     fn calc_vega(&self) -> Result<f32, String> {
-        let nprimed1: f32 = calc_nprimed1(&self)?;
+        let nprimed1: f32 = calc_nprimed1(self)?;
         let vega: f32 = 0.01 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
         Ok(vega)
     }
@@ -130,7 +130,7 @@ impl Greeks<f32> for Inputs {
     /// let rho = inputs.calc_rho().unwrap();
     /// ```
     fn calc_rho(&self) -> Result<f32, String> {
-        let (_, nd2): (f32, f32) = calc_nd1nd2(&self)?;
+        let (_, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
         let option_type: f32 = self.option_type.into();
         let rho = option_type / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2;
@@ -156,7 +156,7 @@ impl Greeks<f32> for Inputs {
     /// let epsilon = inputs.calc_epsilon().unwrap();
     /// ```
     fn calc_epsilon(&self) -> Result<f32, String> {
-        let (nd1, _) = calc_nd1nd2(&self)?;
+        let (nd1, _) = calc_nd1nd2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let option_type: f32 = self.option_type.into();
@@ -197,8 +197,8 @@ impl Greeks<f32> for Inputs {
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
-        let nprimed1 = calc_nprimed1(&self)?;
-        let (_, d2) = calc_d1d2(&self)?;
+        let nprimed1 = calc_nprimed1(self)?;
+        let (_, d2) = calc_d1d2(self)?;
         let vanna: f32 = d2 * E.powf(-self.q * self.t) * nprimed1 * -0.01 / sigma;
         Ok(vanna)
     }
@@ -218,9 +218,9 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let nprimed1 = calc_nprimed1(&self)?;
-        let (nd1, _) = calc_nd1nd2(&self)?;
-        let (_, d2) = calc_d1d2(&self)?;
+        let nprimed1 = calc_nprimed1(self)?;
+        let (nd1, _) = calc_nd1nd2(self)?;
+        let (_, d2) = calc_d1d2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let option_type: f32 = self.option_type.into();
@@ -246,8 +246,8 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let nprimed1 = calc_nprimed1(&self)?;
-        let (d1, d2) = calc_d1d2(&self)?;
+        let nprimed1 = calc_nprimed1(self)?;
+        let (d1, d2) = calc_d1d2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let veta = -self.s
@@ -274,9 +274,9 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let (d1, d2) = calc_d1d2(&self)?;
+        let (d1, d2) = calc_d1d2(self)?;
 
-        let vomma = Inputs::calc_vega(&self)? * ((d1 * d2) / sigma);
+        let vomma = Inputs::calc_vega(self)? * ((d1 * d2) / sigma);
         Ok(vomma)
     }
 
@@ -295,8 +295,8 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let (d1, _) = calc_d1d2(&self)?;
-        let gamma = Inputs::calc_gamma(&self)?;
+        let (d1, _) = calc_d1d2(self)?;
+        let gamma = Inputs::calc_gamma(self)?;
 
         let speed = -gamma / self.s * (d1 / (sigma * self.t.sqrt()) + 1.0);
         Ok(speed)
@@ -317,8 +317,8 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let (d1, d2) = calc_d1d2(&self)?;
-        let gamma = Inputs::calc_gamma(&self)?;
+        let (d1, d2) = calc_d1d2(self)?;
+        let gamma = Inputs::calc_gamma(self)?;
 
         let zomma = gamma * ((d1 * d2 - 1.0) / sigma);
         Ok(zomma)
@@ -339,8 +339,8 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let (d1, d2) = calc_d1d2(&self)?;
-        let nprimed1 = calc_nprimed1(&self)?;
+        let (d1, d2) = calc_d1d2(self)?;
+        let nprimed1 = calc_nprimed1(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let color = -e_negqt
@@ -368,8 +368,8 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let (d1, d2) = calc_d1d2(&self)?;
-        let vega = Inputs::calc_vega(&self)?;
+        let (d1, d2) = calc_d1d2(self)?;
+        let vega = Inputs::calc_vega(self)?;
 
         let ultima =
             -vega / sigma.powf(2.0) * (d1 * d2 * (1.0 - d1 * d2) + d1.powf(2.0) + d2.powf(2.0));
@@ -388,7 +388,7 @@ impl Greeks<f32> for Inputs {
     /// let dual_delta = inputs.calc_dual_delta().unwrap();
     /// ```
     fn calc_dual_delta(&self) -> Result<f32, String> {
-        let (_, nd2) = calc_nd1nd2(&self)?;
+        let (_, nd2) = calc_nd1nd2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let dual_delta = match self.option_type {
@@ -413,7 +413,7 @@ impl Greeks<f32> for Inputs {
         let sigma = self
             .sigma
             .ok_or("Expected Some(f32) for self.sigma, received None")?;
-        let nprimed2 = calc_nprimed2(&self)?;
+        let nprimed2 = calc_nprimed2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
         let dual_gamma = e_negqt * (nprimed2 / (self.k * sigma * self.t.sqrt()));
