@@ -1,4 +1,3 @@
-use libc::c_double;
 use std::fmt::{Display, Formatter, Result as fmtResult};
 
 /// The type of option to be priced (call or put).
@@ -17,7 +16,7 @@ impl Display for OptionType {
     }
 }
 
-impl From<OptionType> for f32 {
+impl From<OptionType> for f64 {
     fn from(val: OptionType) -> Self {
         match val {
             OptionType::Call => 1.0,
@@ -26,11 +25,19 @@ impl From<OptionType> for f32 {
     }
 }
 
-impl From<OptionType> for c_double {
-    fn from(val: OptionType) -> Self {
-        match val {
-            OptionType::Call => 1.0,
-            OptionType::Put => -1.0,
+impl OptionType {
+    /// Returns the opposite type of option.
+    /// # Example
+    /// ```
+    /// use blackscholes::OptionType;
+    /// let call = OptionType::Call;
+    /// let put = call.opposite();
+    /// assert_eq!(put, OptionType::Put);
+    /// ```
+    pub fn opposite(&self) -> Self {
+        match self {
+            OptionType::Call => OptionType::Put,
+            OptionType::Put => OptionType::Call,
         }
     }
 }

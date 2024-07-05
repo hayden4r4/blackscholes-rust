@@ -1,11 +1,10 @@
 use std::f64::consts::FRAC_1_SQRT_2;
 
-use num_traits::{Float};
-use num_traits::float::FloatCore;
 use statrs::function::erf::erfc;
 
 use crate::lets_be_rational::normal_distribution::{inverse_f_upper_map, inverse_norm_cdf, standard_normal_cdf};
 use crate::lets_be_rational::rational_cubic::{convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side, convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side, rational_cubic_interpolation};
+use crate::OptionType;
 
 const DENORMALISATION_CUTOFF: f64 = 0.0;
 const SQRT_TWO_PI: f64 = 2.506_628_274_631_000_7; // (2.0 * f64::PI).sqrt();
@@ -239,33 +238,33 @@ fn compute_f_lower_map_and_first_two_derivatives(x: f64, s: f64) -> (f64, f64, f
 }
 
 fn implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-    price: f64, F: f64, K: f64, T: f64, mut q: f64, N: i32,
+    market_price: f64, forward_price: f64, strike_price: f64, time_to_maturity: f64, mut q: f64, max_iteration: i32,
 ) -> f64 {
-    let mut price = price;
-    let intrinsic = (q * (K - F)).max(0.0).abs();
+    let mut price = market_price;
+    let intrinsic = (q * (strike_price - forward_price)).max(0.0).abs();
     if price < intrinsic {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
     }
-    let max_price = if q < 0.0 { K } else { F };
+    let max_price = if q < 0.0 { strike_price } else { forward_price };
     if price >= max_price {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM;
     }
-    let x = (F / K).ln();
+    let x = (forward_price / strike_price).ln();
     if q * x > 0.0 {
         price = (price - intrinsic).max(0.0).abs();
         q = -q;
     }
     unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-        price / (F.sqrt() * K.sqrt()), x, q, N,
-    ) / T.sqrt()
+        price / (forward_price.sqrt() * strike_price.sqrt()), x, q, max_iteration,
+    ) / time_to_maturity.sqrt()
 }
 
 
-pub fn implied_volatility_from_a_transformed_rational_guess(price: f64, F: f64, K: f64, T: f64, q: f64) -> f64 {
-    implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(price, F, K, T, q, IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS)
+pub fn implied_volatility_from_a_transformed_rational_guess(market_price: f64, forward_price: f64, strike_price: f64, time_to_maturity: f64, q: f64) -> f64 {
+    implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(market_price, forward_price, strike_price, time_to_maturity, q, IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS)
 }
 
-fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta: f64, x: f64, q: f64 /* q=±1 */, N: i32) -> f64 {
+fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta: f64, x: f64, q: f64 /* q=±1 */, max_iteration: i32) -> f64 {
     // Map in-the-money to out-of-the-money
     let mut beta = beta;
     let mut q = q;
@@ -277,7 +276,7 @@ fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_
         return implied_volatility_output(0, VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC);
     }
 
-    unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta, x, q, N)
+    unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta, x, q, max_iteration)
 }
 
 pub fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
@@ -477,12 +476,44 @@ fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
     normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
 }
 
-pub fn black(F: f64, K: f64, sigma: f64, T: f64, q: f64) -> f64 {
-    let intrinsic = (if q < 0.0 { K - F } else { F - K }).max(0.0).abs();
+/// Calculates the price of a European option using the Black model.
+///
+/// This function computes the theoretical price of a European call or put option based on the Black model, which is an extension of the Black-Scholes model for futures contracts. The model assumes that the price of the underlying asset follows a geometric Brownian motion and that markets are frictionless.
+///
+/// # Arguments
+/// * `forward_price` - The forward price of the underlying asset.
+/// * `strike_price` - The strike price of the option.
+/// * `sigma` - The volatility of the underlying asset's returns.
+/// * `time_to_maturity` - The time to maturity of the option, in years.
+/// * `option_type` - The type of the option (call or put), represented by `OptionType`.
+///
+/// # Returns
+/// The theoretical price of the option as a `f64`.
+///
+/// # Examples
+/// ```
+/// use blackscholes::{OptionType, lets_be_rational::black};
+///
+/// let forward_price = 100.0;
+/// let strike_price = 95.0;
+/// let sigma = 0.2;
+/// let time_to_maturity = 1.0;
+/// let option_type = OptionType::Call; // For a call option
+///
+/// let price = black(forward_price, strike_price, sigma, time_to_maturity, option_type);
+/// println!("The price of the option is: {}", price);
+/// ```
+///
+/// # Note
+/// The function uses the natural logarithm of the forward price over the strike price,
+/// multiplies it by the square root of time to maturity, and applies the option type
+/// to determine the final price. It's suitable for European options *only*.
+pub fn black(forward_price: f64, strike_price: f64, sigma: f64, time_to_maturity: f64, option_type: OptionType) -> f64 {
+    let q: f64 = option_type.into();
+    let intrinsic = (if q < 0.0 { strike_price - forward_price } else { forward_price - strike_price }).max(0.0).abs();
     // Map in-the-money to out-of-the-money
-    if q * (F - K) > 0.0 {
-        return intrinsic + black(F, K, sigma, T, -q);
+    if q * (forward_price - strike_price) > 0.0 {
+        return intrinsic + black(forward_price, strike_price, sigma, time_to_maturity, option_type.opposite());
     }
-    intrinsic.max((F.sqrt() * K.sqrt()) * normalised_black((F / K).ln(), sigma * T.sqrt(), q))
+    intrinsic.max((forward_price.sqrt() * strike_price.sqrt()) * normalised_black((forward_price / strike_price).ln(), sigma * time_to_maturity.sqrt(), q))
 }
-
