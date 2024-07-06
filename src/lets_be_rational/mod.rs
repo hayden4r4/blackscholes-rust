@@ -1,18 +1,16 @@
 use crate::lets_be_rational::black::normalised_black;
 use crate::OptionType;
 
+mod black;
+mod intrinsic;
 mod normal_distribution;
 mod rational_cubic;
 mod so_rational;
-mod black;
-mod intrinsic;
 
 const IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS: i32 = 2;
-pub (crate) const DENORMALISATION_CUTOFF: f64 = 0.0;
-pub (crate) const SQRT_TWO_PI: f64 = 2.506_628_274_631_000_7;
-pub (crate) const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_TWO_PI;
-
-
+pub(crate) const DENORMALISATION_CUTOFF: f64 = 0.0;
+pub(crate) const SQRT_TWO_PI: f64 = 2.506_628_274_631_000_7;
+pub(crate) const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_TWO_PI;
 
 /// Calculates the price of a European option using the Black model.
 ///

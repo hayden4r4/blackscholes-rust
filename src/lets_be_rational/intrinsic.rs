@@ -11,12 +11,19 @@ pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
     }
     let x2 = x * x;
     if x2 < NORMALISED_X2_THRESHOLD {
-        return ((if q < 0.0 { -1.0 } else { 1.0 }) * x *
-            (1.0 + x2 * ((1.0 / 24.0) + x2 * ((1.0 / 1920.0) + x2 * ((1.0 / 322560.0) + (1.0 / 92897280.0) * x2))))).max(0.0).abs();
+        return ((if q < 0.0 { -1.0 } else { 1.0 })
+            * x
+            * (1.0
+                + x2 * ((1.0 / 24.0)
+                    + x2 * ((1.0 / 1920.0) + x2 * ((1.0 / 322560.0) + (1.0 / 92897280.0) * x2)))))
+            .max(0.0)
+            .abs();
     }
     let b_max = (0.5 * x).exp();
     let one_over_b_max = 1.0 / b_max;
-    ((if q < 0.0 { -1.0 } else { 1.0 }) * (b_max - one_over_b_max)).max(0.0).abs()
+    ((if q < 0.0 { -1.0 } else { 1.0 }) * (b_max - one_over_b_max))
+        .max(0.0)
+        .abs()
 }
 
 #[cfg(test)]
@@ -49,7 +56,11 @@ mod tests {
         let result = normalised_intrinsic(x, option_type);
 
         // TODO: to analyze correct paths here
-        assert_eq!(result, f64::INFINITY, "Expected intrinsic value to be infinity for f64::MAX.");
+        assert_eq!(
+            result,
+            f64::INFINITY,
+            "Expected intrinsic value to be infinity for f64::MAX."
+        );
     }
 
     #[test]
@@ -91,7 +102,10 @@ mod tests {
         let result = normalised_intrinsic(x, option_type);
 
         // assert
-        assert_eq!(result, EXPECTED_RESULT, "Expected intrinsic value to be 0 for f64::MIN.");
+        assert_eq!(
+            result, EXPECTED_RESULT,
+            "Expected intrinsic value to be 0 for f64::MIN."
+        );
     }
 
     #[test]

@@ -2,7 +2,7 @@ use std::f32::consts::E;
 
 use num_traits::Float;
 
-use crate::{*, Inputs, lets_be_rational, OptionType};
+use crate::{lets_be_rational, Inputs, OptionType, *};
 
 pub trait Pricing<T>
 where
