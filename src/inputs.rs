@@ -1,7 +1,8 @@
+use libc::c_double;
 use std::fmt::{Display, Formatter, Result as fmtResult};
 
 /// The type of option to be priced (call or put).
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Copy)]
 pub enum OptionType {
     Call,
     Put,
@@ -12,6 +13,24 @@ impl Display for OptionType {
         match self {
             OptionType::Call => write!(f, "Call"),
             OptionType::Put => write!(f, "Put"),
+        }
+    }
+}
+
+impl From<OptionType> for f32 {
+    fn from(val: OptionType) -> Self {
+        match val {
+            OptionType::Call => 1.0,
+            OptionType::Put => -1.0,
+        }
+    }
+}
+
+impl From<OptionType> for c_double {
+    fn from(val: OptionType) -> Self {
+        match val {
+            OptionType::Call => 1.0,
+            OptionType::Put => -1.0,
         }
     }
 }
@@ -56,6 +75,7 @@ impl Inputs {
     /// ```
     /// # Returns
     /// An instance of the `Inputs` struct.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         option_type: OptionType,
         s: f32,

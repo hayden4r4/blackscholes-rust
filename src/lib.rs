@@ -29,8 +29,8 @@ pub use pricing::Pricing;
 mod greeks;
 mod implied_volatility;
 mod inputs;
-mod pricing;
 pub mod lets_be_rational;
+mod pricing;
 
 pub(crate) const N_MEAN: f32 = 0.0;
 pub(crate) const N_STD_DEV: f32 = 1.0;
@@ -38,13 +38,12 @@ pub(crate) const SQRT_2PI: f32 = 2.5066282;
 pub(crate) const HALF: f32 = 0.5;
 pub(crate) const DAYS_PER_YEAR: f32 = 365.25;
 
-pub(crate) const A: f32 = 4.62627532e-01;
-pub(crate) const B: f32 = -1.16851917e-02;
-pub(crate) const C: f32 = 9.63541838e-04;
-pub(crate) const D: f32 = 7.53502261e-05;
-pub(crate) const _E: f32 = 1.42451646e-05;
-pub(crate) const F: f32 = -2.10237683e-05;
-
+pub(crate) const A: f32 = 4.626_275_3e-1;
+pub(crate) const B: f32 = -1.168_519_2e-2;
+pub(crate) const C: f32 = 9.635_418_5e-4;
+pub(crate) const D: f32 = 7.535_022_5e-5;
+pub(crate) const _E: f32 = 1.424_516_45e-5;
+pub(crate) const F: f32 = -2.102_376_9e-5;
 
 /// Calculates the d1 and d2 values for the option.
 /// # Requires
@@ -56,10 +55,20 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
         .sigma
         .ok_or("Expected Some(f32) for self.sigma, received None")?;
     // Calculating numerator of d1
-    let numd1 =
-        (inputs.s / inputs.k).ln() + (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
+    let part1 = (inputs.s / inputs.k).ln();
+
+    if part1.is_infinite() {
+        return Err("Log from s/k is infinity".to_string());
+    }
+
+    let part2 = (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
+    let numd1 = part1 + part2;
 
     // Calculating denominator of d1 and d2
+    if inputs.t == 0.0 {
+        return Err("Time to maturity is 0".to_string());
+    }
+
     let den = sigma * (inputs.t.sqrt());
 
     let d1 = numd1 / den;
@@ -111,7 +120,7 @@ pub(crate) fn calc_npdf(x: f32) -> f32 {
 /// # Returns
 /// f32 of the derivative of the nd1.
 pub fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
-    let (d1, _) = calc_d1d2(&inputs)?;
+    let (d1, _) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
     let nprimed1 = calc_npdf(d1);
@@ -121,7 +130,7 @@ pub fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
 /// # Returns
 /// f32 of the derivative of the nd2.
 pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f32, String> {
-    let (_, d2) = calc_d1d2(&inputs)?;
+    let (_, d2) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
     let nprimed2 = calc_npdf(d2);

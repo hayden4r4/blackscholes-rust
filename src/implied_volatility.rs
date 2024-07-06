@@ -1,6 +1,9 @@
 use num_traits::Float;
 
-use crate::{*, greeks::Greeks, Inputs, lets_be_rational::implied_volatility_from_a_transformed_rational_guess, OptionType, pricing::Pricing};
+use crate::{
+    greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
+    pricing::Pricing, Inputs, *,
+};
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
@@ -110,13 +113,13 @@ impl ImpliedVolatility<f32> for Inputs {
         // The Black-Scholes-Merton formula takes into account dividend yield by setting S = S * e^{-qt}, do this here with the forward
         let f = f * (-self.q * self.t).exp();
 
-        // convert the option type into \theta
-        let q: f64 = match self.option_type {
-            OptionType::Call => 1.0,
-            OptionType::Put => -1.0,
-        };
-
-        let sigma = implied_volatility_from_a_transformed_rational_guess(p as f64, f as f64, self.k as f64, self.t as f64, q as f64);
+        let sigma = implied_volatility_from_a_transformed_rational_guess(
+            p as f64,
+            f as f64,
+            self.k as f64,
+            self.t as f64,
+            self.option_type,
+        );
 
         if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
             Err("Implied volatility failed to converge".to_string())?
