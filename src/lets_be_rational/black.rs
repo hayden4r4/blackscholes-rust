@@ -2,7 +2,10 @@ use std::f64::consts::FRAC_1_SQRT_2;
 
 use statrs::function::erf::erfc;
 
-use crate::lets_be_rational::{DENORMALISATION_CUTOFF, intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf, ONE_OVER_SQRT_TWO_PI, SQRT_TWO_PI};
+use crate::lets_be_rational::{
+    intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf,
+    DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI, SQRT_TWO_PI,
+};
 use crate::OptionType;
 
 const ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD: f64 = -10.0;
@@ -45,6 +48,7 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
     (0.5 * two_b).abs().max(0.0)
 }
 
+#[rustfmt::skip]
 fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
     let a = 1.0 + h * (0.5 * SQRT_TWO_PI) * erfcx(-FRAC_1_SQRT_2 * h);
     let w = t * t;
@@ -62,13 +66,16 @@ fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
 }
 
 pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
-    let b = 0.5 * (-0.5 * (h * h + t * t)).exp() * (erfcx(-FRAC_1_SQRT_2 * (h + t)) - erfcx(-FRAC_1_SQRT_2 * (h - t)));
+    let b = 0.5
+        * (-0.5 * (h * h + t * t)).exp()
+        * (erfcx(-FRAC_1_SQRT_2 * (h + t)) - erfcx(-FRAC_1_SQRT_2 * (h - t)));
     b.abs().max(0.0)
 }
 
 pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
     if x > 0.0 {
-        return normalised_intrinsic(x, OptionType::Call) + normalised_black_call(-x, s); // In the money.
+        return normalised_intrinsic(x, OptionType::Call) + normalised_black_call(-x, s);
+        // In the money.
     }
     if s <= x.abs() * DENORMALISATION_CUTOFF {
         return normalised_intrinsic(x, OptionType::Call); // sigma=0 -> intrinsic value.
@@ -77,7 +84,9 @@ pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
     // Denote h := x/s and t := s/2.
     // We evaluate the condition |h|>|η|, i.e., h<η  &&  t < τ+|h|-|η|  avoiding any divisions by s , where η = asymptotic_expansion_accuracy_threshold  and τ = small_t_expansion_of_normalised_black_threshold .
     if x < s * ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD
-        && 0.5 * s * s + x < s * (SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD + ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD)
+        && 0.5 * s * s + x
+            < s * (SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD
+                + ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD)
     {
         return asymptotic_expansion_of_normalised_black_call(x / s, 0.5 * s);
     }
@@ -92,7 +101,7 @@ pub(crate) fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
     normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
 }
 
-
+#[rustfmt::skip]
 pub fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
     let e = (t / h) * (t / h);
     let r = (h + t) * (h - t);
