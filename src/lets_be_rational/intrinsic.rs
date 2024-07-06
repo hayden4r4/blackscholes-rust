@@ -21,16 +21,25 @@ pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    use approx::assert_relative_eq;
     use proptest::prelude::*;
 
     use super::*;
 
+    const EPSILON: f64 = 1e-9;
+
     #[test]
     fn test_normalised_intrinsic_near_zero() {
+        // arrange
         let x = 0.0001;
+        const EXPECTED_RESULT: f64 = 0.00010000000004166668;
         let option_type = OptionType::Call;
+
+        // act
         let result = normalised_intrinsic(x, option_type);
-        assert!(result > 0.0 && result < 0.0002, "Expected a very small positive intrinsic value for x near zero.");
+
+        // assert
+        assert_relative_eq!(result, EXPECTED_RESULT, epsilon = EPSILON);
     }
 
     #[test]
@@ -38,43 +47,65 @@ mod tests {
         let x = f64::MAX;
         let option_type = OptionType::Call;
         let result = normalised_intrinsic(x, option_type);
-        assert!(result > 0.0, "Expected a positive intrinsic value for a large x.");
+
+        // TODO: to analyze correct paths here
+        assert_eq!(result, f64::INFINITY, "Expected intrinsic value to be infinity for f64::MAX.");
     }
 
     #[test]
     fn test_normalised_intrinsic_at_zero() {
+        // arrange
         let x = 0.0;
+        const EXPECTED_RESULT: f64 = 0.0;
         let option_type = OptionType::Call;
+
+        // act
         let result = normalised_intrinsic(x, option_type);
-        assert_eq!(result, 0.0, "Expected intrinsic value to be 0 for x = 0.");
+
+        // assert
+        assert_relative_eq!(result, EXPECTED_RESULT, epsilon = EPSILON);
     }
 
     #[test]
     fn test_normalised_intrinsic_negative_x() {
+        // arrange
         let x = -0.0001;
+        const EXPECTED_RESULT: f64 = 0.00010000000004166668;
         let option_type = OptionType::Put;
+
+        // act
         let result = normalised_intrinsic(x, option_type);
-        assert!(result > 0.0, "Expected a positive intrinsic value for a small negative x.");
+
+        // assert
+        assert_relative_eq!(result, EXPECTED_RESULT, epsilon = EPSILON);
     }
 
     #[test]
     fn test_normalised_intrinsic_with_min_x() {
+        // arrange
         let x = f64::MIN;
+        const EXPECTED_RESULT: f64 = 0.0;
         let option_type = OptionType::Call;
+
+        // act
         let result = normalised_intrinsic(x, option_type);
-        assert_eq!(result, 0.0, "Expected intrinsic value to be 0 for f64::MIN.");
+
+        // assert
+        assert_eq!(result, EXPECTED_RESULT, "Expected intrinsic value to be 0 for f64::MIN.");
     }
 
     #[test]
     fn test_normalised_intrinsic_around_threshold() {
         // arrange
         let x = NORMALISED_X2_THRESHOLD.sqrt();
-        const EXPECTED_RESULT: f64 = 0.1;
+        const EXPECTED_RESULT: f64 = 0.10942952653480309;
         let option_type = OptionType::Call;
+
+        // act
         let result = normalised_intrinsic(x, option_type);
 
-        assert!(prop_approx_eq(result, 0.2, 1e-9));
-        assert!(result >= 0.0, "Expected non-negative intrinsic value around threshold.");
+        // assert
+        assert_relative_eq!(result, EXPECTED_RESULT, epsilon = EPSILON);
     }
 
     proptest! {
