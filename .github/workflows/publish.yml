@@ -1,0 +1,50 @@
+name: Publish process for blacksholes-rust
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: '0.0.0'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check version
+        run: |
+          CURRENT_VERSION=$(sed -n -e 's/^version = "\(.*\)"/\1/p' Cargo.toml)
+          INPUT_VERSION=${{ github.event.inputs.version }}
+          if [[ ! $INPUT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Input version is not in the correct format (0-9.0-9.0-9)"
+            exit 1
+          fi
+          if [[ $(printf '%s\n' "$INPUT_VERSION" "$CURRENT_VERSION" | sort --version-sort | head -n1) == "$INPUT_VERSION" ]]; then
+            echo "Input version is not greater than the current version"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Update version in toml
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/version/}
+          sed -i "s/^version = .*/version = \"${{ github.event.inputs.version }}\"/" Cargo.toml
+      - name: Commit and tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Bump version to ${{ github.event.inputs.version }}"
+          git push origin main
+          git tag version/${{ github.event.inputs.version }}
+          git push origin --tags
+
+      - name: Login to crates.io
+        run: echo "${{ secrets.CARGO_TOKEN }}" | cargo login
+      - name: Publish
+        run: cargo publish --verbose
