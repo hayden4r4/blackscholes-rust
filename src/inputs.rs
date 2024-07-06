@@ -1,10 +1,23 @@
 use std::fmt::{Display, Formatter, Result as fmtResult};
+use std::ops::Neg;
 
 /// The type of option to be priced (call or put).
 #[derive(Debug, Clone, Eq, PartialEq, Copy)]
+#[repr(i32)]
 pub enum OptionType {
-    Call,
-    Put,
+    Call = 1,
+    Put = -1,
+}
+
+impl Neg for OptionType {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            OptionType::Call => OptionType::Put,
+            OptionType::Put => OptionType::Call,
+        }
+    }
 }
 
 impl Display for OptionType {
@@ -18,27 +31,7 @@ impl Display for OptionType {
 
 impl From<OptionType> for f64 {
     fn from(val: OptionType) -> Self {
-        match val {
-            OptionType::Call => 1.0,
-            OptionType::Put => -1.0,
-        }
-    }
-}
-
-impl OptionType {
-    /// Returns the opposite type of option.
-    /// # Example
-    /// ```
-    /// use blackscholes::OptionType;
-    /// let call = OptionType::Call;
-    /// let put = call.opposite();
-    /// assert_eq!(put, OptionType::Put);
-    /// ```
-    pub fn opposite(&self) -> Self {
-        match self {
-            OptionType::Call => OptionType::Put,
-            OptionType::Put => OptionType::Call,
-        }
+        val as i32 as f64
     }
 }
 

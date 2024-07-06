@@ -1,26 +1,14 @@
-use std::f64::consts::FRAC_1_SQRT_2;
-
-use statrs::function::erf::erfc;
-
-use crate::lets_be_rational::normal_distribution::{inverse_f_upper_map, inverse_norm_cdf, standard_normal_cdf};
+use crate::lets_be_rational::{DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI};
+use crate::lets_be_rational::black::normalised_black_call;
+use crate::lets_be_rational::intrinsic::normalised_intrinsic;
+use crate::lets_be_rational::normal_distribution::{inverse_f_upper_map, inverse_normal_cdf, standard_normal_cdf};
 use crate::lets_be_rational::rational_cubic::{convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side, convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side, rational_cubic_interpolation};
 use crate::OptionType;
-
-const DENORMALISATION_CUTOFF: f64 = 0.0;
-const SQRT_TWO_PI: f64 = 2.506_628_274_631_000_7; // (2.0 * f64::PI).sqrt();
-const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_TWO_PI;
-const FOURTH_ROOT_DBL_EPSILON: f64 = 0.0001220703125; //f64::EPSILON.sqrt().sqrt();
-const CODYS_THRESHOLD: f64 = 0.46875;
 
 const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM: f64 = f64::MAX;
 
 const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC: f64 = -f64::MAX;
 
-const ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD: f64 = -10.0;
-
-const SIXTEENTH_ROOT_DBL_EPSILON: f64 = 0.10566243270259357;
-
-const SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD: f64 = 2.0 * SIXTEENTH_ROOT_DBL_EPSILON;
 
 const SQRT_DBL_MIN: f64 = 1.4916681462400413e-154;
 const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_6e154;
@@ -35,40 +23,13 @@ const SQRT_ONE_OVER_THREE: f64 = 0.577_350_269_189_625_7; // sqrt(1.0 / 3.0_f64)
 
 const PI_OVER_SIX: f64 = std::f64::consts::PI / 6.0;
 
-const IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS: i32 = 2;
 
-pub fn implied_volatility_output(_count: i32, volatility: f64) -> f64 {
-    volatility
-}
-
-pub fn erfcx(x: f64) -> f64 {
-    (x * x).exp() * erfc(x)
-}
-
-pub fn is_below_horizon(x: f64) -> bool {
+fn is_below_horizon(x: f64) -> bool {
     x.abs() < DENORMALISATION_CUTOFF
 }
 
 
-pub fn normalised_intrinsic(x: f64, q: f64) -> f64 {
-    if q * x <= 0.0 {
-        return 0.0;
-    }
-    let x2 = x * x;
-    if x2 < 98.0 * FOURTH_ROOT_DBL_EPSILON {
-        return ((if q < 0.0 { -1.0 } else { 1.0 }) * x *
-            (1.0 + x2 * ((1.0 / 24.0) + x2 * ((1.0 / 1920.0) + x2 * ((1.0 / 322560.0) + (1.0 / 92897280.0) * x2))))).max(0.0).abs();
-    }
-    let b_max = (0.5 * x).exp();
-    let one_over_b_max = 1.0 / b_max;
-    ((if q < 0.0 { -1.0 } else { 1.0 }) * (b_max - one_over_b_max)).max(0.0).abs()
-}
-
-pub fn normalised_intrinsic_call(x: f64) -> f64 {
-    normalised_intrinsic(x, 1.0)
-}
-
-pub fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
+pub(crate) fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
     let e = (t / h) * (t / h);
     let r = (h + t) * (h - t);
     let q = (h / r) * (h / r);
@@ -95,83 +56,8 @@ pub fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
     b.abs().max(0.0)
 }
 
-pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
-    let b = 0.5 * (-0.5 * (h * h + t * t)).exp() * (erfcx(-FRAC_1_SQRT_2 * (h + t)) - erfcx(-FRAC_1_SQRT_2 * (h - t)));
-    b.abs().max(0.0)
-}
 
-pub fn normalised_black_call_using_norm_cdf(x: f64, s: f64) -> f64 {
-    let h = x / s;
-    let t = 0.5 * s;
-    let b_max = (0.5 * x).exp();
-    let b = standard_normal_cdf(h + t) * b_max - standard_normal_cdf(h - t) / b_max;
-    b.abs().max(0.0)
-}
-
-
-pub fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> f64 {
-    let h = x / s;
-    let t = 0.5 * s;
-    let q1 = -FRAC_1_SQRT_2 * (h + t);
-    let q2 = -FRAC_1_SQRT_2 * (h - t);
-    let two_b;
-
-    if q1 < CODYS_THRESHOLD {
-        if q2 < CODYS_THRESHOLD {
-            two_b = (0.5 * x).exp() * erfc(q1) - (-0.5 * x).exp() * erfc(q2);
-        } else {
-            two_b = (0.5 * x).exp() * erfc(q1) - (-0.5 * (h * h + t * t)).exp() * erfcx(q2);
-        }
-    } else if q2 < CODYS_THRESHOLD {
-        two_b = (-0.5 * (h * h + t * t)).exp() * erfcx(q1) - (-0.5 * x).exp() * erfc(q2);
-    } else {
-        two_b = (-0.5 * (h * h + t * t)).exp() * (erfcx(q1) - erfcx(q2));
-    }
-
-    (0.5 * two_b).abs().max(0.0)
-}
-
-pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
-    let a = 1.0 + h * (0.5 * SQRT_TWO_PI) * erfcx(-FRAC_1_SQRT_2 * h);
-    let w = t * t;
-    let h2 = h * h;
-
-    let expansion = 2.0 * t * (a + w * ((-1.0 + 3.0 * a + a * h2) / 6.0
-        + w * ((-7.0 + 15.0 * a + h2 * (-1.0 + 10.0 * a + a * h2)) / 120.0
-        + w * ((-57.0 + 105.0 * a + h2 * (-18.0 + 105.0 * a + h2 * (-1.0 + 21.0 * a + a * h2))) / 5040.0
-        + w * ((-561.0 + 945.0 * a + h2 * (-285.0 + 1260.0 * a + h2 * (-33.0 + 378.0 * a + h2 * (-1.0 + 36.0 * a + a * h2)))) / 362880.0
-        + w * ((-6555.0 + 10395.0 * a + h2 * (-4680.0 + 17325.0 * a + h2 * (-840.0 + 6930.0 * a + h2 * (-52.0 + 990.0 * a + h2 * (-1.0 + 55.0 * a + a * h2))))) / 39916800.0
-        + w * ((-89055.0 + 135135.0 * a + h2 * (-82845.0 + 270270.0 * a + h2 * (-20370.0 + 135135.0 * a + h2 * (-1926.0 + 25740.0 * a + h2 * (-75.0 + 2145.0 * a + h2 * (-1.0 + 78.0 * a + a * h2)))))) / 6227020800.0)))))));
-
-    let b = ONE_OVER_SQRT_TWO_PI * (-0.5 * (h * h + t * t)).exp() * expansion;
-    b.abs().max(0.0)
-}
-
-
-pub fn normalised_black_call(x: f64, s: f64) -> f64 {
-    if x > 0.0 {
-        return normalised_intrinsic_call(x) + normalised_black_call(-x, s); // In the money.
-    }
-    if s <= x.abs() * DENORMALISATION_CUTOFF {
-        return normalised_intrinsic_call(x); // sigma=0 -> intrinsic value.
-    }
-
-    // Denote h := x/s and t := s/2.
-    // We evaluate the condition |h|>|η|, i.e., h<η  &&  t < τ+|h|-|η|  avoiding any divisions by s , where η = asymptotic_expansion_accuracy_threshold  and τ = small_t_expansion_of_normalised_black_threshold .
-    if x < s * ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD
-        && 0.5 * s * s + x < s * (SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD + ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD)
-    {
-        return asymptotic_expansion_of_normalised_black_call(x / s, 0.5 * s);
-    }
-    if 0.5 * s < SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD {
-        return small_t_expansion_of_normalised_black_call(x / s, 0.5 * s);
-    }
-
-    normalised_black_call_with_optimal_use_of_codys_functions(x, s)
-}
-
-
-pub fn normalised_vega(x: f64, s: f64) -> f64 {
+pub(crate) fn normalised_vega(x: f64, s: f64) -> f64 {
     let ax = x.abs();
     if ax <= 0.0 {
         ONE_OVER_SQRT_TWO_PI * (-0.125 * s * s).exp()
@@ -190,7 +76,7 @@ fn inverse_f_lower_map(x: f64, f: f64) -> f64 {
     if is_below_horizon(f) {
         0.0
     } else {
-        (x / (SQRT_THREE * inverse_norm_cdf((f / (TWO_PI_OVER_SQRT_TWENTY_SEVEN * x.abs())).powf(1.0 / 3.0)))).abs()
+        (x / (SQRT_THREE * inverse_normal_cdf((f / (TWO_PI_OVER_SQRT_TWENTY_SEVEN * x.abs())).powf(1.0 / 3.0)))).abs()
     }
 }
 
@@ -237,11 +123,12 @@ fn compute_f_lower_map_and_first_two_derivatives(x: f64, s: f64) -> (f64, f64, f
     (f, fp, fpp)
 }
 
-fn implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-    market_price: f64, forward_price: f64, strike_price: f64, time_to_maturity: f64, mut q: f64, max_iteration: i32,
+pub(crate) fn implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
+    market_price: f64, forward_price: f64, strike_price: f64, time_to_maturity: f64, mut option_type: OptionType, max_iteration: i32,
 ) -> f64 {
+    let q = option_type as i32 as f64;
     let mut price = market_price;
-    let intrinsic = (q * (strike_price - forward_price)).max(0.0).abs();
+    let intrinsic = (q as i32 as f64 * (strike_price - forward_price)).max(0.0).abs();
     if price < intrinsic {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
     }
@@ -250,56 +137,51 @@ fn implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM;
     }
     let x = (forward_price / strike_price).ln();
-    if q * x > 0.0 {
+    if q as i32 as f64 * x > 0.0 {
         price = (price - intrinsic).max(0.0).abs();
-        q = -q;
+        option_type = -option_type;
     }
     unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-        price / (forward_price.sqrt() * strike_price.sqrt()), x, q, max_iteration,
+        price / (forward_price.sqrt() * strike_price.sqrt()), x, option_type, max_iteration,
     ) / time_to_maturity.sqrt()
 }
 
 
-pub fn implied_volatility_from_a_transformed_rational_guess(market_price: f64, forward_price: f64, strike_price: f64, time_to_maturity: f64, q: f64) -> f64 {
-    implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(market_price, forward_price, strike_price, time_to_maturity, q, IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS)
-}
-
-fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta: f64, x: f64, q: f64 /* q=±1 */, max_iteration: i32) -> f64 {
+fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta: f64, x: f64, option_type: OptionType, max_iteration: i32) -> f64 {
     // Map in-the-money to out-of-the-money
     let mut beta = beta;
-    let mut q = q;
-    if q * x > 0.0 {
+    let mut q = option_type;
+    if q as i32 as f64 * x > 0.0 {
         beta -= normalised_intrinsic(x, q);
         q = -q;
     }
     if beta < 0.0 {
-        return implied_volatility_output(0, VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC);
+        return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
     }
 
     unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta, x, q, max_iteration)
 }
 
-pub fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-    mut beta: f64, mut x: f64, mut q: f64, n: i32,
+pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
+    mut beta: f64, mut x: f64, option_type: OptionType, n: i32,
 ) -> f64 {
-    if q * x > 0.0 {
-        beta = (beta - normalised_intrinsic(x, q)).abs().max(0.0);
-        q = -q;
+    if option_type as i32 as f64 * x > 0.0 {
+        beta = (beta - normalised_intrinsic(x, option_type)).abs().max(0.0);
     }
-    if q < 0.0 {
+    if option_type == OptionType::Put {
         x = -x;
-        q = -q;
     }
     if beta <= 0.0 {
-        return implied_volatility_output(0, 0.0);
+        return 0.0;
     }
     if beta < DENORMALISATION_CUTOFF {
-        return implied_volatility_output(0, 0.0);
+        return 0.0;
     }
     let b_max = (0.5 * x).exp();
     if beta >= b_max {
-        return implied_volatility_output(0, VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM);
+        return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM;
     }
+
     let iterations = 0;
     let mut direction_reversal_count = 0;
     let mut f = -f64::MAX;
@@ -366,7 +248,7 @@ pub fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess
                 }
                 s += ds.max(-0.5 * s);
             }
-            return implied_volatility_output(iterations, s);
+            return s;
         } else {
             let v_l = normalised_vega(x, s_l);
             let r_lm = convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(b_l, b_c, s_l, s_c, 1.0 / v_l, 1.0 / v_c, 0.0, false);
@@ -435,7 +317,7 @@ pub fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess
                     }
                     s += ds.max(-0.5 * s);
                 }
-                return implied_volatility_output(iterations, s);
+                return s;
             }
         }
     }
@@ -469,51 +351,6 @@ pub fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess
         ds = newton * householder_factor(newton, halley, hh3).max(-0.5 * s);
         s += ds;
     }
-    implied_volatility_output(iterations, s)
-}
 
-fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
-    normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
-}
-
-/// Calculates the price of a European option using the Black model.
-///
-/// This function computes the theoretical price of a European call or put option based on the Black model, which is an extension of the Black-Scholes model for futures contracts. The model assumes that the price of the underlying asset follows a geometric Brownian motion and that markets are frictionless.
-///
-/// # Arguments
-/// * `forward_price` - The forward price of the underlying asset.
-/// * `strike_price` - The strike price of the option.
-/// * `sigma` - The volatility of the underlying asset's returns.
-/// * `time_to_maturity` - The time to maturity of the option, in years.
-/// * `option_type` - The type of the option (call or put), represented by `OptionType`.
-///
-/// # Returns
-/// The theoretical price of the option as a `f64`.
-///
-/// # Examples
-/// ```
-/// use blackscholes::{OptionType, lets_be_rational::black};
-///
-/// let forward_price = 100.0;
-/// let strike_price = 95.0;
-/// let sigma = 0.2;
-/// let time_to_maturity = 1.0;
-/// let option_type = OptionType::Call; // For a call option
-///
-/// let price = black(forward_price, strike_price, sigma, time_to_maturity, option_type);
-/// println!("The price of the option is: {}", price);
-/// ```
-///
-/// # Note
-/// The function uses the natural logarithm of the forward price over the strike price,
-/// multiplies it by the square root of time to maturity, and applies the option type
-/// to determine the final price. It's suitable for European options *only*.
-pub fn black(forward_price: f64, strike_price: f64, sigma: f64, time_to_maturity: f64, option_type: OptionType) -> f64 {
-    let q: f64 = option_type.into();
-    let intrinsic = (if q < 0.0 { strike_price - forward_price } else { forward_price - strike_price }).max(0.0).abs();
-    // Map in-the-money to out-of-the-money
-    if q * (forward_price - strike_price) > 0.0 {
-        return intrinsic + black(forward_price, strike_price, sigma, time_to_maturity, option_type.opposite());
-    }
-    intrinsic.max((forward_price.sqrt() * strike_price.sqrt()) * normalised_black((forward_price / strike_price).ln(), sigma * time_to_maturity.sqrt(), q))
+    s
 }

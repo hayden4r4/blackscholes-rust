@@ -2,3 +2,4 @@ target/
 build/
 .vscode/
 lib/cmake-build-debug
+src/lets_be_rational/debug
