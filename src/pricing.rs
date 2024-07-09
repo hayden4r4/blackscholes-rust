@@ -65,7 +65,7 @@ impl Pricing<f32> for Inputs {
             self.k as f64,
             sigma as f64,
             self.t as f64,
-            self.option_type.into(),
+            self.option_type,
         );
 
         // discount the price
