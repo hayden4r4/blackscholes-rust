@@ -216,7 +216,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                 d_f_lower_map_l_d_beta,
                 r_ll,
             );
-            if !(f > 0.0) {
+            if f <= 0.0 {
                 let t = beta / b_l;
                 f = (f_lower_map_l * t + b_l * (1.0 - t)) * t;
             }
