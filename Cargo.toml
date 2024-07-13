@@ -10,10 +10,6 @@ readme = "README.md"
 authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
-[[bench]]
-name = "pricing"
-harness = false
-
 [dev-dependencies]
 criterion = "0.5.1"
 proptest = "1.5.0"
@@ -24,3 +20,12 @@ num-traits = "0.2.19"
 statrs = "0.17.1"
 log = "0.4.22"
 once_cell = "1.19.0"
+
+# Benchmarks
+[[bench]]
+name = "pricing"
+harness = false
+
+[[bench]]
+name = "implied_volatility"
+harness = false

@@ -1,7 +1,7 @@
-use blackscholes::Pricing;
+use blackscholes::{Inputs, OptionType, Pricing};
 
-const INPUTS_CALL_OTM: blackscholes::Inputs = blackscholes::Inputs {
-    option_type: blackscholes::OptionType::Call,
+const INPUTS_CALL_OTM: Inputs = Inputs {
+    option_type: OptionType::Call,
     s: 100.0,
     k: 110.0,
     p: None,
@@ -10,8 +10,8 @@ const INPUTS_CALL_OTM: blackscholes::Inputs = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_CALL_ITM: blackscholes::Inputs = blackscholes::Inputs {
-    option_type: blackscholes::OptionType::Call,
+const INPUTS_CALL_ITM: Inputs = Inputs {
+    option_type: OptionType::Call,
     s: 100.0,
     k: 90.0,
     p: None,
@@ -20,8 +20,8 @@ const INPUTS_CALL_ITM: blackscholes::Inputs = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_OTM: blackscholes::Inputs = blackscholes::Inputs {
-    option_type: blackscholes::OptionType::Put,
+const INPUTS_PUT_OTM: Inputs = Inputs {
+    option_type: OptionType::Put,
     s: 100.0,
     k: 90.0,
     p: None,
@@ -30,8 +30,8 @@ const INPUTS_PUT_OTM: blackscholes::Inputs = blackscholes::Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_ITM: blackscholes::Inputs = blackscholes::Inputs {
-    option_type: blackscholes::OptionType::Put,
+const INPUTS_PUT_ITM: Inputs = Inputs {
+    option_type: OptionType::Put,
     s: 100.0,
     k: 110.0,
     p: None,
