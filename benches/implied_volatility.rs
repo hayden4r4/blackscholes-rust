@@ -1,4 +1,4 @@
-use blackscholes::{Inputs, OptionType, ImpliedVolatility};
+use blackscholes::{ImpliedVolatility, Inputs, OptionType};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 const INPUTS: Inputs = Inputs {
@@ -13,7 +13,9 @@ const INPUTS: Inputs = Inputs {
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("calc_rational_iv", |b| b.iter(|| black_box(INPUTS.calc_rational_iv())));
+    c.bench_function("calc_rational_iv", |b| {
+        b.iter(|| black_box(INPUTS.calc_rational_iv()))
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
