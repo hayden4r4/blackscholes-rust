@@ -113,7 +113,7 @@ pub(crate) fn implied_volatility_from_a_transformed_rational_guess_with_limited_
 ) -> f64 {
     let q = option_type as i32 as f64;
     let mut price = market_price;
-    let intrinsic = (q as i32 as f64 * (strike_price - forward_price))
+    let intrinsic = (q as i32 as f64 * (forward_price - strike_price))
         .max(0.0)
         .abs();
     if price < intrinsic {
