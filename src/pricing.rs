@@ -1,4 +1,4 @@
-use num_traits::{AsPrimitive, Float};
+use num_traits::{float::FloatConst, AsPrimitive, Float};
 
 use crate::{lets_be_rational, Inputs, OptionType, *};
 
@@ -12,7 +12,7 @@ where
 
 impl<T> Pricing<T> for Inputs<T>
 where
-    T: Float + FromPrimitive + AsPrimitive<f64>,
+    T: Float + FromPrimitive + AsPrimitive<f64> + FloatConst,
 {
     /// Calculates the price of the option.
     /// # Requires
@@ -29,15 +29,15 @@ where
         // Calculates the price of the option
         let (nd1, nd2): (T, T) = calc_nd1nd2(self)?;
         let price: T = match self.option_type {
-            OptionType::Call => <T>::max(
+            OptionType::Call => T::max(
                 T::zero(),
-                nd1 * self.s * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t)
-                    - nd2 * self.k * T::from(std::f64::consts::E).unwrap().powf(-self.r * self.t),
+                nd1 * self.s * T::E().powf(-self.q * self.t)
+                    - nd2 * self.k * T::E().powf(-self.r * self.t),
             ),
-            OptionType::Put => <T>::max(
+            OptionType::Put => T::max(
                 T::zero(),
-                nd2 * self.k * T::from(std::f64::consts::E).unwrap().powf(-self.r * self.t)
-                    - nd1 * self.s * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t),
+                nd2 * self.k * T::E().powf(-self.r * self.t)
+                    - nd1 * self.s * T::E().powf(-self.q * self.t),
             ),
         };
         Ok(price)

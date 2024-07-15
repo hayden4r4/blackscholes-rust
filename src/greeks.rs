@@ -1,4 +1,4 @@
-use num_traits::{AsPrimitive, Float, FromPrimitive};
+use num_traits::{AsPrimitive, Float, FloatConst, FromPrimitive};
 use std::collections::HashMap;
 
 use crate::{
@@ -32,7 +32,7 @@ where
 
 impl<T> Greeks<T> for Inputs<T>
 where
-    T: Float + FromPrimitive + AsPrimitive<f64>,
+    T: Float + FromPrimitive + AsPrimitive<f64> + FloatConst,
 {
     /// Calculates the delta of the option.
     /// # Requires
@@ -49,8 +49,7 @@ where
         let (nd1, _): (T, T) = calc_nd1nd2(self)?;
 
         let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
-        let delta =
-            option_type * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t) * nd1;
+        let delta = option_type * T::E().powf(-self.q * self.t) * nd1;
 
         Ok(delta)
     }
@@ -72,8 +71,7 @@ where
             .ok_or("Expected Some(T) for self.sigma, received None")?;
 
         let nprimed1: T = calc_nprimed1(self)?;
-        let gamma: T = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t) * nprimed1
-            / (self.s * sigma * self.t.sqrt());
+        let gamma: T = T::E().powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
         Ok(gamma)
     }
 
@@ -99,21 +97,10 @@ where
 
         // Calculation uses 365.25 for T: Time of days per year.
         let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
-        let theta = (-(self.s
-            * sigma
-            * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t)
-            * nprimed1
+        let theta = (-(self.s * sigma * T::E().powf(-self.q * self.t) * nprimed1
             / (T::from(2.).unwrap() * self.t.sqrt()))
-            - self.r
-                * self.k
-                * T::from(std::f64::consts::E).unwrap().powf(-self.r * self.t)
-                * nd2
-                * option_type
-            + self.q
-                * self.s
-                * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t)
-                * nd1
-                * option_type)
+            - self.r * self.k * T::E().powf(-self.r * self.t) * nd2 * option_type
+            + self.q * self.s * T::E().powf(-self.q * self.t) * nd1 * option_type)
             / T::from(DAYS_PER_YEAR).unwrap();
 
         Ok(theta)
@@ -134,7 +121,7 @@ where
         let nprimed1: T = calc_nprimed1(self)?;
         let vega: T = T::from(0.01).unwrap()
             * self.s
-            * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t)
+            * T::E().powf(-self.q * self.t)
             * self.t.sqrt()
             * nprimed1;
         Ok(vega)
@@ -159,7 +146,7 @@ where
             * T::from(0.01).unwrap()
             * self.k
             * self.t
-            * T::from(std::f64::consts::E).unwrap().powf(-self.r * self.t)
+            * T::E().powf(-self.r * self.t)
             * nd2;
 
         Ok(rho)
@@ -184,7 +171,7 @@ where
     /// ```
     fn calc_epsilon(&self) -> Result<T, String> {
         let (nd1, _) = calc_nd1nd2(self)?;
-        let e_negqt = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t);
+        let e_negqt = T::E().powf(-self.q * self.t);
 
         let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
         let epsilon: T = -self.s * self.t * e_negqt * nd1 * option_type;
@@ -226,11 +213,8 @@ where
 
         let nprimed1 = calc_nprimed1(self)?;
         let (_, d2) = calc_d1d2(self)?;
-        let vanna: T = d2
-            * T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t)
-            * nprimed1
-            * T::from(-0.01).unwrap()
-            / sigma;
+        let vanna: T =
+            d2 * T::E().powf(-self.q * self.t) * nprimed1 * T::from(-0.01).unwrap() / sigma;
         Ok(vanna)
     }
 
@@ -252,7 +236,7 @@ where
         let nprimed1 = calc_nprimed1(self)?;
         let (nd1, _) = calc_nd1nd2(self)?;
         let (_, d2) = calc_d1d2(self)?;
-        let e_negqt = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t);
+        let e_negqt = T::E().powf(-self.q * self.t);
 
         let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
         let charm: T = option_type * self.q * e_negqt * nd1
@@ -281,7 +265,7 @@ where
             .ok_or("Expected Some(T) for self.sigma, received None")?;
         let nprimed1 = calc_nprimed1(self)?;
         let (d1, d2) = calc_d1d2(self)?;
-        let e_negqt = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t);
+        let e_negqt = T::E().powf(-self.q * self.t);
 
         let veta = -self.s
             * e_negqt
@@ -374,7 +358,7 @@ where
             .ok_or("Expected Some(T) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(self)?;
         let nprimed1 = calc_nprimed1(self)?;
-        let e_negqt = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t);
+        let e_negqt = T::E().powf(-self.q * self.t);
 
         let color = -e_negqt
             * (nprimed1 / (T::from(2.0).unwrap() * self.s * self.t * sigma * self.t.sqrt()))
@@ -425,7 +409,7 @@ where
     /// ```
     fn calc_dual_delta(&self) -> Result<T, String> {
         let (_, nd2) = calc_nd1nd2(self)?;
-        let e_negqt = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t);
+        let e_negqt = T::E().powf(-self.q * self.t);
 
         let dual_delta = match self.option_type {
             OptionType::Call => -e_negqt * nd2,
@@ -450,7 +434,7 @@ where
             .sigma
             .ok_or("Expected Some(T) for self.sigma, received None")?;
         let nprimed2 = calc_nprimed2(self)?;
-        let e_negqt = T::from(std::f64::consts::E).unwrap().powf(-self.q * self.t);
+        let e_negqt = T::E().powf(-self.q * self.t);
 
         let dual_gamma = e_negqt * (nprimed2 / (self.k * sigma * self.t.sqrt()));
         Ok(dual_gamma)

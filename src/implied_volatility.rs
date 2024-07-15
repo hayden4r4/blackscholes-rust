@@ -1,4 +1,4 @@
-use num_traits::{AsPrimitive, Float, FromPrimitive};
+use num_traits::{float::FloatConst, AsPrimitive, Float, FromPrimitive};
 
 use crate::{
     greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
@@ -15,7 +15,7 @@ where
 
 impl<T> ImpliedVolatility<T> for Inputs<T>
 where
-    T: Float + FromPrimitive + AsPrimitive<f64>,
+    T: Float + FromPrimitive + AsPrimitive<f64> + FloatConst,
 {
     /// Calculates the implied volatility of the option.
     /// Tolerance is the max error allowed for the implied volatility,
@@ -47,32 +47,26 @@ where
         // commented out to replace with modified corrado-miller method.
         // let mut sigma: T = (PI2 / inputs.t).sqrt() * (p / inputs.s);
 
-        let X: T = inputs.k
-            * T::from(std::f64::consts::E)
-                .unwrap()
-                .powf(-inputs.r * inputs.t);
+        let two = T::from(2.0).unwrap();
+
+        let X: T = inputs.k * T::E().powf(-inputs.r * inputs.t);
         let fminusX: T = inputs.s - X;
         let fplusX: T = inputs.s + X;
         let oneoversqrtT: T = T::one() / inputs.t.sqrt();
 
         let x: T = oneoversqrtT * (T::from(SQRT_2PI).unwrap() / (fplusX));
-        let y: T = p - (inputs.s - inputs.k) / T::from(2.0).unwrap()
-            + ((p - fminusX / T::from(2.0).unwrap()).powf(T::from(2.0).unwrap())
-                - fminusX.powf(T::from(2.0).unwrap()) / T::from(std::f64::consts::PI).unwrap())
-            .sqrt();
+        let y: T = p - (inputs.s - inputs.k) / two
+            + ((p - fminusX / two).powf(two) - fminusX.powf(two) / T::PI()).sqrt();
 
         let mut sigma: T = oneoversqrtT
             * (T::from(SQRT_2PI).unwrap() / fplusX)
-            * (p - fminusX / T::from(2.0).unwrap()
-                + ((p - fminusX / T::from(2.0).unwrap()).powf(T::from(2.0).unwrap())
-                    - fminusX.powf(T::from(2.0).unwrap())
-                        / T::from(std::f64::consts::PI).unwrap())
-                .sqrt())
+            * (p - fminusX / two
+                + ((p - fminusX / two).powf(two) - fminusX.powf(two) / T::PI()).sqrt())
             + T::from(A).unwrap()
             + T::from(B).unwrap() / x
             + T::from(C).unwrap() * y
-            + T::from(D).unwrap() / x.powf(T::from(2.0).unwrap())
-            + T::from(_E).unwrap() * y.powf(T::from(2.0).unwrap())
+            + T::from(D).unwrap() / x.powf(two)
+            + T::from(_E).unwrap() * y.powf(two)
             + T::from(F).unwrap() * y / x;
 
         if sigma.is_nan() {
