@@ -11,7 +11,7 @@ authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
 [build-dependencies]
-cc = { version="1.0", features=["parallel"] }
+cc = { version="1.1", features=["parallel"] }
 
 [dev-dependencies]
 criterion = "0.5"
