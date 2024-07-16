@@ -43,9 +43,6 @@ where
         let p = self
             .p
             .ok_or("inputs.p must contain Some(T), found None".to_string())?;
-        // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
-        // commented out to replace with modified corrado-miller method.
-        // let mut sigma: T = (PI2 / inputs.t).sqrt() * (p / inputs.s);
 
         let two = T::from(2.0).unwrap();
 
