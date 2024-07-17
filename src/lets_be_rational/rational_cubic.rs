@@ -13,6 +13,8 @@ pub fn rational_cubic_interpolation(
     d_r: f64,
     r: f64,
 ) -> Result<f64, String> {
+    // TODO: verify is it necessary to check for infinite values
+    // or ensure that they are not present in the input
     if x.is_infinite() || x_l.is_infinite() || x_r.is_infinite() {
         return Err("Infinite value found in input".to_string());
     }
@@ -109,7 +111,7 @@ fn rational_cubic_control_parameter(
     side: Side,
 ) -> f64 {
     let h = x_r - x_l;
-    let numerator = 0.5 * h * second_derivative + (d_r - d_l);
+    let numerator = 0.5 * second_derivative.mul_add(h, d_r - d_l);
     if numerator.is_zero() {
         return 0.0;
     }
@@ -119,7 +121,10 @@ fn rational_cubic_control_parameter(
         Side::Right => d_r - (y_r - y_l) / h,
     };
 
-    match (denominator.is_zero(), numerator > 0.0) {
+    match (
+        denominator.is_zero() || denominator.is_infinite(),
+        numerator > 0.0,
+    ) {
         (true, true) => MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
         (true, false) => MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
         _ => numerator / denominator,
