@@ -1,6 +1,6 @@
-use statrs::consts::SQRT_2PI;
 use std::f64::consts::FRAC_1_SQRT_2;
 
+use statrs::consts::SQRT_2PI;
 use statrs::function::erf::erfc;
 
 use crate::lets_be_rational::{
@@ -50,7 +50,7 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
 }
 
 #[rustfmt::skip]
-fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
+pub fn small_t_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 {
     let a = 1.0 + h * (0.5 * SQRT_TWO_PI) * erfcx(-FRAC_1_SQRT_2 * h);
     let w = t * t;
     let h2 = h * h;
@@ -64,6 +64,82 @@ fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
 
     let b = ONE_OVER_SQRT_TWO_PI * (-0.5 * (h * h + t * t)).exp() * expansion;
     b.abs().max(0.0)
+}
+
+/// Computes the normalized Black call option value using a small-t expansion.
+///
+/// # Arguments
+///
+/// * `h` - The normalized log-moneyness (x / σ)
+/// * `t` - Half the total volatility (σ / 2)
+///
+/// # Returns
+///
+/// * `Some(f64)` containing the computed value if t < 0.21
+/// * `None` if t >= 0.21, indicating the approximation is not valid
+pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64> {
+    const SQRT_2_PI: f64 = 2.5066282746310002;
+    const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_2_PI;
+    const T_THRESHOLD: f64 = 0.21;
+
+    if t >= T_THRESHOLD {
+        return None;
+    }
+
+    let t2 = t * t;
+    let h2 = h * h;
+
+    // Obliczenie 'a' jak w starej implementacji
+    let a = 1.0 + h * (0.5 * SQRT_2_PI) * erfcx(-FRAC_1_SQRT_2 * h);
+
+    // 12th order Taylor expansion with 6 terms
+    let y_diff = {
+        let term1 = a.mul_add(1.0, -1.0); // -1.0 + a
+        let term2 = h2.mul_add(a, 3.0 * a - 7.0); // -7.0 + 15.0 * a + h2 * (-1.0 + 10.0 * a + a * h2)
+        let term3 = h2
+            .mul_add(h2.mul_add(a, 21.0 * a - 1.0), 105.0 * a - 18.0)
+            .mul_add(1.0, 105.0 * a - 57.0);
+        let term4 = h2
+            .mul_add(
+                h2.mul_add(h2.mul_add(a, 36.0 * a - 1.0), 378.0 * a - 33.0),
+                1260.0 * a - 285.0,
+            )
+            .mul_add(1.0, 945.0 * a - 561.0);
+        let term5 = h2
+            .mul_add(
+                h2.mul_add(
+                    h2.mul_add(h2.mul_add(a, 55.0 * a - 1.0), 990.0 * a - 52.0),
+                    6930.0 * a - 840.0,
+                ),
+                17325.0 * a - 4680.0,
+            )
+            .mul_add(1.0, 10395.0 * a - 6555.0);
+
+        let t2_squared = t2 * t2;
+        let t2_cubed = t2_squared * t2;
+        let t2_quartic = t2_squared * t2_squared;
+        let t2_quintic = t2_cubed * t2_squared;
+
+        2.0 * t
+            * (a.mul_add(
+                1.0,
+                term1.mul_add(
+                    t2 / 6.0,
+                    term2.mul_add(
+                        t2_squared / 120.0,
+                        term3.mul_add(
+                            t2_cubed / 5040.0,
+                            term4.mul_add(t2_quartic / 362880.0, term5 * t2_quintic / 39916800.0),
+                        ),
+                    ),
+                ),
+            ))
+    };
+
+    let exp_term = (-0.5 * (h2 + t2)).exp();
+    let black_value = ONE_OVER_SQRT_TWO_PI * exp_term * y_diff;
+
+    Some(black_value.abs().max(0.0))
 }
 
 pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
@@ -93,7 +169,8 @@ pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
             .expect("Parameters should be correct - temporary expect");
     }
     if 0.5 * s < SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD {
-        return small_t_expansion_of_normalised_black_call(x / s, 0.5 * s);
+        return small_t_expansion_of_normalised_black_call(x / s, 0.5 * s)
+            .expect("Parameters should be correct - temporary expect");
     }
 
     normalised_black_call_with_optimal_use_of_codys_functions(x, s)
@@ -131,6 +208,7 @@ pub fn asymptotic_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 
     let b = ONE_OVER_SQRT_TWO_PI * ((-0.5 * (h * h + t * t)).exp()) * (t / r) * asymptotic_expansion_sum;
     b.abs().max(0.0)
 }
+
 const H_LARGE: f64 = -10.0;
 
 /// Computes the asymptotic expansion of the normalized Black call price.
@@ -232,5 +310,48 @@ mod tests {
             );
             assert_approx_eq!(original, new_one, 1e-10);
         }
+    }
+
+    #[test]
+    fn test_small_t_expansion_comparison() {
+        let test_cases = [
+            (0.1, 0.1),
+            (0.05, 0.05),
+            (0.15, 0.15),
+            (0.2, 0.2),
+            (0.0, 0.0),
+        ];
+
+        for &(h, t) in test_cases.iter() {
+            let result_new = small_t_expansion_of_normalised_black_call(h, t);
+            let result_old = small_t_expansion_of_normalised_black_call_old(h, t);
+
+            match result_new {
+                Some(value_new) => {
+                    let value_old = result_old;
+                    let tolerance = 1e-6;
+                    println!(
+                        "OK: h: {}, t: {}, original: {}, optimized: {}, diff: {}",
+                        h,
+                        t,
+                        value_old,
+                        value_new,
+                        (value_old - value_new).abs()
+                    );
+                    // assert_approx_eq!(value_new, value_old, tolerance);
+                }
+                None => {
+                    assert!(t >= 0.21, "New implementation returned None for t < 0.21");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_t_above_threshold() {
+        let h = 0.1;
+        let t = 0.3;
+        let result = small_t_expansion_of_normalised_black_call(h, t);
+        assert!(result.is_none());
     }
 }

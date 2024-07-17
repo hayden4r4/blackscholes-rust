@@ -1,6 +1,7 @@
 use crate::lets_be_rational::black::normalised_black;
 use crate::OptionType;
 
+// TODO: Drop pub
 pub mod black;
 mod intrinsic;
 mod normal_distribution;
