@@ -1,5 +1,5 @@
-use std::f64::consts::FRAC_1_SQRT_2;
 use statrs::consts::SQRT_2PI;
+use std::f64::consts::FRAC_1_SQRT_2;
 
 use statrs::function::erf::erfc;
 
