@@ -1,28 +1,34 @@
 use crate::OptionType;
+use num_traits::{Float, FromPrimitive};
 
 const FOURTH_ROOT_DBL_EPSILON: f64 = 0.0001220703125;
 
 const NORMALISED_X2_THRESHOLD: f64 = 98.0 * FOURTH_ROOT_DBL_EPSILON;
 
-pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
-    let q = option_type as i32 as f64;
-    if q * x <= 0.0 {
-        return 0.0;
+pub(crate) fn normalised_intrinsic<T>(x: T, option_type: OptionType) -> T
+where
+    T: Float + FromPrimitive,
+{
+    let q = T::from(option_type as i32).unwrap();
+    if q * x <= T::zero() {
+        return T::zero();
     }
     let x2 = x * x;
-    if x2 < NORMALISED_X2_THRESHOLD {
-        return ((if q < 0.0 { -1.0 } else { 1.0 })
+    if x2 < T::from(NORMALISED_X2_THRESHOLD).unwrap() {
+        return ((if q < T::zero() { -T::one() } else { T::one() })
             * x
-            * (1.0
-                + x2 * ((1.0 / 24.0)
-                    + x2 * ((1.0 / 1920.0) + x2 * ((1.0 / 322560.0) + (1.0 / 92897280.0) * x2)))))
-            .max(0.0)
+            * (T::one()
+                + x2 * ((T::from(1.0 / 24.0).unwrap())
+                    + x2 * ((T::from(1.0 / 1920.0).unwrap())
+                        + x2 * ((T::from(1.0 / 322560.0).unwrap())
+                            + (T::from(1.0 / 92897280.0).unwrap()) * x2)))))
+            .max(T::zero())
             .abs();
     }
-    let b_max = (0.5 * x).exp();
-    let one_over_b_max = 1.0 / b_max;
-    ((if q < 0.0 { -1.0 } else { 1.0 }) * (b_max - one_over_b_max))
-        .max(0.0)
+    let b_max = (T::from(0.5).unwrap() * x).exp();
+    let one_over_b_max = T::one() / b_max;
+    ((if q < T::zero() { -T::one() } else { T::one() }) * (b_max - one_over_b_max))
+        .max(T::zero())
         .abs()
 }
 
