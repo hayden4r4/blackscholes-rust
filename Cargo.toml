@@ -14,6 +14,7 @@ keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 criterion = "0.5.1"
 proptest = "1.5.0"
 approx = "0.5.1"
+assert_approx_eq = "1.1.0"
 
 [dependencies]
 num-traits = "0.2.19"
@@ -29,3 +30,8 @@ harness = false
 [[bench]]
 name = "implied_volatility"
 harness = false
+
+# enable this to run additional benches
+# [[bench]]
+# name = "additional_benches_to_verify"
+# harness = false
