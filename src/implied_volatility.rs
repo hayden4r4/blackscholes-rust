@@ -10,7 +10,7 @@ where
     T: Float,
 {
     fn calc_iv(&self, tolerance: T) -> Result<T, String>;
-    fn calc_rational_iv(&self) -> Result<f64, String>;
+    fn calc_rational_iv(&self) -> Result<T, String>;
 }
 
 impl<T> ImpliedVolatility<T> for Inputs<T>
@@ -103,7 +103,7 @@ where
     /// Uses the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// from Jackel's C++ implementation, imported through the C FFI.  The C++ implementation is available at [here](http://www.jaeckel.org/LetsBeRational.7z)
     /// Per Jackel's whitepaper, this method can solve for the implied volatility to f64 precision in 2 iterations.
-    fn calc_rational_iv(&self) -> Result<f64, String> {
+    fn calc_rational_iv(&self) -> Result<T, String> {
         // extract price, or return error
         let p = self.p.ok_or("Option price is required".to_string())?;
 
@@ -117,14 +117,14 @@ where
         let f = f * (-self.q * self.t).exp();
 
         let sigma = implied_volatility_from_a_transformed_rational_guess(
-            p.as_(),
-            f.as_(),
-            self.k.as_(),
-            self.t.as_(),
+            p,
+            f,
+            self.k,
+            self.t,
             self.option_type,
         );
 
-        if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
+        if sigma.is_nan() || sigma.is_infinite() || sigma < T::zero() {
             Err("Implied volatility failed to converge".to_string())?
         }
         Ok(sigma)

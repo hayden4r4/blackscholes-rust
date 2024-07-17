@@ -3,7 +3,7 @@ mod tests {
 
     // Tolerance is a bit higher due to IV being an approximation
     const TOLERANCE_F64: f64 = 1e-10;
-    const TOLERANCE_F32: f64 = 1e-5;
+    const TOLERANCE_F32: f32 = 1e-5;
 
     #[test]
     fn test_put_otm_rational_iv_f64() {
@@ -58,7 +58,7 @@ mod tests {
 
         // assert
         println!("Put OTM: {}", iv);
-        assert!((iv - sigma as f64).abs() < TOLERANCE_F32);
+        assert!((iv - sigma).abs() < TOLERANCE_F32);
     }
 
     #[test]
@@ -114,7 +114,7 @@ mod tests {
 
         // assert
         println!("Call ITM: {}", iv);
-        assert!((iv - sigma as f64).abs() < TOLERANCE_F32);
+        assert!((iv - sigma).abs() < TOLERANCE_F32);
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod tests {
 
         // assert
         println!("Put ITM: {}", iv);
-        assert!((iv - sigma as f64).abs() < TOLERANCE_F32);
+        assert!((iv - sigma).abs() < TOLERANCE_F32);
     }
 
     #[test]
@@ -226,7 +226,7 @@ mod tests {
 
         // assert
         println!("Call ATM: {}", iv);
-        assert!((iv - sigma as f64).abs() < TOLERANCE_F32);
+        assert!((iv - sigma).abs() < TOLERANCE_F32);
     }
 
     #[test]
@@ -282,6 +282,6 @@ mod tests {
 
         // assert
         println!("Put ATM: {}", iv);
-        assert!((iv - sigma as f64).abs() < TOLERANCE_F32);
+        assert!((iv - sigma).abs() < TOLERANCE_F32);
     }
 }
