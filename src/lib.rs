@@ -32,8 +32,7 @@ mod pricing;
 
 pub(crate) const N_MEAN: f64 = 0.0;
 pub(crate) const N_STD_DEV: f64 = 1.0;
-pub(crate) const SQRT_2PI: f64 = 2.506628274630002;
-pub(crate) const HALF: f64 = 0.5;
+pub(crate) const SQRT_2PI: f64 = statrs::consts::SQRT_2PI;
 pub(crate) const DAYS_PER_YEAR: f64 = 365.25;
 
 pub(crate) const A: f64 = 4.626_275_3e-1;
@@ -123,9 +122,8 @@ where
     let n_mean = T::from(N_MEAN).unwrap();
     let n_std_dev = T::from(N_STD_DEV).unwrap();
     let sqrt_2pi = T::from(SQRT_2PI).unwrap();
-    let half = T::from(HALF).unwrap();
     let d: T = (x - n_mean) / n_std_dev;
-    (-half * d * d).exp() / (sqrt_2pi * n_std_dev)
+    (-T::from(0.5).unwrap() * d * d).exp() / (sqrt_2pi * n_std_dev)
 }
 
 /// # Returns

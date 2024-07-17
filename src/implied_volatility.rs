@@ -44,7 +44,7 @@ where
             .p
             .ok_or("inputs.p must contain Some(T), found None".to_string())?;
 
-        let two = T::from(2.0).unwrap();
+        let half = T::from(0.5).unwrap();
 
         let X: T = inputs.k * T::E().powf(-inputs.r * inputs.t);
         let fminusX: T = inputs.s - X;
@@ -52,18 +52,18 @@ where
         let oneoversqrtT: T = T::one() / inputs.t.sqrt();
 
         let x: T = oneoversqrtT * (T::from(SQRT_2PI).unwrap() / (fplusX));
-        let y: T = p - (inputs.s - inputs.k) / two
-            + ((p - fminusX / two).powf(two) - fminusX.powf(two) / T::PI()).sqrt();
+        let y: T = p - (inputs.s - inputs.k) * half
+            + ((p - fminusX * half).powi(2) - fminusX.powi(2) / T::PI()).sqrt();
 
         let mut sigma: T = oneoversqrtT
             * (T::from(SQRT_2PI).unwrap() / fplusX)
-            * (p - fminusX / two
-                + ((p - fminusX / two).powf(two) - fminusX.powf(two) / T::PI()).sqrt())
+            * (p - fminusX * half
+                + ((p - fminusX * half).powi(2) - fminusX.powi(2) / T::PI()).sqrt())
             + T::from(A).unwrap()
             + T::from(B).unwrap() / x
             + T::from(C).unwrap() * y
-            + T::from(D).unwrap() / x.powf(two)
-            + T::from(_E).unwrap() * y.powf(two)
+            + T::from(D).unwrap() / x.powi(2)
+            + T::from(_E).unwrap() * y.powi(2)
             + T::from(F).unwrap() * y / x;
 
         if sigma.is_nan() {

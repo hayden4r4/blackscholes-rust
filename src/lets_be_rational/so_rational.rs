@@ -11,10 +11,6 @@ use crate::OptionType;
 
 use num_traits::{AsPrimitive, Float, FloatConst, FromPrimitive};
 
-const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM: f64 = f64::MAX;
-
-const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC: f64 = -f64::MAX;
-
 const SQRT_DBL_MIN: f64 = 1.4916681462400413e-154;
 const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_6e154;
 
@@ -22,7 +18,7 @@ const SQRT_THREE: f64 = 1.732_050_807_568_877_2; //3.0_f64.sqrt();
 
 const TWO_PI_OVER_SQRT_TWENTY_SEVEN: f64 = 1.209_199_576_156_145_2; // f64::PI() * 2.0 / sqrt(27.0);
 
-const SQRT_PI_OVER_TWO: f64 = 1.253_314_137_315_500_3; //sqrt(f64::PI() / 2.0_f64);
+const SQRT_PI_OVER_TWO: f64 = statrs::consts::SQRT_2PI / 2.; //sqrt(f64::PI() / 2.0_f64);
 
 const SQRT_ONE_OVER_THREE: f64 = 0.577_350_269_189_625_7; // sqrt(1.0 / 3.0_f64);
 
@@ -151,7 +147,7 @@ where
     let mut price = market_price;
     let intrinsic = (q * (forward_price - strike_price)).max(T::zero()).abs();
     if price < intrinsic {
-        return T::from(VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC).unwrap();
+        return T::min_value();
     }
     let max_price = if q < T::zero() {
         strike_price
@@ -159,7 +155,7 @@ where
         forward_price
     };
     if price >= max_price {
-        return T::from(VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM).unwrap();
+        return T::max_value();
     }
     let x = (forward_price / strike_price).ln();
     if q * x > T::zero() {
@@ -172,21 +168,24 @@ where
 }
 
 #[allow(dead_code)]
-fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-    beta: f64,
-    x: f64,
+fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations<T>(
+    beta: T,
+    x: T,
     option_type: OptionType,
     max_iteration: i32,
-) -> f64 {
+) -> T
+where
+    T: Float + FromPrimitive + AsPrimitive<f64> + FloatConst,
+{
     // Map in-the-money to out-of-the-money
     let mut beta = beta;
     let mut q = option_type;
-    if q as i32 as f64 * x > 0.0 {
-        beta -= normalised_intrinsic(x, q);
+    if T::from(q as i32).unwrap() * x > T::zero() {
+        beta = beta - normalised_intrinsic(x, q);
         q = -q;
     }
-    if beta < 0.0 {
-        return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
+    if beta < T::zero() {
+        return T::min_value();
     }
 
     unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta, x, q, max_iteration)
@@ -219,7 +218,7 @@ where
     }
     let b_max = (T::from(0.5).unwrap() * x).exp();
     if beta >= b_max {
-        return T::from(VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM).unwrap();
+        return T::max_value();
     }
 
     let iterations = 0;
