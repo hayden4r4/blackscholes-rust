@@ -78,8 +78,6 @@ pub fn small_t_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 {
 /// * `Some(f64)` containing the computed value if t < 0.21
 /// * `None` if t >= 0.21, indicating the approximation is not valid
 pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64> {
-    const SQRT_2_PI: f64 = 2.5066282746310002;
-    const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_2_PI;
     const T_THRESHOLD: f64 = 0.21;
 
     if t >= T_THRESHOLD {
@@ -89,8 +87,7 @@ pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64>
     let t2 = t * t;
     let h2 = h * h;
 
-    // Obliczenie 'a' jak w starej implementacji
-    let a = 1.0 + h * (0.5 * SQRT_2_PI) * erfcx(-FRAC_1_SQRT_2 * h);
+    let a = 1.0 + h * (0.5 * SQRT_2PI) * erfcx(-FRAC_1_SQRT_2 * h);
 
     // 12th order Taylor expansion with 6 terms
     let y_diff = {
@@ -338,7 +335,7 @@ mod tests {
                         value_new,
                         (value_old - value_new).abs()
                     );
-                    // assert_approx_eq!(value_new, value_old, tolerance);
+                    assert_approx_eq!(value_new, value_old, tolerance);
                 }
                 None => {
                     assert!(t >= 0.21, "New implementation returned None for t < 0.21");
