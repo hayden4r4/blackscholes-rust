@@ -1,10 +1,8 @@
-use num_traits::{AsPrimitive, Float, FloatConst, FromPrimitive};
 use std::collections::HashMap;
 
-use crate::{
-    calc_d1d2, calc_nd1nd2, calc_nprimed1, calc_nprimed2, Inputs, OptionType, Pricing,
-    DAYS_PER_YEAR,
-};
+use num_traits::Float;
+
+use crate::{Inputs, OptionType, Pricing, *};
 
 pub trait Greeks<T>: Pricing<T>
 where
@@ -30,26 +28,23 @@ where
     fn calc_all_greeks(&self) -> Result<HashMap<String, T>, String>;
 }
 
-impl<T> Greeks<T> for Inputs<T>
-where
-    T: Float + FromPrimitive + AsPrimitive<f64> + FloatConst,
-{
+impl Greeks<f32> for Inputs {
     /// Calculates the delta of the option.
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the delta of the option.
+    /// f32 of the delta of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let delta = inputs.calc_delta().unwrap();
     /// ```
-    fn calc_delta(&self) -> Result<T, String> {
-        let (nd1, _): (T, T) = calc_nd1nd2(self)?;
+    fn calc_delta(&self) -> Result<f32, String> {
+        let (nd1, _): (f32, f32) = calc_nd1nd2(self)?;
 
-        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
-        let delta = option_type * T::E().powf(-self.q * self.t) * nd1;
+        let option_type: f64 = self.option_type.into();
+        let delta = option_type as f32 * E.powf(-self.q * self.t) * nd1;
 
         Ok(delta)
     }
@@ -58,20 +53,20 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the gamma of the option.
+    /// f32 of the gamma of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let gamma = inputs.calc_gamma().unwrap();
     /// ```
-    fn calc_gamma(&self) -> Result<T, String> {
+    fn calc_gamma(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
-        let nprimed1: T = calc_nprimed1(self)?;
-        let gamma: T = T::E().powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
+        let nprimed1: f32 = calc_nprimed1(self)?;
+        let gamma: f32 = E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
         Ok(gamma)
     }
 
@@ -80,28 +75,28 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of theta per day (not per year).
+    /// f32 of theta per day (not per year).
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let theta = inputs.calc_theta().unwrap();
     /// ```
-    fn calc_theta(&self) -> Result<T, String> {
+    fn calc_theta(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
-        let nprimed1: T = calc_nprimed1(self)?;
-        let (nd1, nd2): (T, T) = calc_nd1nd2(self)?;
+        let nprimed1: f32 = calc_nprimed1(self)?;
+        let (nd1, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
-        // Calculation uses 365.25 for T: Time of days per year.
-        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
-        let theta = (-(self.s * sigma * T::E().powf(-self.q * self.t) * nprimed1
-            / (T::from(2.).unwrap() * self.t.sqrt()))
-            - self.r * self.k * T::E().powf(-self.r * self.t) * nd2 * option_type
-            + self.q * self.s * T::E().powf(-self.q * self.t) * nd1 * option_type)
-            / T::from(DAYS_PER_YEAR).unwrap();
+        // Calculation uses 365.25 for f32: Time of days per year.
+        let option_type: f64 = self.option_type.into();
+        let theta = (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
+            / (2.0 * self.t.sqrt()))
+            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * option_type as f32
+            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * option_type as f32)
+            / DAYS_PER_YEAR;
 
         Ok(theta)
     }
@@ -110,20 +105,16 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the vega of the option.
+    /// f32 of the vega of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vega = inputs.calc_vega().unwrap();
     /// ```
-    fn calc_vega(&self) -> Result<T, String> {
-        let nprimed1: T = calc_nprimed1(self)?;
-        let vega: T = T::from(0.01).unwrap()
-            * self.s
-            * T::E().powf(-self.q * self.t)
-            * self.t.sqrt()
-            * nprimed1;
+    fn calc_vega(&self) -> Result<f32, String> {
+        let nprimed1: f32 = calc_nprimed1(self)?;
+        let vega: f32 = 0.01 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
         Ok(vega)
     }
 
@@ -131,23 +122,18 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the rho of the option.
+    /// f32 of the rho of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let rho = inputs.calc_rho().unwrap();
     /// ```
-    fn calc_rho(&self) -> Result<T, String> {
-        let (_, nd2): (T, T) = calc_nd1nd2(self)?;
+    fn calc_rho(&self) -> Result<f32, String> {
+        let (_, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
-        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
-        let rho = option_type
-            * T::from(0.01).unwrap()
-            * self.k
-            * self.t
-            * T::E().powf(-self.r * self.t)
-            * nd2;
+        let option_type: f64 = self.option_type.into();
+        let rho = option_type as f32 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2;
 
         Ok(rho)
     }
@@ -162,19 +148,19 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the epsilon of the option.
+    /// f32 of the epsilon of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let epsilon = inputs.calc_epsilon().unwrap();
     /// ```
-    fn calc_epsilon(&self) -> Result<T, String> {
+    fn calc_epsilon(&self) -> Result<f32, String> {
         let (nd1, _) = calc_nd1nd2(self)?;
-        let e_negqt = T::E().powf(-self.q * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
 
-        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
-        let epsilon: T = -self.s * self.t * e_negqt * nd1 * option_type;
+        let option_type: f64 = self.option_type.into();
+        let epsilon: f32 = -self.s * self.t * e_negqt * nd1 * option_type as f32;
 
         Ok(epsilon)
     }
@@ -183,14 +169,14 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the lambda of the option.
+    /// f32 of the lambda of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks, Pricing};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let lambda = inputs.calc_lambda().unwrap();
     /// ```
-    fn calc_lambda(&self) -> Result<T, String> {
+    fn calc_lambda(&self) -> Result<f32, String> {
         let delta = self.calc_delta()?;
         Ok(delta * self.s / self.calc_price()?)
     }
@@ -199,22 +185,21 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the vanna of the option.
+    /// f32 of the vanna of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vanna = inputs.calc_vanna().unwrap();
     /// ```
-    fn calc_vanna(&self) -> Result<T, String> {
+    fn calc_vanna(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
 
         let nprimed1 = calc_nprimed1(self)?;
         let (_, d2) = calc_d1d2(self)?;
-        let vanna: T =
-            d2 * T::E().powf(-self.q * self.t) * nprimed1 * T::from(-0.01).unwrap() / sigma;
+        let vanna: f32 = d2 * E.powf(-self.q * self.t) * nprimed1 * -0.01 / sigma;
         Ok(vanna)
     }
 
@@ -222,28 +207,26 @@ where
     // /// # Requires
     // /// s, k, r, q, t, sigma
     // /// # Returns
-    // /// T of the charm of the option.
+    // /// f32 of the charm of the option.
     // /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let charm = inputs.calc_charm().unwrap();
     /// ```
-    fn calc_charm(&self) -> Result<T, String> {
+    fn calc_charm(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let nprimed1 = calc_nprimed1(self)?;
         let (nd1, _) = calc_nd1nd2(self)?;
         let (_, d2) = calc_d1d2(self)?;
-        let e_negqt = T::E().powf(-self.q * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
 
-        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
-        let charm: T = option_type * self.q * e_negqt * nd1
-            - e_negqt
-                * nprimed1
-                * (T::from(2.0).unwrap() * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
-                / (T::from(2.0).unwrap() * self.t * sigma * self.t.sqrt());
+        let option_type: f64 = self.option_type.into();
+        let charm: f32 = option_type as f32 * self.q * e_negqt * nd1
+            - e_negqt * nprimed1 * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
+                / (2.0 * self.t * sigma * self.t.sqrt());
 
         Ok(charm)
     }
@@ -252,27 +235,27 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the veta of the option.
+    /// f32 of the veta of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let veta = inputs.calc_veta().unwrap();
     /// ```
-    fn calc_veta(&self) -> Result<T, String> {
+    fn calc_veta(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let nprimed1 = calc_nprimed1(self)?;
         let (d1, d2) = calc_d1d2(self)?;
-        let e_negqt = T::E().powf(-self.q * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
 
         let veta = -self.s
             * e_negqt
             * nprimed1
             * self.t.sqrt()
             * (self.q + ((self.r - self.q) * d1) / (sigma * self.t.sqrt())
-                - ((T::one() + d1 * d2) / (T::from(2.0).unwrap() * self.t)));
+                - ((1.0 + d1 * d2) / (2.0 * self.t)));
         Ok(veta)
     }
 
@@ -280,17 +263,17 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the vomma of the option.
+    /// f32 of the vomma of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vomma = inputs.calc_vomma().unwrap();
     /// ```
-    fn calc_vomma(&self) -> Result<T, String> {
+    fn calc_vomma(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(self)?;
 
         let vomma = Inputs::calc_vega(self)? * ((d1 * d2) / sigma);
@@ -301,21 +284,21 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the speed of the option.
+    /// f32 of the speed of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let speed = inputs.calc_speed().unwrap();
     /// ```
-    fn calc_speed(&self) -> Result<T, String> {
+    fn calc_speed(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, _) = calc_d1d2(self)?;
         let gamma = Inputs::calc_gamma(self)?;
 
-        let speed = -gamma / self.s * (d1 / (sigma * self.t.sqrt()) + T::one());
+        let speed = -gamma / self.s * (d1 / (sigma * self.t.sqrt()) + 1.0);
         Ok(speed)
     }
 
@@ -323,21 +306,21 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the zomma of the option.
+    /// f32 of the zomma of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let zomma = inputs.calc_zomma().unwrap();
     /// ```
-    fn calc_zomma(&self) -> Result<T, String> {
+    fn calc_zomma(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(self)?;
         let gamma = Inputs::calc_gamma(self)?;
 
-        let zomma = gamma * ((d1 * d2 - T::one()) / sigma);
+        let zomma = gamma * ((d1 * d2 - 1.0) / sigma);
         Ok(zomma)
     }
 
@@ -345,27 +328,26 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the color of the option.
+    /// f32 of the color of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let color = inputs.calc_color().unwrap();
     /// ```
-    fn calc_color(&self) -> Result<T, String> {
+    fn calc_color(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(self)?;
         let nprimed1 = calc_nprimed1(self)?;
-        let e_negqt = T::E().powf(-self.q * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
 
         let color = -e_negqt
-            * (nprimed1 / (T::from(2.0).unwrap() * self.s * self.t * sigma * self.t.sqrt()))
-            * (T::from(2.0).unwrap() * self.q * self.t
-                + T::one()
-                + (T::from(2.0).unwrap() * (self.r - self.q) * self.t
-                    - d2 * sigma * self.t.sqrt())
+            * (nprimed1 / (2.0 * self.s * self.t * sigma * self.t.sqrt()))
+            * (2.0 * self.q * self.t
+                + 1.0
+                + (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
                     / (sigma * self.t.sqrt())
                     * d1);
         Ok(color)
@@ -375,24 +357,22 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the ultima of the option.
+    /// f32 of the ultima of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let ultima = inputs.calc_ultima().unwrap();
     /// ```
-    fn calc_ultima(&self) -> Result<T, String> {
+    fn calc_ultima(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(self)?;
         let vega = Inputs::calc_vega(self)?;
 
-        let ultima = -vega / sigma.powf(T::from(2.0).unwrap())
-            * (d1 * d2 * (T::one() - d1 * d2)
-                + d1.powf(T::from(2.0).unwrap())
-                + d2.powf(T::from(2.0).unwrap()));
+        let ultima =
+            -vega / sigma.powf(2.0) * (d1 * d2 * (1.0 - d1 * d2) + d1.powf(2.0) + d2.powf(2.0));
         Ok(ultima)
     }
 
@@ -400,16 +380,16 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the dual delta of the option.
+    /// f32 of the dual delta of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let dual_delta = inputs.calc_dual_delta().unwrap();
     /// ```
-    fn calc_dual_delta(&self) -> Result<T, String> {
+    fn calc_dual_delta(&self) -> Result<f32, String> {
         let (_, nd2) = calc_nd1nd2(self)?;
-        let e_negqt = T::E().powf(-self.q * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
 
         let dual_delta = match self.option_type {
             OptionType::Call => -e_negqt * nd2,
@@ -422,19 +402,19 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// T of the dual gamma of the option.
+    /// f32 of the dual gamma of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let dual_gamma = inputs.calc_dual_gamma().unwrap();
     /// ```
-    fn calc_dual_gamma(&self) -> Result<T, String> {
+    fn calc_dual_gamma(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
-            .ok_or("Expected Some(T) for self.sigma, received None")?;
+            .ok_or("Expected Some(f32) for self.sigma, received None")?;
         let nprimed2 = calc_nprimed2(self)?;
-        let e_negqt = T::E().powf(-self.q * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
 
         let dual_gamma = e_negqt * (nprimed2 / (self.k * sigma * self.t.sqrt()));
         Ok(dual_gamma)
@@ -444,15 +424,15 @@ where
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// HashMap of type <String, T> of all Greeks of the option.
+    /// HashMap of type <String, f32> of all Greeks of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let greeks = inputs.calc_all_greeks().unwrap();
     /// ```
-    fn calc_all_greeks(&self) -> Result<HashMap<String, T>, String> {
-        let mut greeks: HashMap<String, T> = HashMap::with_capacity(17);
+    fn calc_all_greeks(&self) -> Result<HashMap<String, f32>, String> {
+        let mut greeks: HashMap<String, f32> = HashMap::with_capacity(17);
         greeks.insert("delta".into(), self.calc_delta()?);
         greeks.insert("gamma".into(), self.calc_gamma()?);
         greeks.insert("theta".into(), self.calc_theta()?);

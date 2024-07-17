@@ -1,21 +1,18 @@
-use num_traits::{Float, FromPrimitive};
+use num_traits::Zero;
 
 const MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE: f64 = -(1.0 - 1.4901161193847656e-8); // -(1.0 - f64::EPSILON.sqrt());
 const MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE: f64 = 2.0 / (f64::EPSILON * f64::EPSILON);
 
-pub fn rational_cubic_interpolation<T>(
-    x: T,
-    x_l: T,
-    x_r: T,
-    y_l: T,
-    y_r: T,
-    d_l: T,
-    d_r: T,
-    r: T,
-) -> Result<T, String>
-where
-    T: Float + FromPrimitive,
-{
+pub fn rational_cubic_interpolation(
+    x: f64,
+    x_l: f64,
+    x_r: f64,
+    y_l: f64,
+    y_r: f64,
+    d_l: f64,
+    d_r: f64,
+    r: f64,
+) -> Result<f64, String> {
     // TODO: verify is it necessary to check for infinite values
     // or ensure that they are not present in the input
     if x.is_infinite() || x_l.is_infinite() || x_r.is_infinite() {
@@ -25,16 +22,16 @@ where
     let h = x_r - x_l;
     // NOTE: This is an optimization as reuse calculated value of `h`.
     // Based on `additional_benches_to_verify::abs_vs_equality_benchmarks` as an evidence
-    if h.abs() <= T::epsilon() {
-        return Ok(T::from(0.5).unwrap() * (y_l + y_r));
+    if h.abs() <= f64::EPSILON {
+        return Ok(0.5 * (y_l + y_r));
     }
 
     let t = (x - x_l) / h;
-    let omt = T::one() - t;
+    let omt = 1.0 - t;
 
     // r should be greater than -1.
     // We do not use assert(r > -1) here in order to allow values such as NaN to be propagated as they should.
-    if r < T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap() {
+    if r < MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE {
         let t_power = t * t;
         let omt2 = omt * omt;
 
@@ -43,7 +40,7 @@ where
             + (r * y_l + h * d_l) * t * omt2
             + y_l * omt2 * omt;
 
-        let denominator = T::one() + (r - T::from(3.0).unwrap()) * t * omt;
+        let denominator = 1.0 + (r - 3.0) * t * omt;
 
         // Formula (2.4) divided by formula (2.5)
         Ok(numerator / denominator)
@@ -54,20 +51,17 @@ where
     }
 }
 
-fn minimum_rational_cubic_control_parameter<T>(
-    d_l: T,
-    d_r: T,
-    s: T,
+fn minimum_rational_cubic_control_parameter(
+    d_l: f64,
+    d_r: f64,
+    s: f64,
     prefer_shape_preservation_over_smoothness: bool,
-) -> T
-where
-    T: Float + FromPrimitive,
-{
-    let monotonic = d_l * s >= T::zero() && d_r * s >= T::zero();
+) -> f64 {
+    let monotonic = d_l * s >= 0.0 && d_r * s >= 0.0;
     let convex = d_l <= s && s <= d_r;
     let concave = d_l >= s && s >= d_r;
     if !monotonic && !convex && !concave {
-        return T::from(MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap();
+        return MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE;
     }
     let d_r_m_d_l = d_r - d_l;
     let d_r_m_s = d_r - s;
@@ -78,9 +72,9 @@ where
     let r1 = match (monotonic, s.is_zero()) {
         (true, false) => (d_r + d_l) / s,
         (true, true) if prefer_shape_preservation_over_smoothness => {
-            T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap()
+            MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE
         }
-        _ => T::min_value(),
+        _ => f64::MIN,
     };
 
     let r2 = match (
@@ -89,15 +83,15 @@ where
         prefer_shape_preservation_over_smoothness,
     ) {
         (true, _, _) if !s_m_d_l.is_zero() && !d_r_m_s.is_zero() => {
-            T::max((d_r_m_d_l / d_r_m_s).abs(), (d_r_m_d_l / s_m_d_l).abs())
+            f64::max((d_r_m_d_l / d_r_m_s).abs(), (d_r_m_d_l / s_m_d_l).abs())
         }
-        (_, true, true) => T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
-        _ => T::min_value(),
+        (_, true, true) => MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+        _ => f64::MIN,
     };
 
-    T::max(
-        T::from(MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
-        T::max(r1, r2),
+    f64::max(
+        MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+        f64::max(r1, r2),
     )
 }
 
@@ -106,23 +100,20 @@ pub enum Side {
     Right,
 }
 
-fn rational_cubic_control_parameter<T>(
-    x_l: T,
-    x_r: T,
-    y_l: T,
-    y_r: T,
-    d_l: T,
-    d_r: T,
-    second_derivative: T,
+fn rational_cubic_control_parameter(
+    x_l: f64,
+    x_r: f64,
+    y_l: f64,
+    y_r: f64,
+    d_l: f64,
+    d_r: f64,
+    second_derivative: f64,
     side: Side,
-) -> T
-where
-    T: Float + FromPrimitive,
-{
+) -> f64 {
     let h = x_r - x_l;
-    let numerator = T::from(0.5).unwrap() * second_derivative.mul_add(h, d_r - d_l);
+    let numerator = 0.5 * second_derivative.mul_add(h, d_r - d_l);
     if numerator.is_zero() {
-        return T::zero();
+        return 0.0;
     }
 
     let denominator = match side {
@@ -132,28 +123,25 @@ where
 
     match (
         denominator.is_zero() || denominator.is_infinite(),
-        numerator > T::zero(),
+        numerator > 0.0,
     ) {
-        (true, true) => T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
-        (true, false) => T::from(MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
+        (true, true) => MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+        (true, false) => MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
         _ => numerator / denominator,
     }
 }
 
-pub fn convex_rational_cubic_control_parameter<T>(
-    x_l: T,
-    x_r: T,
-    y_l: T,
-    y_r: T,
-    d_l: T,
-    d_r: T,
-    second_derivative: T,
+pub fn convex_rational_cubic_control_parameter(
+    x_l: f64,
+    x_r: f64,
+    y_l: f64,
+    y_r: f64,
+    d_l: f64,
+    d_r: f64,
+    second_derivative: f64,
     prefer_shape_preservation_over_smoothness: bool,
     side: Side,
-) -> T
-where
-    T: Float + FromPrimitive,
-{
+) -> f64 {
     let r = rational_cubic_control_parameter(x_l, x_r, y_l, y_r, d_l, d_r, second_derivative, side);
     let r_min = minimum_rational_cubic_control_parameter(
         d_l,
