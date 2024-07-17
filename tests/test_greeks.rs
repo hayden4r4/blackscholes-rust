@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{Greeks, Inputs, OptionType};
+    use blackscholes::{Greeks, Inputs, OptionType};
 
     #[test]
     fn test_calc_delta_zero_stock_price() {
