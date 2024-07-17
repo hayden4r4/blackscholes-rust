@@ -3,11 +3,7 @@ use crate::lets_be_rational::intrinsic::normalised_intrinsic;
 use crate::lets_be_rational::normal_distribution::{
     inverse_f_upper_map, inverse_normal_cdf, standard_normal_cdf,
 };
-use crate::lets_be_rational::rational_cubic::{
-    convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side,
-    convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side,
-    rational_cubic_interpolation,
-};
+use crate::lets_be_rational::rational_cubic::{convex_rational_cubic_control_parameter, rational_cubic_interpolation, Side};
 use crate::lets_be_rational::{DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI};
 use crate::OptionType;
 
@@ -196,7 +192,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
             let (f_lower_map_l, d_f_lower_map_l_d_beta, d2_f_lower_map_l_d_beta2) =
                 compute_f_lower_map_and_first_two_derivatives(x, s_l);
             let r_ll =
-                convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(
+                convex_rational_cubic_control_parameter(
                     0.0,
                     b_l,
                     0.0,
@@ -205,6 +201,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                     d_f_lower_map_l_d_beta,
                     d2_f_lower_map_l_d_beta2,
                     true,
+                    Side::Right,
                 );
             // TODO: Unwrap terrible approach, handle it properly
             f = rational_cubic_interpolation(
@@ -270,7 +267,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
         } else {
             let v_l = normalised_vega(x, s_l);
             let r_lm =
-                convex_rational_cubic_control_parameter_to_fit_second_derivative_at_right_side(
+                convex_rational_cubic_control_parameter(
                     b_l,
                     b_c,
                     s_l,
@@ -279,6 +276,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                     1.0 / v_c,
                     0.0,
                     false,
+                    Side::Right,
                 );
             // TODO: Unwrap terrible approach, handle it properly
             s = rational_cubic_interpolation(beta, b_l, b_c, s_l, s_c, 1.0 / v_l, 1.0 / v_c, r_lm)
@@ -296,7 +294,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
         if beta <= b_h {
             let v_h = normalised_vega(x, s_h);
             let r_hm =
-                convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(
+                convex_rational_cubic_control_parameter(
                     b_c,
                     b_h,
                     s_c,
@@ -305,6 +303,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                     1.0 / v_h,
                     0.0,
                     false,
+                    Side::Left,
                 );
             // TODO: Unwrap terrible approach, handle it properly
             s = rational_cubic_interpolation(beta, b_c, b_h, s_c, s_h, 1.0 / v_c, 1.0 / v_h, r_hm)
@@ -316,7 +315,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                 compute_f_upper_map_and_first_two_derivatives(x, s_h);
             if d2_f_upper_map_h_d_beta2 > -SQRT_DBL_MAX && d2_f_upper_map_h_d_beta2 < SQRT_DBL_MAX {
                 let r_hh =
-                    convex_rational_cubic_control_parameter_to_fit_second_derivative_at_left_side(
+                    convex_rational_cubic_control_parameter(
                         b_h,
                         b_max,
                         f_upper_map_h,
@@ -325,6 +324,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                         -0.5,
                         d2_f_upper_map_h_d_beta2,
                         true,
+                        Side::Left,
                     );
                 // TODO: Unwrap terrible approach, handle it properly
                 f = rational_cubic_interpolation(
