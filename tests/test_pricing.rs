@@ -1,6 +1,6 @@
 use blackscholes::{Inputs, OptionType, Pricing};
 
-const INPUTS_CALL_OTM: Inputs = Inputs {
+const INPUTS_CALL_OTM: Inputs<f64> = Inputs {
     option_type: OptionType::Call,
     s: 100.0,
     k: 110.0,
@@ -10,7 +10,7 @@ const INPUTS_CALL_OTM: Inputs = Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_CALL_ITM: Inputs = Inputs {
+const INPUTS_CALL_ITM: Inputs<f64> = Inputs {
     option_type: OptionType::Call,
     s: 100.0,
     k: 90.0,
@@ -20,7 +20,7 @@ const INPUTS_CALL_ITM: Inputs = Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_OTM: Inputs = Inputs {
+const INPUTS_PUT_OTM: Inputs<f64> = Inputs {
     option_type: OptionType::Put,
     s: 100.0,
     k: 90.0,
@@ -30,7 +30,7 @@ const INPUTS_PUT_OTM: Inputs = Inputs {
     t: 20.0 / 365.25,
     sigma: Some(0.2),
 };
-const INPUTS_PUT_ITM: Inputs = Inputs {
+const INPUTS_PUT_ITM: Inputs<f64> = Inputs {
     option_type: OptionType::Put,
     s: 100.0,
     k: 110.0,
@@ -62,26 +62,22 @@ fn price_put_itm() {
 fn price_using_lets_be_rational() {
     // compare the results from calc_price() and calc_rational_price() for the options above
     assert!(
-        (INPUTS_CALL_OTM.calc_price().unwrap()
-            - INPUTS_CALL_OTM.calc_rational_price().unwrap() as f32)
+        (INPUTS_CALL_OTM.calc_price().unwrap() - INPUTS_CALL_OTM.calc_rational_price().unwrap())
             .abs()
             < 0.001
     );
     assert!(
-        (INPUTS_CALL_ITM.calc_price().unwrap()
-            - INPUTS_CALL_ITM.calc_rational_price().unwrap() as f32)
+        (INPUTS_CALL_ITM.calc_price().unwrap() - INPUTS_CALL_ITM.calc_rational_price().unwrap())
             .abs()
             < 0.001
     );
     assert!(
-        (INPUTS_PUT_OTM.calc_price().unwrap()
-            - INPUTS_PUT_OTM.calc_rational_price().unwrap() as f32)
+        (INPUTS_PUT_OTM.calc_price().unwrap() - INPUTS_PUT_OTM.calc_rational_price().unwrap())
             .abs()
             < 0.001
     );
     assert!(
-        (INPUTS_PUT_ITM.calc_price().unwrap()
-            - INPUTS_PUT_ITM.calc_rational_price().unwrap() as f32)
+        (INPUTS_PUT_ITM.calc_price().unwrap() - INPUTS_PUT_ITM.calc_rational_price().unwrap())
             .abs()
             < 0.001
     );

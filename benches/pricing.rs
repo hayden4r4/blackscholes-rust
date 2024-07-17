@@ -1,7 +1,7 @@
 use blackscholes::{Inputs, OptionType, Pricing};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-const INPUTS: Inputs = Inputs {
+const INPUTS: Inputs<f64> = Inputs {
     option_type: OptionType::Call,
     s: 51.03,
     k: 55.0,

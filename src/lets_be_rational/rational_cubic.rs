@@ -1,18 +1,21 @@
-use num_traits::Zero;
+use num_traits::{Float, FromPrimitive};
 
 const MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE: f64 = -(1.0 - 1.4901161193847656e-8); // -(1.0 - f64::EPSILON.sqrt());
 const MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE: f64 = 2.0 / (f64::EPSILON * f64::EPSILON);
 
-pub fn rational_cubic_interpolation(
-    x: f64,
-    x_l: f64,
-    x_r: f64,
-    y_l: f64,
-    y_r: f64,
-    d_l: f64,
-    d_r: f64,
-    r: f64,
-) -> Result<f64, String> {
+pub fn rational_cubic_interpolation<T>(
+    x: T,
+    x_l: T,
+    x_r: T,
+    y_l: T,
+    y_r: T,
+    d_l: T,
+    d_r: T,
+    r: T,
+) -> Result<T, String>
+where
+    T: Float + FromPrimitive,
+{
     // TODO: verify is it necessary to check for infinite values
     // or ensure that they are not present in the input
     if x.is_infinite() || x_l.is_infinite() || x_r.is_infinite() {
@@ -22,16 +25,16 @@ pub fn rational_cubic_interpolation(
     let h = x_r - x_l;
     // NOTE: This is an optimization as reuse calculated value of `h`.
     // Based on `additional_benches_to_verify::abs_vs_equality_benchmarks` as an evidence
-    if h.abs() <= f64::EPSILON {
-        return Ok(0.5 * (y_l + y_r));
+    if h.abs() <= T::epsilon() {
+        return Ok(T::from(0.5).unwrap() * (y_l + y_r));
     }
 
     let t = (x - x_l) / h;
-    let omt = 1.0 - t;
+    let omt = T::one() - t;
 
     // r should be greater than -1.
     // We do not use assert(r > -1) here in order to allow values such as NaN to be propagated as they should.
-    if r < MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE {
+    if r < T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap() {
         let t_power = t * t;
         let omt2 = omt * omt;
 
@@ -40,7 +43,7 @@ pub fn rational_cubic_interpolation(
             + (r * y_l + h * d_l) * t * omt2
             + y_l * omt2 * omt;
 
-        let denominator = 1.0 + (r - 3.0) * t * omt;
+        let denominator = T::one() + (r - T::from(3.0).unwrap()) * t * omt;
 
         // Formula (2.4) divided by formula (2.5)
         Ok(numerator / denominator)
@@ -51,17 +54,20 @@ pub fn rational_cubic_interpolation(
     }
 }
 
-fn minimum_rational_cubic_control_parameter(
-    d_l: f64,
-    d_r: f64,
-    s: f64,
+fn minimum_rational_cubic_control_parameter<T>(
+    d_l: T,
+    d_r: T,
+    s: T,
     prefer_shape_preservation_over_smoothness: bool,
-) -> f64 {
-    let monotonic = d_l * s >= 0.0 && d_r * s >= 0.0;
+) -> T
+where
+    T: Float + FromPrimitive,
+{
+    let monotonic = d_l * s >= T::zero() && d_r * s >= T::zero();
     let convex = d_l <= s && s <= d_r;
     let concave = d_l >= s && s >= d_r;
     if !monotonic && !convex && !concave {
-        return MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE;
+        return T::from(MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap();
     }
     let d_r_m_d_l = d_r - d_l;
     let d_r_m_s = d_r - s;
@@ -72,9 +78,9 @@ fn minimum_rational_cubic_control_parameter(
     let r1 = match (monotonic, s.is_zero()) {
         (true, false) => (d_r + d_l) / s,
         (true, true) if prefer_shape_preservation_over_smoothness => {
-            MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE
+            T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap()
         }
-        _ => f64::MIN,
+        _ => T::min_value(),
     };
 
     let r2 = match (
@@ -83,15 +89,15 @@ fn minimum_rational_cubic_control_parameter(
         prefer_shape_preservation_over_smoothness,
     ) {
         (true, _, _) if !s_m_d_l.is_zero() && !d_r_m_s.is_zero() => {
-            f64::max((d_r_m_d_l / d_r_m_s).abs(), (d_r_m_d_l / s_m_d_l).abs())
+            T::max((d_r_m_d_l / d_r_m_s).abs(), (d_r_m_d_l / s_m_d_l).abs())
         }
-        (_, true, true) => MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
-        _ => f64::MIN,
+        (_, true, true) => T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
+        _ => T::min_value(),
     };
 
-    f64::max(
-        MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
-        f64::max(r1, r2),
+    T::max(
+        T::from(MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
+        T::max(r1, r2),
     )
 }
 
@@ -100,20 +106,23 @@ pub enum Side {
     Right,
 }
 
-fn rational_cubic_control_parameter(
-    x_l: f64,
-    x_r: f64,
-    y_l: f64,
-    y_r: f64,
-    d_l: f64,
-    d_r: f64,
-    second_derivative: f64,
+fn rational_cubic_control_parameter<T>(
+    x_l: T,
+    x_r: T,
+    y_l: T,
+    y_r: T,
+    d_l: T,
+    d_r: T,
+    second_derivative: T,
     side: Side,
-) -> f64 {
+) -> T
+where
+    T: Float + FromPrimitive,
+{
     let h = x_r - x_l;
-    let numerator = 0.5 * second_derivative.mul_add(h, d_r - d_l);
+    let numerator = T::from(0.5).unwrap() * second_derivative.mul_add(h, d_r - d_l);
     if numerator.is_zero() {
-        return 0.0;
+        return T::zero();
     }
 
     let denominator = match side {
@@ -123,25 +132,28 @@ fn rational_cubic_control_parameter(
 
     match (
         denominator.is_zero() || denominator.is_infinite(),
-        numerator > 0.0,
+        numerator > T::zero(),
     ) {
-        (true, true) => MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
-        (true, false) => MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+        (true, true) => T::from(MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
+        (true, false) => T::from(MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE).unwrap(),
         _ => numerator / denominator,
     }
 }
 
-pub fn convex_rational_cubic_control_parameter(
-    x_l: f64,
-    x_r: f64,
-    y_l: f64,
-    y_r: f64,
-    d_l: f64,
-    d_r: f64,
-    second_derivative: f64,
+pub fn convex_rational_cubic_control_parameter<T>(
+    x_l: T,
+    x_r: T,
+    y_l: T,
+    y_r: T,
+    d_l: T,
+    d_r: T,
+    second_derivative: T,
     prefer_shape_preservation_over_smoothness: bool,
     side: Side,
-) -> f64 {
+) -> T
+where
+    T: Float + FromPrimitive,
+{
     let r = rational_cubic_control_parameter(x_l, x_r, y_l, y_r, d_l, d_r, second_derivative, side);
     let r_min = minimum_rational_cubic_control_parameter(
         d_l,
