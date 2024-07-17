@@ -67,12 +67,12 @@ fn minimum_rational_cubic_control_parameter(
 
     // If monotonicity on this interval is possible,
     // set r1 to satisfy the monotonicity condition (3.8).
-    let r1 = if monotonic && !s.is_zero() {
-        (d_r + d_l) / s
-    } else if monotonic && prefer_shape_preservation_over_smoothness {
-        MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE
-    } else {
-        f64::MIN
+    let r1 = match (monotonic, s.is_zero()) {
+        (true, false) => (d_r + d_l) / s,
+        (true, true) if prefer_shape_preservation_over_smoothness => {
+            MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE
+        }
+        _ => f64::MIN,
     };
 
     let r2 = match (
