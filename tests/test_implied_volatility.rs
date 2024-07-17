@@ -6,7 +6,7 @@ mod tests {
     const TOLERANCE_F32: f64 = 1e-5;
 
     #[test]
-    fn test_put_otm_rational_iv() {
+    fn test_put_otm_rational_iv_f64() {
         // arrange
         let sigma: f64 = 0.25;
         let mut inputs_put_otm: Inputs<f64> = Inputs {
@@ -34,7 +34,7 @@ mod tests {
     }
 
     #[test]
-    fn test_put_otm_rational_iv() {
+    fn test_put_otm_rational_iv_f32() {
         // arrange
         let sigma: f32 = 0.25;
         let mut inputs_put_otm: Inputs<f32> = Inputs {
@@ -62,7 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn test_call_itm_rational_iv() {
+    fn test_call_itm_rational_iv_f64() {
         // arrange
         let sigma: f64 = 0.15;
         let mut inputs_call_itm: Inputs<f64> = Inputs {
@@ -90,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_call_itm_rational_iv() {
+    fn test_call_itm_rational_iv_f32() {
         // arrange
         let sigma: f32 = 0.15;
         let mut inputs_call_itm: Inputs<f32> = Inputs {
@@ -118,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    fn test_put_itm_rational_iv() {
+    fn test_put_itm_rational_iv_f64() {
         // arrange
         let sigma: f64 = 0.18;
         let mut inputs_put_itm: Inputs<f64> = Inputs {
@@ -146,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn test_put_itm_rational_iv() {
+    fn test_put_itm_rational_iv_f32() {
         // arrange
         let sigma: f32 = 0.18;
         let mut inputs_put_itm: Inputs<f32> = Inputs {
@@ -174,7 +174,7 @@ mod tests {
     }
 
     #[test]
-    fn test_call_atm_rational_iv() {
+    fn test_call_atm_rational_iv_f64() {
         // arrange
         let sigma: f64 = 0.2;
         let mut inputs_call_atm: Inputs<f64> = Inputs {
@@ -202,7 +202,7 @@ mod tests {
     }
 
     #[test]
-    fn test_call_atm_rational_iv() {
+    fn test_call_atm_rational_iv_f32() {
         // arrange
         let sigma: f32 = 0.2;
         let mut inputs_call_atm: Inputs<f32> = Inputs {
@@ -230,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn test_put_atm_rational_iv() {
+    fn test_put_atm_rational_iv_f64() {
         // arrange
         let sigma: f64 = 0.22;
         let mut inputs_put_atm: Inputs<f64> = Inputs {
@@ -258,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn test_put_atm_rational_iv() {
+    fn test_put_atm_rational_iv_f32() {
         // arrange
         let sigma: f32 = 0.22;
         let mut inputs_put_atm: Inputs<f32> = Inputs {

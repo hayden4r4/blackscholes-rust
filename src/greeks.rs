@@ -48,7 +48,7 @@ where
     fn calc_delta(&self) -> Result<T, String> {
         let (nd1, _): (T, T) = calc_nd1nd2(self)?;
 
-        let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
+        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
         let delta = option_type * T::E().powf(-self.q * self.t) * nd1;
 
         Ok(delta)
@@ -96,7 +96,7 @@ where
         let (nd1, nd2): (T, T) = calc_nd1nd2(self)?;
 
         // Calculation uses 365.25 for T: Time of days per year.
-        let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
+        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
         let theta = (-(self.s * sigma * T::E().powf(-self.q * self.t) * nprimed1
             / (T::from(2.).unwrap() * self.t.sqrt()))
             - self.r * self.k * T::E().powf(-self.r * self.t) * nd2 * option_type
@@ -141,7 +141,7 @@ where
     fn calc_rho(&self) -> Result<T, String> {
         let (_, nd2): (T, T) = calc_nd1nd2(self)?;
 
-        let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
+        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
         let rho = option_type
             * T::from(0.01).unwrap()
             * self.k
@@ -173,7 +173,7 @@ where
         let (nd1, _) = calc_nd1nd2(self)?;
         let e_negqt = T::E().powf(-self.q * self.t);
 
-        let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
+        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
         let epsilon: T = -self.s * self.t * e_negqt * nd1 * option_type;
 
         Ok(epsilon)
@@ -238,7 +238,7 @@ where
         let (_, d2) = calc_d1d2(self)?;
         let e_negqt = T::E().powf(-self.q * self.t);
 
-        let option_type: T = T::from::<f32>(self.option_type.into()).unwrap();
+        let option_type: T = T::from::<f64>(self.option_type.into()).unwrap();
         let charm: T = option_type * self.q * e_negqt * nd1
             - e_negqt
                 * nprimed1
