@@ -19,6 +19,7 @@
 pub use std::f32::consts::{E, PI};
 
 use num_traits::NumCast;
+use statrs::consts::SQRT_2PI;
 use statrs::distribution::{ContinuousCDF, Normal};
 
 pub use greeks::Greeks;
@@ -34,7 +35,6 @@ mod pricing;
 
 pub(crate) const N_MEAN: f32 = 0.0;
 pub(crate) const N_STD_DEV: f32 = 1.0;
-pub(crate) const SQRT_2PI: f32 = 2.5066282;
 pub(crate) const HALF: f32 = 0.5;
 pub(crate) const DAYS_PER_YEAR: f32 = 365.25;
 
@@ -114,7 +114,7 @@ pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f32, f32), String> {
 /// f32 of the value of the n probability density function.
 pub(crate) fn calc_npdf(x: f32) -> f32 {
     let d: f32 = (x - N_MEAN) / N_STD_DEV;
-    (-HALF * d * d).exp() / (SQRT_2PI * N_STD_DEV)
+    (-HALF * d * d).exp() / (SQRT_2PI as f32 * N_STD_DEV)
 }
 
 /// # Returns

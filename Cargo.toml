@@ -31,6 +31,10 @@ harness = false
 name = "implied_volatility"
 harness = false
 
+[[bench]]
+name = "black"
+harness = false
+
 # enable this to run additional benches
 # [[bench]]
 # name = "additional_benches_to_verify"

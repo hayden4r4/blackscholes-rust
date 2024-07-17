@@ -47,12 +47,12 @@ impl ImpliedVolatility<f32> for Inputs {
         let fplusX: f32 = inputs.s + X;
         let oneoversqrtT: f32 = 1.0 / inputs.t.sqrt();
 
-        let x: f32 = oneoversqrtT * (SQRT_2PI / (fplusX));
+        let x: f32 = oneoversqrtT * (SQRT_2PI as f32 / (fplusX));
         let y: f32 = p - (inputs.s - inputs.k) / 2.0
             + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt();
 
         let mut sigma: f32 = oneoversqrtT
-            * (SQRT_2PI / fplusX)
+            * (SQRT_2PI as f32 / fplusX)
             * (p - fminusX / 2.0 + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt())
             + A
             + B / x

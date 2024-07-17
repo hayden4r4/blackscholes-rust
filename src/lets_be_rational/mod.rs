@@ -1,7 +1,7 @@
 use crate::lets_be_rational::black::normalised_black;
 use crate::OptionType;
 
-mod black;
+pub mod black;
 mod intrinsic;
 mod normal_distribution;
 mod rational_cubic;
