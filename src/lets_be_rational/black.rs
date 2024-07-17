@@ -346,7 +346,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn compare_original_and_taylor() {
+    fn compare_original_and_new_one() {
         let test_cases = [
             // correct data from the original implementation
             (-12.0, 0.1),
