@@ -145,17 +145,12 @@ const H_LARGE: f64 = -10.0;
 /// * `Ok(f64)` - The computed price
 /// * `Err(String)` - An error message if the input is out of the valid range
 pub fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> Result<f64, &'static str> {
-    // Constants
-    // From section 6: "we found that for n = 17, the approximation series has a maximum relative error of 1.64 · 10^−16 for all z ≤ −10"
-
-    const ERROR_MESSAGE: &str =
-        "This asymptotic expansion is only valid for large negative h and small t";
     let tau_small: f64 = 2.0 * f64::EPSILON.sqrt().powi(16);
 
     // Check if we're in the correct region
     // From section 6: "In the region of large negative h, we can realize these preferences by the aid of the formulation (6.10) for the normalized Black function"
     if h > H_LARGE || t >= (h.abs() - H_LARGE.abs() + tau_small) {
-        return Err(ERROR_MESSAGE);
+        return Err("This asymptotic expansion is only valid for large negative h and small t");
     }
 
     let h_plus_t = h + t;
