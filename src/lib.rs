@@ -137,7 +137,7 @@ where
     let (d1, _) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
-    let nprimed1 = calc_npdf(From::from(d1));
+    let nprimed1 = calc_npdf(d1);
     Ok(nprimed1)
 }
 
