@@ -10,19 +10,16 @@ readme = "README.md"
 authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
-[build-dependencies]
-cc = { version="1.1", features=["parallel"] }
-
 [dev-dependencies]
-criterion = "0.5"
+criterion = "0.5.1"
 proptest = "1.5.0"
 approx = "0.5.1"
 
 [dependencies]
-num-traits = "0.2"
+num-traits = "0.2.19"
 statrs = "0.17.1"
-libc = "0.2"
 log = "0.4.22"
+once_cell = "1.19.0"
 
 # Benchmarks
 [[bench]]

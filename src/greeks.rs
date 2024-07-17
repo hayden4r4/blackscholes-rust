@@ -43,8 +43,8 @@ impl Greeks<f32> for Inputs {
     fn calc_delta(&self) -> Result<f32, String> {
         let (nd1, _): (f32, f32) = calc_nd1nd2(self)?;
 
-        let option_type: f32 = self.option_type.into();
-        let delta = option_type * E.powf(-self.q * self.t) * nd1;
+        let option_type: f64 = self.option_type.into();
+        let delta = option_type as f32 * E.powf(-self.q * self.t) * nd1;
 
         Ok(delta)
     }
@@ -91,11 +91,11 @@ impl Greeks<f32> for Inputs {
         let (nd1, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
         // Calculation uses 365.25 for f32: Time of days per year.
-        let option_type: f32 = self.option_type.into();
+        let option_type: f64 = self.option_type.into();
         let theta = (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
             / (2.0 * self.t.sqrt()))
-            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * option_type
-            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * option_type)
+            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * option_type as f32
+            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * option_type as f32)
             / DAYS_PER_YEAR;
 
         Ok(theta)
@@ -132,8 +132,8 @@ impl Greeks<f32> for Inputs {
     fn calc_rho(&self) -> Result<f32, String> {
         let (_, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
-        let option_type: f32 = self.option_type.into();
-        let rho = option_type / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2;
+        let option_type: f64 = self.option_type.into();
+        let rho = option_type as f32 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2;
 
         Ok(rho)
     }
@@ -159,8 +159,8 @@ impl Greeks<f32> for Inputs {
         let (nd1, _) = calc_nd1nd2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
-        let option_type: f32 = self.option_type.into();
-        let epsilon: f32 = -self.s * self.t * e_negqt * nd1 * option_type;
+        let option_type: f64 = self.option_type.into();
+        let epsilon: f32 = -self.s * self.t * e_negqt * nd1 * option_type as f32;
 
         Ok(epsilon)
     }
@@ -223,8 +223,8 @@ impl Greeks<f32> for Inputs {
         let (_, d2) = calc_d1d2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
-        let option_type: f32 = self.option_type.into();
-        let charm: f32 = option_type * self.q * e_negqt * nd1
+        let option_type: f64 = self.option_type.into();
+        let charm: f32 = option_type as f32 * self.q * e_negqt * nd1
             - e_negqt * nprimed1 * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
                 / (2.0 * self.t * sigma * self.t.sqrt());
 

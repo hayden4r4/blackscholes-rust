@@ -1,9 +1,7 @@
 use num_traits::Float;
 
-use crate::{
-    greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
-    pricing::Pricing, Inputs, *,
-};
+use crate::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
+use crate::{greeks::Greeks, pricing::Pricing, Inputs, *};
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
