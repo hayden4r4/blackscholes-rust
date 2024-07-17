@@ -162,20 +162,22 @@ mod tests {
 
     #[test]
     fn test_equal_x_values() {
-        let result = rational_cubic_interpolation(1.0, 1.0, 1.0, 2.0, 3.0, 0.5, 0.5, 0.0).unwrap();
+        let result = rational_cubic_interpolation(1.0, 1.0, 1.0, 2.0, 3.0, 0.5, 0.5, 0.0)
+            .expect("Test purpose");
         assert_approx_eq!(result, 2.5, 1e-6);
     }
 
     #[test]
     fn test_linear_interpolation() {
-        let result =
-            rational_cubic_interpolation(1.5, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, f64::MAX).unwrap();
+        let result = rational_cubic_interpolation(1.5, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, f64::MAX)
+            .expect("Test purpose");
         assert_approx_eq!(result, 1.5, 1e-6);
     }
 
     #[test]
     fn test_cubic_interpolation() {
-        let result = rational_cubic_interpolation(1.5, 1.0, 2.0, 1.0, 2.0, 0.0, 0.0, 0.0).unwrap();
+        let result = rational_cubic_interpolation(1.5, 1.0, 2.0, 1.0, 2.0, 0.0, 0.0, 0.0)
+            .expect("Test purpose");
         assert_approx_eq!(result, 1.5, 1e-6);
     }
 
@@ -191,25 +193,25 @@ mod tests {
             1.0,
             MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE - 1e-10,
         )
-        .unwrap();
+        .expect("Test purpose");
         assert!(result.is_finite());
     }
 
     #[test]
     fn test_boundary_conditions() {
-        let result_left =
-            rational_cubic_interpolation(1.0, 1.0, 2.0, 1.0, 2.0, 0.5, 0.5, 0.0).unwrap();
+        let result_left = rational_cubic_interpolation(1.0, 1.0, 2.0, 1.0, 2.0, 0.5, 0.5, 0.0)
+            .expect("Test purpose");
         assert_approx_eq!(result_left, 1.0, 1e-6);
 
-        let result_right =
-            rational_cubic_interpolation(2.0, 1.0, 2.0, 1.0, 2.0, 0.5, 0.5, 0.0).unwrap();
+        let result_right = rational_cubic_interpolation(2.0, 1.0, 2.0, 1.0, 2.0, 0.5, 0.5, 0.0)
+            .expect("Test purpose");
         assert_approx_eq!(result_right, 2.0, 1e-6);
     }
 
     #[test]
     fn test_nan_propagation() {
-        let result =
-            rational_cubic_interpolation(f64::NAN, 1.0, 2.0, 1.0, 2.0, 0.5, 0.5, 0.0).unwrap();
+        let result = rational_cubic_interpolation(f64::NAN, 1.0, 2.0, 1.0, 2.0, 0.5, 0.5, 0.0)
+            .expect("Test purpose");
         assert!(result.is_nan());
     }
 

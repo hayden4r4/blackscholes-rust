@@ -204,7 +204,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                 true,
                 Side::Right,
             );
-            // TODO: Unwrap terrible approach, handle it properly
+            // TODO: Expect terrible approach, handle it properly
             f = rational_cubic_interpolation(
                 beta,
                 0.0,
@@ -215,7 +215,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                 d_f_lower_map_l_d_beta,
                 r_ll,
             )
-            .unwrap();
+            .expect("We should expect correct parameters");
             if f <= 0.0 {
                 let t = beta / b_l;
                 f = (f_lower_map_l * t + b_l * (1.0 - t)) * t;
@@ -278,9 +278,9 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                 false,
                 Side::Right,
             );
-            // TODO: Unwrap terrible approach, handle it properly
+            // TODO: Expect terrible approach, handle it properly
             s = rational_cubic_interpolation(beta, b_l, b_c, s_l, s_c, 1.0 / v_l, 1.0 / v_c, r_lm)
-                .unwrap();
+                .expect("We should expect correct parameters");
             s_left = s_l;
             s_right = s_c;
         }
@@ -304,9 +304,9 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                 false,
                 Side::Left,
             );
-            // TODO: Unwrap terrible approach, handle it properly
+            // TODO: Expect terrible approach, handle it properly
             s = rational_cubic_interpolation(beta, b_c, b_h, s_c, s_h, 1.0 / v_c, 1.0 / v_h, r_hm)
-                .unwrap();
+                .expect("We should expect correct parameters");
             s_left = s_c;
             s_right = s_h;
         } else {
@@ -324,7 +324,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                     true,
                     Side::Left,
                 );
-                // TODO: Unwrap terrible approach, handle it properly
+                // TODO: Expect terrible approach, handle it properly
                 f = rational_cubic_interpolation(
                     beta,
                     b_h,
@@ -335,7 +335,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
                     -0.5,
                     r_hh,
                 )
-                .unwrap();
+                .expect("We should expect correct parameters");
             }
             if f <= 0.0 {
                 let h = b_max - b_h;
