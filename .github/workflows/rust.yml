@@ -23,9 +23,11 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Cargo fmt
-      run: cargo fmt --all
+      run: cargo fmt --all --check
     - name: Cargo clippy
       run: cargo clippy --verbose
+    - name: cargo bench
+      run: cargo bench --verbose
     - name: Run tests
       run: cargo test --verbose
     - name: Install cargo-llvm-cov
