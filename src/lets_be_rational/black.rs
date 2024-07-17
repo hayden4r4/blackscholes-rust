@@ -89,7 +89,8 @@ pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
             < s * (SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD
                 + ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD)
     {
-        return asymptotic_expansion_of_normalised_black_call(x / s, 0.5 * s).unwrap();
+        return asymptotic_expansion_of_normalised_black_call(x / s, 0.5 * s)
+            .expect("Parameters should be correct - temporary expect");
     }
     if 0.5 * s < SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD {
         return small_t_expansion_of_normalised_black_call(x / s, 0.5 * s);
