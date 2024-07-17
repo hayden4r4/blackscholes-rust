@@ -75,9 +75,14 @@ fn minimum_rational_cubic_control_parameter(
         f64::MIN
     };
 
-    let r2 = match (convex || concave, monotonic, prefer_shape_preservation_over_smoothness) {
-        (true, _, _) if !s_m_d_l.is_zero() && !d_r_m_s.is_zero() =>
-            f64::max((d_r_m_d_l / d_r_m_s).abs(), (d_r_m_d_l / s_m_d_l).abs()),
+    let r2 = match (
+        convex || concave,
+        monotonic,
+        prefer_shape_preservation_over_smoothness,
+    ) {
+        (true, _, _) if !s_m_d_l.is_zero() && !d_r_m_s.is_zero() => {
+            f64::max((d_r_m_d_l / d_r_m_s).abs(), (d_r_m_d_l / s_m_d_l).abs())
+        }
         (_, true, true) => MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
         _ => f64::MIN,
     };
@@ -132,16 +137,7 @@ pub fn convex_rational_cubic_control_parameter(
     prefer_shape_preservation_over_smoothness: bool,
     side: Side,
 ) -> f64 {
-    let r = rational_cubic_control_parameter(
-        x_l,
-        x_r,
-        y_l,
-        y_r,
-        d_l,
-        d_r,
-        second_derivative,
-        side,
-    );
+    let r = rational_cubic_control_parameter(x_l, x_r, y_l, y_r, d_l, d_r, second_derivative, side);
     let r_min = minimum_rational_cubic_control_parameter(
         d_l,
         d_r,
@@ -245,13 +241,21 @@ mod tests {
     #[test]
     fn test_non_monotonic_non_convex_non_concave() {
         let result = minimum_rational_cubic_control_parameter(1.0, -1.0, 2.0, false);
-        assert_approx_eq!(result, MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE, EPSILON);
+        assert_approx_eq!(
+            result,
+            MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+            EPSILON
+        );
     }
 
     #[test]
     fn test_prefer_shape_preservation_monotonic() {
         let result = minimum_rational_cubic_control_parameter(1.0, 2.0, 0.0, true);
-        assert_approx_eq!(result, MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE, EPSILON);
+        assert_approx_eq!(
+            result,
+            MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+            EPSILON
+        );
     }
 
     #[test]
@@ -263,13 +267,21 @@ mod tests {
     #[test]
     fn test_zero_s_max() {
         let result = minimum_rational_cubic_control_parameter(1.0, 2.0, 0.0, true);
-        assert_approx_eq!(result, MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE, EPSILON);
+        assert_approx_eq!(
+            result,
+            MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+            EPSILON
+        );
     }
 
     #[test]
     fn test_zero_s_min() {
         let result = minimum_rational_cubic_control_parameter(1.0, 2.0, 0.0, false);
-        assert_approx_eq!(result, MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE, EPSILON);
+        assert_approx_eq!(
+            result,
+            MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE,
+            EPSILON
+        );
     }
 
     #[test]
