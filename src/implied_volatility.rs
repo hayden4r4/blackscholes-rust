@@ -1,22 +1,17 @@
-use num_traits::{float::FloatConst, AsPrimitive, Float, FromPrimitive};
+use num_traits::Float;
 
-use crate::{
-    greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
-    pricing::Pricing, Inputs, A, B, C, D, F, SQRT_2PI, _E,
-};
+use crate::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
+use crate::{greeks::Greeks, pricing::Pricing, Inputs, *};
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
     T: Float,
 {
     fn calc_iv(&self, tolerance: T) -> Result<T, String>;
-    fn calc_rational_iv(&self) -> Result<T, String>;
+    fn calc_rational_iv(&self) -> Result<f64, String>;
 }
 
-impl<T> ImpliedVolatility<T> for Inputs<T>
-where
-    T: Float + FromPrimitive + AsPrimitive<f64> + FloatConst,
-{
+impl ImpliedVolatility<f32> for Inputs {
     /// Calculates the implied volatility of the option.
     /// Tolerance is the max error allowed for the implied volatility,
     /// the lower the tolerance the more iterations will be required.
@@ -26,7 +21,7 @@ where
     /// # Requires
     /// s, k, r, q, t, p
     /// # Returns
-    /// T of the implied volatility of the option.
+    /// f32 of the implied volatility of the option.
     /// # Example:
     /// ```
     /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
@@ -37,41 +32,41 @@ where
     /// A more accurate method is the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// however this method is much more complicated, it is available as calc_rational_iv().
     #[allow(non_snake_case)]
-    fn calc_iv(&self, tolerance: T) -> Result<T, String> {
-        let mut inputs: Inputs<T> = self.clone();
+    fn calc_iv(&self, tolerance: f32) -> Result<f32, String> {
+        let mut inputs: Inputs = self.clone();
 
         let p = self
             .p
-            .ok_or("inputs.p must contain Some(T), found None".to_string())?;
+            .ok_or("inputs.p must contain Some(f32), found None".to_string())?;
+        // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
+        // commented out to replace with modified corrado-miller method.
+        // let mut sigma: f32 = (PI2 / inputs.t).sqrt() * (p / inputs.s);
 
-        let half = T::from(0.5).unwrap();
+        let X: f32 = inputs.k * E.powf(-inputs.r * inputs.t);
+        let fminusX: f32 = inputs.s - X;
+        let fplusX: f32 = inputs.s + X;
+        let oneoversqrtT: f32 = 1.0 / inputs.t.sqrt();
 
-        let X: T = inputs.k * T::E().powf(-inputs.r * inputs.t);
-        let fminusX: T = inputs.s - X;
-        let fplusX: T = inputs.s + X;
-        let oneoversqrtT: T = T::one() / inputs.t.sqrt();
+        let x: f32 = oneoversqrtT * (SQRT_2PI / (fplusX));
+        let y: f32 = p - (inputs.s - inputs.k) / 2.0
+            + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt();
 
-        let x: T = oneoversqrtT * (T::from(SQRT_2PI).unwrap() / (fplusX));
-        let y: T = p - (inputs.s - inputs.k) * half
-            + ((p - fminusX * half).powi(2) - fminusX.powi(2) / T::PI()).sqrt();
-
-        let mut sigma: T = oneoversqrtT
-            * (T::from(SQRT_2PI).unwrap() / fplusX)
-            * (p - fminusX * half
-                + ((p - fminusX * half).powi(2) - fminusX.powi(2) / T::PI()).sqrt())
-            + T::from(A).unwrap()
-            + T::from(B).unwrap() / x
-            + T::from(C).unwrap() * y
-            + T::from(D).unwrap() / x.powi(2)
-            + T::from(_E).unwrap() * y.powi(2)
-            + T::from(F).unwrap() * y / x;
+        let mut sigma: f32 = oneoversqrtT
+            * (SQRT_2PI / fplusX)
+            * (p - fminusX / 2.0 + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt())
+            + A
+            + B / x
+            + C * y
+            + D / x.powf(2.0)
+            + _E * y.powf(2.0)
+            + F * y / x;
 
         if sigma.is_nan() {
             Err("Failed to converge".to_string())?
         }
 
         // Initialize diff to 100 for use in while loop
-        let mut diff: T = T::from(100.0).unwrap();
+        let mut diff: f32 = 100.0;
 
         // Uses Newton Raphson algorithm to calculate implied volatility.
         // Test if the difference between calculated option price and actual option price is > tolerance,
@@ -79,7 +74,7 @@ where
         while diff.abs() > tolerance {
             inputs.sigma = Some(sigma);
             diff = Inputs::calc_price(&inputs)? - p;
-            sigma = sigma - diff / (Inputs::calc_vega(&inputs)? * T::from(100.0).unwrap());
+            sigma -= diff / (Inputs::calc_vega(&inputs)? * 100.0);
 
             if sigma.is_nan() || sigma.is_infinite() {
                 Err("Failed to converge".to_string())?
@@ -103,7 +98,7 @@ where
     /// Uses the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// from Jackel's C++ implementation, imported through the C FFI.  The C++ implementation is available at [here](http://www.jaeckel.org/LetsBeRational.7z)
     /// Per Jackel's whitepaper, this method can solve for the implied volatility to f64 precision in 2 iterations.
-    fn calc_rational_iv(&self) -> Result<T, String> {
+    fn calc_rational_iv(&self) -> Result<f64, String> {
         // extract price, or return error
         let p = self.p.ok_or("Option price is required".to_string())?;
 
@@ -117,14 +112,14 @@ where
         let f = f * (-self.q * self.t).exp();
 
         let sigma = implied_volatility_from_a_transformed_rational_guess(
-            p,
-            f,
-            self.k,
-            self.t,
+            p as f64,
+            f as f64,
+            self.k as f64,
+            self.t as f64,
             self.option_type,
         );
 
-        if sigma.is_nan() || sigma.is_infinite() || sigma < T::zero() {
+        if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
             Err("Implied volatility failed to converge".to_string())?
         }
         Ok(sigma)
