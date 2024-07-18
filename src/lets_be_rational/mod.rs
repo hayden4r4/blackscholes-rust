@@ -8,7 +8,6 @@ pub mod test_utils {
     pub use super::black::*;
 }
 
-
 mod intrinsic;
 mod normal_distribution;
 mod rational_cubic;
