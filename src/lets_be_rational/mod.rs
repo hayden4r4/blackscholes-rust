@@ -2,12 +2,20 @@ use statrs::consts::SQRT_2PI;
 
 use crate::{lets_be_rational::black::normalised_black, OptionType};
 
-// TODO: Drop pub
-pub mod black;
+mod black;
+#[cfg(any(test, feature = "testing"))]
+pub mod test_utils {
+    pub use super::black::*;
+}
+
+
 mod intrinsic;
 mod normal_distribution;
 mod rational_cubic;
 mod so_rational;
+
+#[cfg(test)]
+mod black_tests;
 
 const IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS: i32 = 2;
 pub(crate) const DENORMALISATION_CUTOFF: f64 = 0.0;

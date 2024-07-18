@@ -27,7 +27,7 @@ jobs:
     - name: Cargo clippy
       run: cargo clippy --verbose
     - name: cargo bench
-      run: cargo bench --verbose
+      run: cargo bench --features testing --verbose
     - name: Run tests
       run: cargo test --verbose
     - name: Install cargo-llvm-cov

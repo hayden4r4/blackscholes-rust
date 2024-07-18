@@ -1,5 +1,5 @@
 extern crate criterion;
-use blackscholes::lets_be_rational::black::{
+use blackscholes::lets_be_rational::test_utils::{
     asymptotic_expansion_of_normalised_black_call,
     asymptotic_expansion_of_normalised_black_call_old, small_t_expansion_of_normalised_black_call,
     small_t_expansion_of_normalised_black_call_old,
