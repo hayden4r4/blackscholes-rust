@@ -2,7 +2,7 @@
 mod tests {
     use assert_approx_eq::assert_approx_eq;
 
-    use crate::lets_be_rational::black::{
+    use blackscholes::lets_be_rational::black::{
         asymptotic_expansion_of_normalised_black_call,
         asymptotic_expansion_of_normalised_black_call_old,
         small_t_expansion_of_normalised_black_call, small_t_expansion_of_normalised_black_call_old,
