@@ -18,13 +18,12 @@
 
 pub use std::f32::consts::{E, PI};
 
-use num_traits::NumCast;
-use statrs::distribution::{ContinuousCDF, Normal};
-
 pub use greeks::Greeks;
 pub use implied_volatility::ImpliedVolatility;
 pub use inputs::{Inputs, OptionType};
+use num_traits::NumCast;
 pub use pricing::Pricing;
+use statrs::distribution::{ContinuousCDF, Normal};
 
 mod greeks;
 mod implied_volatility;

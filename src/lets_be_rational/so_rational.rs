@@ -1,13 +1,15 @@
-use crate::lets_be_rational::black::normalised_black_call;
-use crate::lets_be_rational::intrinsic::normalised_intrinsic;
-use crate::lets_be_rational::normal_distribution::{
-    inverse_f_upper_map, inverse_normal_cdf, standard_normal_cdf,
+use crate::{
+    lets_be_rational::{
+        black::normalised_black_call,
+        intrinsic::normalised_intrinsic,
+        normal_distribution::{inverse_f_upper_map, inverse_normal_cdf, standard_normal_cdf},
+        rational_cubic::{
+            convex_rational_cubic_control_parameter, rational_cubic_interpolation, Side,
+        },
+        DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+    },
+    OptionType,
 };
-use crate::lets_be_rational::rational_cubic::{
-    convex_rational_cubic_control_parameter, rational_cubic_interpolation, Side,
-};
-use crate::lets_be_rational::{DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI};
-use crate::OptionType;
 
 const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM: f64 = f64::MAX;
 

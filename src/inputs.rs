@@ -1,5 +1,7 @@
-use std::fmt::{Display, Formatter, Result as fmtResult};
-use std::ops::Neg;
+use std::{
+    fmt::{Display, Formatter, Result as fmtResult},
+    ops::Neg,
+};
 
 /// The type of option to be priced (call or put).
 #[derive(Debug, Clone, Eq, PartialEq, Copy)]

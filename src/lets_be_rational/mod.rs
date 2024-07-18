@@ -1,10 +1,10 @@
 use statrs::consts::SQRT_2PI;
 
-use crate::lets_be_rational::black::normalised_black;
-use crate::OptionType;
+use crate::{lets_be_rational::black::normalised_black, OptionType};
 
 // TODO: Drop pub
 pub mod black;
+mod black_tests;
 mod intrinsic;
 mod normal_distribution;
 mod rational_cubic;

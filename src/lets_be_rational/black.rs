@@ -1,19 +1,21 @@
 use std::f64::consts::FRAC_1_SQRT_2;
 
-use statrs::consts::SQRT_2PI;
-use statrs::function::erf::erfc;
+use statrs::{consts::SQRT_2PI, function::erf::erfc};
 
-use crate::lets_be_rational::{
-    intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf,
-    DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+use crate::{
+    lets_be_rational::{
+        intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf,
+        DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+    },
+    OptionType,
 };
-use crate::OptionType;
 
 const ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD: f64 = -10.0;
 const SIXTEENTH_ROOT_DBL_EPSILON: f64 = 0.10566243270259357;
 const CODYS_THRESHOLD: f64 = 0.46875;
 
 const SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD: f64 = 2.0 * SIXTEENTH_ROOT_DBL_EPSILON;
+const H_LARGE: f64 = -10.0;
 
 fn erfcx(x: f64) -> f64 {
     (x * x).exp() * erfc(x)
@@ -49,6 +51,7 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
     (0.5 * two_b).abs().max(0.0)
 }
 
+// TODO: to remove?
 #[rustfmt::skip]
 pub fn small_t_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 {
     let a = 1.0 + h * (0.5 * SQRT_2PI) * erfcx(-FRAC_1_SQRT_2 * h);
@@ -177,6 +180,7 @@ pub(crate) fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
     normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
 }
 
+// TODO: to remove?
 #[rustfmt::skip]
 pub fn asymptotic_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 {
     let e = (t / h) * (t / h);
@@ -205,8 +209,6 @@ pub fn asymptotic_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 
     let b = ONE_OVER_SQRT_TWO_PI * ((-0.5 * (h * h + t * t)).exp()) * (t / r) * asymptotic_expansion_sum;
     b.abs().max(0.0)
 }
-
-const H_LARGE: f64 = -10.0;
 
 /// Computes the asymptotic expansion of the normalized Black call price.
 ///
@@ -273,82 +275,4 @@ pub fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> Result<f
     // Return the final computed price
     // From equation (6.10): "b = 1/√(2π) · e^(−1/2(h^2+t^2)) · [Y(h + t) - Y(h - t)]"
     Ok((exp_term * diff_y / SQRT_2PI).abs())
-}
-
-#[cfg(test)]
-mod tests {
-    use assert_approx_eq::assert_approx_eq;
-
-    use super::*;
-
-    #[test]
-    fn compare_original_and_new_one() {
-        let test_cases = [
-            // correct data from the original implementation
-            (-12.0, 0.1),
-            (-20.0, 0.05),
-            (-15.0, 0.2),
-            (-30.0, 0.01),
-            (-12.0, 0.1),
-        ];
-
-        for &(h, t) in &test_cases {
-            let original = asymptotic_expansion_of_normalised_black_call_old(h, t);
-            let new_one = asymptotic_expansion_of_normalised_black_call(h, t)
-                .expect("Wrong data or implementation - should happened here");
-
-            println!(
-                "OK: h: {}, t: {}, original: {}, optimized: {}, diff: {}",
-                h,
-                t,
-                original,
-                new_one,
-                (original - new_one).abs()
-            );
-            assert_approx_eq!(original, new_one, 1e-10);
-        }
-    }
-
-    #[test]
-    fn test_small_t_expansion_comparison() {
-        let test_cases = [
-            (0.1, 0.1),
-            (0.05, 0.05),
-            (0.15, 0.15),
-            (0.2, 0.2),
-            (0.0, 0.0),
-        ];
-
-        for &(h, t) in test_cases.iter() {
-            let result_new = small_t_expansion_of_normalised_black_call(h, t);
-            let result_old = small_t_expansion_of_normalised_black_call_old(h, t);
-
-            match result_new {
-                Some(value_new) => {
-                    let value_old = result_old;
-                    let tolerance = 1e-6;
-                    println!(
-                        "OK: h: {}, t: {}, original: {}, optimized: {}, diff: {}",
-                        h,
-                        t,
-                        value_old,
-                        value_new,
-                        (value_old - value_new).abs()
-                    );
-                    assert_approx_eq!(value_new, value_old, tolerance);
-                }
-                None => {
-                    assert!(t >= 0.21, "New implementation returned None for t < 0.21");
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_t_above_threshold() {
-        let h = 0.1;
-        let t = 0.3;
-        let result = small_t_expansion_of_normalised_black_call(h, t);
-        assert!(result.is_none());
-    }
 }
