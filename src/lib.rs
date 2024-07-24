@@ -18,7 +18,6 @@
 
 pub use std::f64::consts::{E, PI};
 
-use num_traits::NumCast;
 use statrs::distribution::{ContinuousCDF, Normal};
 
 pub use greeks::Greeks;
@@ -88,22 +87,11 @@ pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), String> {
 
         let n: Normal = Normal::new(N_MEAN, N_STD_DEV).unwrap();
 
-        let num_cast_err: String = "Failed to cast f64 to f64".into();
         // Calculates the nd1 and nd2 values
         // Checks if OptionType is Call or Put
         match inputs.option_type {
-            OptionType::Call => (
-                NumCast::from(n.cdf(NumCast::from(d1d2.0).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
-                NumCast::from(n.cdf(NumCast::from(d1d2.1).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
-            ),
-            OptionType::Put => (
-                NumCast::from(n.cdf(NumCast::from(-d1d2.0).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
-                NumCast::from(n.cdf(NumCast::from(-d1d2.1).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
-            ),
+            OptionType::Call => (n.cdf(d1d2.0), n.cdf(d1d2.1)),
+            OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
         }
     };
     Ok(nd1nd2)
