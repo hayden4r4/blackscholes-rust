@@ -107,24 +107,30 @@ pub(crate) fn implied_volatility_from_a_transformed_rational_guess_with_limited_
     forward_price: f64,
     strike_price: f64,
     time_to_maturity: f64,
-    mut option_type: OptionType,
+    option_type: OptionType,
     max_iteration: i32,
 ) -> f64 {
-    let q: f64 = option_type.into();
     let mut price = market_price;
-    let intrinsic = (q * (forward_price - strike_price)).max(0.0).abs();
+    let intrinsic = (option_type * (forward_price - strike_price))
+        .max(0.0)
+        .abs();
     if price < intrinsic {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
     }
-    let max_price = if q < 0.0 { strike_price } else { forward_price };
+    let max_price = match option_type {
+        OptionType::Call => strike_price,
+        OptionType::Put => forward_price,
+    };
     if price >= max_price {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM;
     }
     let x = (forward_price / strike_price).ln();
-    if q * x > 0.0 {
+    let option_type = if option_type * x > 0.0 {
         price = (price - intrinsic).max(0.0).abs();
-        option_type = -option_type;
-    }
+        -option_type
+    } else {
+        option_type
+    };
     unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
         price / (forward_price.sqrt() * strike_price.sqrt()), x, option_type, max_iteration,
     ) / time_to_maturity.sqrt()
@@ -139,30 +145,31 @@ fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_
 ) -> f64 {
     // Map in-the-money to out-of-the-money
     let mut beta = beta;
-    let mut q = option_type;
-    if f64::from(q) * x > 0.0 {
-        beta -= normalised_intrinsic(x, q);
-        q = -q;
-    }
+    let option_type = if option_type * x > 0.0 {
+        beta -= normalised_intrinsic(x, option_type);
+        -option_type
+    } else {
+        option_type
+    };
     if beta < 0.0 {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
     }
 
-    unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta, x, q, max_iteration)
+    unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(beta, x, option_type, max_iteration)
 }
 
 pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
-    mut beta: f64,
-    mut x: f64,
+    beta: f64,
+    x: f64,
     option_type: OptionType,
     n: i32,
 ) -> f64 {
-    if f64::from(option_type) * x > 0.0 {
-        beta = (beta - normalised_intrinsic(x, option_type)).abs().max(0.0);
-    }
-    if option_type == OptionType::Put {
-        x = -x;
-    }
+    let beta = if option_type * x > 0.0 {
+        (beta - normalised_intrinsic(x, option_type)).abs().max(0.0)
+    } else {
+        beta
+    };
+    let x = option_type * x;
     if beta <= 0.0 {
         return 0.0;
     }

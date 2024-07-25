@@ -44,8 +44,7 @@ impl Greeks<f64> for Inputs {
     fn calc_delta(&self) -> Result<f64, String> {
         let (nd1, _): (f64, f64) = calc_nd1nd2(self)?;
 
-        let option_type: f64 = self.option_type.into();
-        let delta = option_type * E.powf(-self.q * self.t) * nd1;
+        let delta = self.option_type * E.powf(-self.q * self.t) * nd1;
 
         Ok(delta)
     }
@@ -92,11 +91,10 @@ impl Greeks<f64> for Inputs {
         let (nd1, nd2): (f64, f64) = calc_nd1nd2(self)?;
 
         // Calculation uses 365.25 for f64: Time of days per year.
-        let option_type: f64 = self.option_type.into();
         let theta = (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
             / (2.0 * self.t.sqrt()))
-            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * option_type as f64
-            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * option_type as f64)
+            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * self.option_type
+            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * self.option_type)
             / DAYS_PER_YEAR;
 
         Ok(theta)
@@ -133,8 +131,7 @@ impl Greeks<f64> for Inputs {
     fn calc_rho(&self) -> Result<f64, String> {
         let (_, nd2): (f64, f64) = calc_nd1nd2(self)?;
 
-        let option_type: f64 = self.option_type.into();
-        let rho = option_type as f64 / 100.0 * self.k * self.t * E.powf(-self.r * self.t) * nd2;
+        let rho = self.option_type * self.k * self.t * E.powf(-self.r * self.t) * nd2 / 100.0;
 
         Ok(rho)
     }
@@ -160,8 +157,7 @@ impl Greeks<f64> for Inputs {
         let (nd1, _) = calc_nd1nd2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
-        let option_type: f64 = self.option_type.into();
-        let epsilon: f64 = -self.s * self.t * e_negqt * nd1 * option_type as f64;
+        let epsilon: f64 = -self.s * self.t * e_negqt * nd1 * self.option_type;
 
         Ok(epsilon)
     }
@@ -224,8 +220,7 @@ impl Greeks<f64> for Inputs {
         let (_, d2) = calc_d1d2(self)?;
         let e_negqt = E.powf(-self.q * self.t);
 
-        let option_type: f64 = self.option_type.into();
-        let charm: f64 = option_type as f64 * self.q * e_negqt * nd1
+        let charm: f64 = self.option_type * self.q * e_negqt * nd1
             - e_negqt * nprimed1 * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
                 / (2.0 * self.t * sigma * self.t.sqrt());
 

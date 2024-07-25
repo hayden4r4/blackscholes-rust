@@ -99,8 +99,8 @@ pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
     normalised_black_call_with_optimal_use_of_codys_functions(x, s)
 }
 
-pub(crate) fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
-    normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
+pub(crate) fn normalised_black(x: f64, s: f64, option_type: OptionType) -> f64 {
+    normalised_black_call(option_type * x, s) /* Reciprocal-strike call-put equivalence */
 }
 
 #[rustfmt::skip]

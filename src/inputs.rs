@@ -31,7 +31,7 @@ impl Display for OptionType {
     }
 }
 
-macro_rules! impl_from_option {
+macro_rules! impl_option_type {
     ($type:ty) => {
         impl From<OptionType> for $type {
             #[inline]
@@ -50,17 +50,41 @@ macro_rules! impl_from_option {
                 }
             }
         }
+
+        impl std::ops::Mul<OptionType> for $type {
+            type Output = $type;
+
+            #[inline]
+            fn mul(self, rhs: OptionType) -> Self::Output {
+                match rhs {
+                    OptionType::Call => self,
+                    OptionType::Put => -self,
+                }
+            }
+        }
+
+        impl std::ops::Mul<$type> for OptionType {
+            type Output = $type;
+
+            #[inline]
+            fn mul(self, rhs: $type) -> Self::Output {
+                match self {
+                    OptionType::Call => rhs,
+                    OptionType::Put => -rhs,
+                }
+            }
+        }
     };
 }
 
-impl_from_option!(f32);
-impl_from_option!(f64);
-impl_from_option!(i8);
-impl_from_option!(i16);
-impl_from_option!(i32);
-impl_from_option!(i64);
-impl_from_option!(i128);
-impl_from_option!(isize);
+impl_option_type!(f32);
+impl_option_type!(f64);
+impl_option_type!(i8);
+impl_option_type!(i16);
+impl_option_type!(i32);
+impl_option_type!(i64);
+impl_option_type!(i128);
+impl_option_type!(isize);
 
 /// The inputs to the Black-Scholes-Merton model.
 #[derive(Debug, Clone, PartialEq)]

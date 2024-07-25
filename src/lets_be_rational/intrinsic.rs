@@ -5,13 +5,12 @@ const FOURTH_ROOT_DBL_EPSILON: f64 = 0.0001220703125;
 const NORMALISED_X2_THRESHOLD: f64 = 98.0 * FOURTH_ROOT_DBL_EPSILON;
 
 pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
-    let q: f64 = option_type.into();
-    if q * x <= 0.0 {
+    if option_type * x <= 0.0 {
         return 0.0;
     }
     let x2 = x * x;
     if x2 < NORMALISED_X2_THRESHOLD {
-        return ((if q < 0.0 { -1.0 } else { 1.0 })
+        return (option_type
             * x
             * (1.0
                 + x2 * ((1.0 / 24.0)
@@ -21,9 +20,7 @@ pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
     }
     let b_max = (0.5 * x).exp();
     let one_over_b_max = 1.0 / b_max;
-    ((if q < 0.0 { -1.0 } else { 1.0 }) * (b_max - one_over_b_max))
-        .max(0.0)
-        .abs()
+    (option_type * (b_max - one_over_b_max)).max(0.0).abs()
 }
 
 #[cfg(test)]
