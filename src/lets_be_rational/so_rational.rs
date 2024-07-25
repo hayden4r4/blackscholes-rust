@@ -109,11 +109,9 @@ pub(crate) fn implied_volatility_from_a_transformed_rational_guess_with_limited_
     mut option_type: OptionType,
     max_iteration: i32,
 ) -> f64 {
-    let q = option_type as i32 as f64;
+    let q = f64::from(option_type);
     let mut price = market_price;
-    let intrinsic = (q as i32 as f64 * (forward_price - strike_price))
-        .max(0.0)
-        .abs();
+    let intrinsic = (q * (forward_price - strike_price)).max(0.0).abs();
     if price < intrinsic {
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC;
     }
@@ -122,7 +120,7 @@ pub(crate) fn implied_volatility_from_a_transformed_rational_guess_with_limited_
         return VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM;
     }
     let x = (forward_price / strike_price).ln();
-    if q as i32 as f64 * x > 0.0 {
+    if q * x > 0.0 {
         price = (price - intrinsic).max(0.0).abs();
         option_type = -option_type;
     }
@@ -131,6 +129,7 @@ pub(crate) fn implied_volatility_from_a_transformed_rational_guess_with_limited_
     ) / time_to_maturity.sqrt()
 }
 
+#[allow(dead_code)]
 fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_iterations(
     beta: f64,
     x: f64,
@@ -140,7 +139,7 @@ fn normalised_implied_volatility_from_a_transformed_rational_guess_with_limited_
     // Map in-the-money to out-of-the-money
     let mut beta = beta;
     let mut q = option_type;
-    if q as i32 as f64 * x > 0.0 {
+    if f64::from(q) * x > 0.0 {
         beta -= normalised_intrinsic(x, q);
         q = -q;
     }
@@ -157,7 +156,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
     option_type: OptionType,
     n: i32,
 ) -> f64 {
-    if option_type as i32 as f64 * x > 0.0 {
+    if f64::from(option_type) * x > 0.0 {
         beta = (beta - normalised_intrinsic(x, option_type)).abs().max(0.0);
     }
     if option_type == OptionType::Put {

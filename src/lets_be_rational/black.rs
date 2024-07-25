@@ -18,6 +18,7 @@ fn erfcx(x: f64) -> f64 {
     (x * x).exp() * erfc(x)
 }
 
+#[allow(dead_code)]
 fn normalised_black_call_using_norm_cdf(x: f64, s: f64) -> f64 {
     let h = x / s;
     let t = 0.5 * s;
@@ -65,6 +66,7 @@ fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> f64 {
     b.abs().max(0.0)
 }
 
+#[allow(dead_code)]
 pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
     let b = 0.5
         * (-0.5 * (h * h + t * t)).exp()

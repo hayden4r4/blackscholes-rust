@@ -30,6 +30,7 @@ impl Display for OptionType {
 }
 
 impl From<OptionType> for f64 {
+    #[inline]
     fn from(val: OptionType) -> Self {
         val as i32 as f64
     }
@@ -41,19 +42,19 @@ pub struct Inputs {
     /// The type of the option (call or put)
     pub option_type: OptionType,
     /// Stock price
-    pub s: f32,
+    pub s: f64,
     /// Strike price
-    pub k: f32,
+    pub k: f64,
     /// Option price
-    pub p: Option<f32>,
+    pub p: Option<f64>,
     /// Risk-free rate
-    pub r: f32,
+    pub r: f64,
     /// Dividend yield
-    pub q: f32,
+    pub q: f64,
     /// Time to maturity in years
-    pub t: f32,
+    pub t: f64,
     /// Volatility
-    pub sigma: Option<f32>,
+    pub sigma: Option<f64>,
 }
 
 /// Methods for calculating the price, greeks, and implied volatility of an option.
@@ -78,13 +79,13 @@ impl Inputs {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         option_type: OptionType,
-        s: f32,
-        k: f32,
-        p: Option<f32>,
-        r: f32,
-        q: f32,
-        t: f32,
-        sigma: Option<f32>,
+        s: f64,
+        k: f64,
+        p: Option<f64>,
+        r: f64,
+        q: f64,
+        t: f64,
+        sigma: Option<f64>,
     ) -> Self {
         Self {
             option_type,

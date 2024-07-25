@@ -6,7 +6,7 @@
 //! ```
 //! use blackscholes::{Inputs, OptionType, Pricing};
 //! let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
-//! let price: f32 = inputs.calc_price().unwrap();
+//! let price: f64 = inputs.calc_price().unwrap();
 //! ```
 //!
 //! Criterion benchmark can be ran by running:
@@ -16,7 +16,7 @@
 //!
 //! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a [npm WASM package](https://www.npmjs.com/package/@haydenr4/blackscholes_wasm) and a [python module](https://pypi.org/project/blackscholes/) are also available.
 
-pub use std::f32::consts::{E, PI};
+pub use std::f64::consts::{E, PI};
 
 use num_traits::NumCast;
 use statrs::distribution::{ContinuousCDF, Normal};
@@ -32,28 +32,28 @@ mod inputs;
 pub mod lets_be_rational;
 mod pricing;
 
-pub(crate) const N_MEAN: f32 = 0.0;
-pub(crate) const N_STD_DEV: f32 = 1.0;
-pub(crate) const SQRT_2PI: f32 = 2.5066282;
-pub(crate) const HALF: f32 = 0.5;
-pub(crate) const DAYS_PER_YEAR: f32 = 365.25;
+pub(crate) const N_MEAN: f64 = 0.0;
+pub(crate) const N_STD_DEV: f64 = 1.0;
+pub(crate) const SQRT_2PI: f64 = statrs::consts::SQRT_2PI;
+pub(crate) const HALF: f64 = 0.5;
+pub(crate) const DAYS_PER_YEAR: f64 = 365.25;
 
-pub(crate) const A: f32 = 4.626_275_3e-1;
-pub(crate) const B: f32 = -1.168_519_2e-2;
-pub(crate) const C: f32 = 9.635_418_5e-4;
-pub(crate) const D: f32 = 7.535_022_5e-5;
-pub(crate) const _E: f32 = 1.424_516_45e-5;
-pub(crate) const F: f32 = -2.102_376_9e-5;
+pub(crate) const A: f64 = 4.626_275_3e-1;
+pub(crate) const B: f64 = -1.168_519_2e-2;
+pub(crate) const C: f64 = 9.635_418_5e-4;
+pub(crate) const D: f64 = 7.535_022_5e-5;
+pub(crate) const _E: f64 = 1.424_516_45e-5;
+pub(crate) const F: f64 = -2.102_376_9e-5;
 
 /// Calculates the d1 and d2 values for the option.
 /// # Requires
 /// s, k, r, q, t, sigma.
 /// # Returns
-/// Tuple (f32, f32) of (d1, d2)
-pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
+/// Tuple (f64, f64) of (d1, d2)
+pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), String> {
     let sigma = inputs
         .sigma
-        .ok_or("Expected Some(f32) for self.sigma, received None")?;
+        .ok_or("Expected Some(f64) for self.sigma, received None")?;
     // Calculating numerator of d1
     let part1 = (inputs.s / inputs.k).ln();
 
@@ -81,14 +81,14 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
 /// # Requires
 /// s, k, r, q, t, sigma
 /// # Returns
-/// Tuple (f32, f32) of (nd1, nd2)
-pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f32, f32), String> {
+/// Tuple (f64, f64) of (nd1, nd2)
+pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), String> {
     let nd1nd2 = {
         let d1d2 = calc_d1d2(inputs)?;
 
-        let n: Normal = Normal::new(N_MEAN as f64, N_STD_DEV as f64).unwrap();
+        let n: Normal = Normal::new(N_MEAN, N_STD_DEV).unwrap();
 
-        let num_cast_err: String = "Failed to cast f64 to f32".into();
+        let num_cast_err: String = "Failed to cast f64 to f64".into();
         // Calculates the nd1 and nd2 values
         // Checks if OptionType is Call or Put
         match inputs.option_type {
@@ -111,15 +111,15 @@ pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f32, f32), String> {
 
 /// Calculates the n probability density function (PDF) for the given input.
 /// # Returns
-/// f32 of the value of the n probability density function.
-pub(crate) fn calc_npdf(x: f32) -> f32 {
-    let d: f32 = (x - N_MEAN) / N_STD_DEV;
+/// f64 of the value of the n probability density function.
+pub(crate) fn calc_npdf(x: f64) -> f64 {
+    let d: f64 = (x - N_MEAN) / N_STD_DEV;
     (-HALF * d * d).exp() / (SQRT_2PI * N_STD_DEV)
 }
 
 /// # Returns
-/// f32 of the derivative of the nd1.
-pub fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
+/// f64 of the derivative of the nd1.
+pub fn calc_nprimed1(inputs: &Inputs) -> Result<f64, String> {
     let (d1, _) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
@@ -128,8 +128,8 @@ pub fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
 }
 
 /// # Returns
-/// f32 of the derivative of the nd2.
-pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f32, String> {
+/// f64 of the derivative of the nd2.
+pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f64, String> {
     let (_, d2) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
