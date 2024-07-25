@@ -10,6 +10,10 @@ readme = "README.md"
 authors = ["Hayden Rose"]
 keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 
+[profile.release]
+codegen-units = 1
+lto = "fat"
+
 [dev-dependencies]
 approx = "0.5.1"
 assert_approx_eq = "1.1.0"
