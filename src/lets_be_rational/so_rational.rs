@@ -8,6 +8,7 @@ use crate::lets_be_rational::rational_cubic::{
 };
 use crate::lets_be_rational::{DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI};
 use crate::OptionType;
+use std::f64::consts::PI;
 
 const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM: f64 = f64::MAX;
 
@@ -24,7 +25,7 @@ const SQRT_PI_OVER_TWO: f64 = 1.253_314_137_315_500_3; //sqrt(f64::PI() / 2.0_f6
 
 const SQRT_ONE_OVER_THREE: f64 = 0.577_350_269_189_625_7; // sqrt(1.0 / 3.0_f64);
 
-const PI_OVER_SIX: f64 = std::f64::consts::PI / 6.0;
+const PI_OVER_SIX: f64 = PI / 6.0;
 
 fn is_below_horizon(x: f64) -> bool {
     x.abs() < DENORMALISATION_CUTOFF
@@ -90,7 +91,7 @@ fn compute_f_lower_map_and_first_two_derivatives(x: f64, s: f64) -> (f64, f64, f
         f = 0.0;
     } else {
         let phi2 = phi_ * phi_;
-        fp = std::f64::consts::PI * 2.0 * y * phi2 * (y + 0.125 * s * s).exp();
+        fp = PI * 2.0 * y * phi2 * (y + 0.125 * s * s).exp();
         f = if is_below_horizon(x) {
             0.0
         } else {

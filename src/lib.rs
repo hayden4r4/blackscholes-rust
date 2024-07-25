@@ -16,8 +16,6 @@
 //!
 //! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a [npm WASM package](https://www.npmjs.com/package/@haydenr4/blackscholes_wasm) and a [python module](https://pypi.org/project/blackscholes/) are also available.
 
-pub use std::f64::consts::{E, PI};
-
 use statrs::distribution::{ContinuousCDF, Normal};
 
 pub use greeks::Greeks;
@@ -31,10 +29,8 @@ mod inputs;
 pub mod lets_be_rational;
 mod pricing;
 
-pub(crate) const N_MEAN: f64 = 0.0;
-pub(crate) const N_STD_DEV: f64 = 1.0;
-pub(crate) const SQRT_2PI: f64 = statrs::consts::SQRT_2PI;
-pub(crate) const HALF: f64 = 0.5;
+const FRAC_1_SQRT_2PI: f64 = std::f64::consts::FRAC_2_SQRT_PI * 0.5;
+
 pub(crate) const DAYS_PER_YEAR: f64 = 365.25;
 
 pub(crate) const A: f64 = 4.626_275_3e-1;
@@ -82,17 +78,15 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), String> {
 /// # Returns
 /// Tuple (f64, f64) of (nd1, nd2)
 pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), String> {
-    let nd1nd2 = {
-        let d1d2 = calc_d1d2(inputs)?;
+    let (d1, d2) = calc_d1d2(inputs)?;
 
-        let n: Normal = Normal::new(N_MEAN, N_STD_DEV).unwrap();
+    let n: Normal = Normal::new(0.0, 1.0).unwrap();
 
-        // Calculates the nd1 and nd2 values
-        // Checks if OptionType is Call or Put
-        match inputs.option_type {
-            OptionType::Call => (n.cdf(d1d2.0), n.cdf(d1d2.1)),
-            OptionType::Put => (n.cdf(-d1d2.0), n.cdf(-d1d2.1)),
-        }
+    // Calculates the nd1 and nd2 values
+    // Checks if OptionType is Call or Put
+    let nd1nd2 = match inputs.option_type {
+        OptionType::Call => (n.cdf(d1), n.cdf(d2)),
+        OptionType::Put => (n.cdf(-d1), n.cdf(-d2)),
     };
     Ok(nd1nd2)
 }
@@ -101,8 +95,7 @@ pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), String> {
 /// # Returns
 /// f64 of the value of the n probability density function.
 pub(crate) fn calc_npdf(x: f64) -> f64 {
-    let d: f64 = (x - N_MEAN) / N_STD_DEV;
-    (-HALF * d * d).exp() / (SQRT_2PI * N_STD_DEV)
+    (-0.5 * x * x).exp() * FRAC_1_SQRT_2PI
 }
 
 /// # Returns
