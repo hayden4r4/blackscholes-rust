@@ -5,7 +5,7 @@ const FOURTH_ROOT_DBL_EPSILON: f64 = 0.0001220703125;
 const NORMALISED_X2_THRESHOLD: f64 = 98.0 * FOURTH_ROOT_DBL_EPSILON;
 
 pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
-    let q = f64::from(option_type);
+    let q: f64 = option_type.into();
     if q * x <= 0.0 {
         return 0.0;
     }
