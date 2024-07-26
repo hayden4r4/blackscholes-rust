@@ -30,9 +30,9 @@ statrs = "0.17.1"
 [features]
 testing = []
 
-[[bench]]
-name = "black"
-harness = false
+#[[bench]]
+#name = "black"
+#harness = false
 
 # Benchmarks
 [[bench]]
