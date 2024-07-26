@@ -1,11 +1,11 @@
 use statrs::consts::SQRT_2PI;
 use std::f64::consts::FRAC_1_SQRT_2;
 
+use crate::lets_be_rational::cody::optimized::{erfc, erfcx};
 use crate::lets_be_rational::{
     intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf,
     DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
 };
-use crate::lets_be_rational::cody::optimized::{erfc, erfcx};
 use crate::OptionType;
 const H_LARGE: f64 = -10.0;
 
