@@ -11,6 +11,7 @@ mod intrinsic;
 mod normal_distribution;
 mod rational_cubic;
 mod so_rational;
+mod cody;
 
 const IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS: i32 = 2;
 pub(crate) const DENORMALISATION_CUTOFF: f64 = 0.0;
