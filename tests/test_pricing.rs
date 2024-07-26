@@ -1,3 +1,5 @@
+use assert_approx_eq::assert_approx_eq;
+
 use blackscholes::{Inputs, OptionType, Pricing};
 
 const INPUTS_CALL_OTM: Inputs = Inputs {
@@ -61,28 +63,27 @@ fn price_put_itm() {
 #[test]
 fn price_using_lets_be_rational() {
     // compare the results from calc_price() and calc_rational_price() for the options above
-    assert!(
-        (INPUTS_CALL_OTM.calc_price().unwrap()
-            - INPUTS_CALL_OTM.calc_rational_price().unwrap() as f32)
-            .abs()
-            < 0.001
+    assert_approx_eq!(
+        INPUTS_CALL_OTM.calc_price().unwrap() as f64,
+        INPUTS_CALL_OTM.calc_rational_price().unwrap(),
+        0.001
     );
-    assert!(
-        (INPUTS_CALL_ITM.calc_price().unwrap()
-            - INPUTS_CALL_ITM.calc_rational_price().unwrap() as f32)
-            .abs()
-            < 0.001
+
+    assert_approx_eq!(
+        INPUTS_CALL_ITM.calc_price().unwrap() as f64,
+        INPUTS_CALL_ITM.calc_rational_price().unwrap(),
+        0.001
     );
-    assert!(
-        (INPUTS_PUT_OTM.calc_price().unwrap()
-            - INPUTS_PUT_OTM.calc_rational_price().unwrap() as f32)
-            .abs()
-            < 0.001
+
+    assert_approx_eq!(
+        INPUTS_PUT_OTM.calc_price().unwrap() as f64,
+        INPUTS_PUT_OTM.calc_rational_price().unwrap(),
+        0.001
     );
-    assert!(
-        (INPUTS_PUT_ITM.calc_price().unwrap()
-            - INPUTS_PUT_ITM.calc_rational_price().unwrap() as f32)
-            .abs()
-            < 0.001
+
+    assert_approx_eq!(
+        INPUTS_PUT_ITM.calc_price().unwrap() as f64,
+        INPUTS_PUT_ITM.calc_rational_price().unwrap(),
+        0.001
     );
 }
