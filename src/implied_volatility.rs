@@ -1,4 +1,6 @@
 use num_traits::Float;
+use statrs::consts::SQRT_2PI;
+use std::f64::consts::{E, PI};
 
 use crate::{
     greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
@@ -13,7 +15,7 @@ where
     fn calc_rational_iv(&self) -> Result<f64, String>;
 }
 
-impl ImpliedVolatility<f32> for Inputs {
+impl ImpliedVolatility<f64> for Inputs {
     /// Calculates the implied volatility of the option.
     /// Tolerance is the max error allowed for the implied volatility,
     /// the lower the tolerance the more iterations will be required.
@@ -23,7 +25,7 @@ impl ImpliedVolatility<f32> for Inputs {
     /// # Requires
     /// s, k, r, q, t, p
     /// # Returns
-    /// f32 of the implied volatility of the option.
+    /// f64 of the implied volatility of the option.
     /// # Example:
     /// ```
     /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
@@ -34,33 +36,33 @@ impl ImpliedVolatility<f32> for Inputs {
     /// A more accurate method is the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// however this method is much more complicated, it is available as calc_rational_iv().
     #[allow(non_snake_case)]
-    fn calc_iv(&self, tolerance: f32) -> Result<f32, String> {
+    fn calc_iv(&self, tolerance: f64) -> Result<f64, String> {
         let mut inputs: Inputs = self.clone();
 
         let p = self
             .p
-            .ok_or("inputs.p must contain Some(f32), found None".to_string())?;
+            .ok_or("inputs.p must contain Some(f64), found None".to_string())?;
         // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
         // commented out to replace with modified corrado-miller method.
-        // let mut sigma: f32 = (PI2 / inputs.t).sqrt() * (p / inputs.s);
+        // let mut sigma: f64 = (PI2 / inputs.t).sqrt() * (p / inputs.s);
 
-        let X: f32 = inputs.k * E.powf(-inputs.r * inputs.t);
-        let fminusX: f32 = inputs.s - X;
-        let fplusX: f32 = inputs.s + X;
-        let oneoversqrtT: f32 = 1.0 / inputs.t.sqrt();
+        let X: f64 = inputs.k * E.powf(-inputs.r * inputs.t);
+        let fminusX: f64 = inputs.s - X;
+        let fplusX: f64 = inputs.s + X;
+        let oneoversqrtT: f64 = 1.0 / inputs.t.sqrt();
 
-        let x: f32 = oneoversqrtT * (SQRT_2PI / (fplusX));
-        let y: f32 = p - (inputs.s - inputs.k) / 2.0
-            + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt();
+        let x: f64 = oneoversqrtT * (SQRT_2PI / (fplusX));
+        let y: f64 = p - (inputs.s - inputs.k) / 2.0
+            + ((p - fminusX / 2.0).powi(2) - fminusX.powi(2) / PI).sqrt();
 
-        let mut sigma: f32 = oneoversqrtT
+        let mut sigma: f64 = oneoversqrtT
             * (SQRT_2PI / fplusX)
-            * (p - fminusX / 2.0 + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt())
+            * (p - fminusX / 2.0 + ((p - fminusX / 2.0).powi(2) - fminusX.powi(2) / PI).sqrt())
             + A
             + B / x
             + C * y
-            + D / x.powf(2.0)
-            + _E * y.powf(2.0)
+            + D / x.powi(2)
+            + _E * y.powi(2)
             + F * y / x;
 
         if sigma.is_nan() {
@@ -68,7 +70,7 @@ impl ImpliedVolatility<f32> for Inputs {
         }
 
         // Initialize diff to 100 for use in while loop
-        let mut diff: f32 = 100.0;
+        let mut diff: f64 = 100.0;
 
         // Uses Newton Raphson algorithm to calculate implied volatility.
         // Test if the difference between calculated option price and actual option price is > tolerance,
@@ -114,10 +116,10 @@ impl ImpliedVolatility<f32> for Inputs {
         let f = f * (-self.q * self.t).exp();
 
         let sigma = implied_volatility_from_a_transformed_rational_guess(
-            p as f64,
-            f as f64,
-            self.k as f64,
-            self.t as f64,
+            p,
+            f,
+            self.k,
+            self.t,
             self.option_type,
         );
 

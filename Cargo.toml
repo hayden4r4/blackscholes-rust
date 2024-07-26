@@ -19,6 +19,7 @@ approx = "0.5.1"
 assert_approx_eq = "1.1.0"
 criterion = "0.5.1"
 proptest = "1.5.0"
+rand = "0.8.5"
 
 [dependencies]
 log = "0.4.22"

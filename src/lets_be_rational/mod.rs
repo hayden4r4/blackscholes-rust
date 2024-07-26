@@ -59,33 +59,28 @@ pub fn black(
     time_to_maturity: f64,
     option_type: OptionType,
 ) -> f64 {
-    let q: f64 = option_type.into();
-    let intrinsic = (if q < 0.0 {
-        strike_price - forward_price
-    } else {
-        forward_price - strike_price
-    })
-    .max(0.0)
-    .abs();
+    let signed_diff = option_type * (forward_price - strike_price);
+    let intrinsic = signed_diff.max(0.0).abs();
     // Map in-the-money to out-of-the-money
-    if q * (forward_price - strike_price) > 0.0 {
-        return intrinsic
+    if signed_diff > 0.0 {
+        intrinsic
             + black(
                 forward_price,
                 strike_price,
                 sigma,
                 time_to_maturity,
                 -option_type,
-            );
+            )
+    } else {
+        intrinsic.max(
+            (forward_price.sqrt() * strike_price.sqrt())
+                * normalised_black(
+                    (forward_price / strike_price).ln(),
+                    sigma * time_to_maturity.sqrt(),
+                    option_type,
+                ),
+        )
     }
-    intrinsic.max(
-        (forward_price.sqrt() * strike_price.sqrt())
-            * normalised_black(
-                (forward_price / strike_price).ln(),
-                sigma * time_to_maturity.sqrt(),
-                q,
-            ),
-    )
 }
 
 pub fn implied_volatility_from_a_transformed_rational_guess(

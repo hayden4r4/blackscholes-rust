@@ -1,14 +1,15 @@
 mod tests {
     use assert_approx_eq::assert_approx_eq;
+
     use blackscholes::{ImpliedVolatility, Inputs, OptionType, Pricing};
 
     // Tolerance is a bit higher due to IV being an approximation
-    const TOLERANCE: f64 = 0.0001;
+    const TOLERANCE: f64 = 1e-4;
 
     #[test]
     fn test_put_otm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.25);
+        let sigma: Option<f64> = Some(0.25);
         let mut inputs_put_otm: Inputs = Inputs {
             option_type: OptionType::Put,
             s: 90.0,
@@ -30,13 +31,13 @@ mod tests {
 
         // assert
         println!("Put OTM: {}", iv);
-        assert_approx_eq!(iv, sigma.unwrap() as f64, TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
     fn test_call_itm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.15);
+        let sigma: Option<f64> = Some(0.15);
         let mut inputs_call_itm: Inputs = Inputs {
             option_type: OptionType::Call,
             s: 120.0,
@@ -57,14 +58,14 @@ mod tests {
         let iv = inputs_call_itm.calc_rational_iv().unwrap();
 
         // assert
-        println!("Call ITM: {} sigma {}", iv, sigma.unwrap() as f64);
-        assert_approx_eq!(iv, sigma.unwrap() as f64, TOLERANCE);
+        println!("Call ITM: {} sigma {}", iv, sigma.unwrap());
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
     fn test_put_itm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.18);
+        let sigma: Option<f64> = Some(0.18);
         let mut inputs_put_itm: Inputs = Inputs {
             option_type: OptionType::Put,
             s: 80.0,
@@ -85,14 +86,14 @@ mod tests {
         let iv = inputs_put_itm.calc_rational_iv().unwrap();
 
         // assert
-        println!("Put ITM: {} sigma {}", iv, sigma.unwrap() as f64);
-        assert_approx_eq!(iv, sigma.unwrap() as f64, TOLERANCE);
+        println!("Put ITM: {} sigma {}", iv, sigma.unwrap());
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
     fn test_call_atm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.2);
+        let sigma: Option<f64> = Some(0.2);
         let mut inputs_call_atm: Inputs = Inputs {
             option_type: OptionType::Call,
             s: 100.0,
@@ -113,14 +114,14 @@ mod tests {
         let iv = inputs_call_atm.calc_rational_iv().unwrap();
 
         // assert
-        println!("Call ATM: {} sigma {}", iv, sigma.unwrap() as f64);
-        assert_approx_eq!(iv, sigma.unwrap() as f64, TOLERANCE);
+        println!("Call ATM: {} sigma {}", iv, sigma.unwrap());
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
     fn test_put_atm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.22);
+        let sigma: Option<f64> = Some(0.22);
         let mut inputs_put_atm: Inputs = Inputs {
             option_type: OptionType::Put,
             s: 100.0,
@@ -142,6 +143,6 @@ mod tests {
 
         // assert
         println!("Put ATM: {}", iv);
-        assert_approx_eq!(iv, sigma.unwrap() as f64, TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 }

@@ -21,6 +21,7 @@ fn erfcx(x: f64) -> f64 {
     (x * x).exp() * erfc(x)
 }
 
+#[allow(dead_code)]
 fn normalised_black_call_using_norm_cdf(x: f64, s: f64) -> f64 {
     let h = x / s;
     let t = 0.5 * s;
@@ -53,20 +54,48 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
 
 // TODO: to remove?
 #[rustfmt::skip]
-pub fn small_t_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 {
+pub fn small_t_expansion_of_normalised_black_call_old(h: f64, t: f64) -> Result<f64, &'static str> {
     let a = 1.0 + h * (0.5 * SQRT_2PI) * erfcx(-FRAC_1_SQRT_2 * h);
     let w = t * t;
     let h2 = h * h;
 
-    let expansion = 2.0 * t * (a + w * ((-1.0 + 3.0 * a + a * h2) / 6.0
-        + w * ((-7.0 + 15.0 * a + h2 * (-1.0 + 10.0 * a + a * h2)) / 120.0
-        + w * ((-57.0 + 105.0 * a + h2 * (-18.0 + 105.0 * a + h2 * (-1.0 + 21.0 * a + a * h2))) / 5040.0
-        + w * ((-561.0 + 945.0 * a + h2 * (-285.0 + 1260.0 * a + h2 * (-33.0 + 378.0 * a + h2 * (-1.0 + 36.0 * a + a * h2)))) / 362880.0
-        + w * ((-6555.0 + 10395.0 * a + h2 * (-4680.0 + 17325.0 * a + h2 * (-840.0 + 6930.0 * a + h2 * (-52.0 + 990.0 * a + h2 * (-1.0 + 55.0 * a + a * h2))))) / 39916800.0)))
-        + ((-89055.0 + 135135.0 * a + h2 * (-82845.0 + 270270.0 * a + h2 * (-20370.0 + 135135.0 * a + h2 * (-1926.0 + 25740.0 * a + h2 * (-75.0 + 2145.0 * a + h2 * (-1.0 + 78.0 * a + a * h2)))))) * w) / 6227020800.0)));
+    println!("a: {}", a);
+    println!("w: {}", w);
+    println!("h2: {}", h2);
 
-    let b = ONE_OVER_SQRT_TWO_PI * (-0.5 * (h * h + t * t)).exp() * expansion;
-    b.abs().max(0.0)
+    let term1 = (-1.0 + 3.0 * a + a * h2) / 6.0;
+    let term2 = (-7.0 + 15.0 * a + h2 * (-1.0 + 10.0 * a + a * h2)) / 120.0;
+    let term3 = (-57.0 + 105.0 * a + h2 * (-18.0 + 105.0 * a + h2 * (-1.0 + 21.0 * a + a * h2))) / 5040.0;
+    let term4 = (-561.0 + 945.0 * a + h2 * (-285.0 + 1260.0 * a + h2 * (-33.0 + 378.0 * a + h2 * (-1.0 + 36.0 * a + a * h2)))) / 362880.0;
+    let term5 = (-6555.0 + 10395.0 * a + h2 * (-4680.0 + 17325.0 * a + h2 * (-840.0 + 6930.0 * a + h2 * (-52.0 + 990.0 * a + h2 * (-1.0 + 55.0 * a + a * h2))))) / 39916800.0;
+    let term6 = (-89055.0 + 135135.0 * a + h2 * (-82845.0 + 270270.0 * a + h2 * (-20370.0 + 135135.0 * a + h2 * (-1926.0 + 25740.0 * a + h2 * (-75.0 + 2145.0 * a + h2 * (-1.0 + 78.0 * a + a * h2)))))) / 6227020800.0;
+
+    println!("term1: {}", term1);
+    println!("term2: {}", term2);
+    println!("term3: {}", term3);
+    println!("term4: {}", term4);
+    println!("term5: {}", term5);
+    println!("term6: {}", term6);
+
+    let expansion = 2.0 * t * (a + w * (term1
+        + w * (term2
+        + w * (term3
+        + w * (term4
+        + w * term5))
+        + term6 * w)));
+
+    println!("expansion: {}", expansion);
+
+    let exp_term = (-0.5 * (h * h + t * t)).exp();
+    println!("exp_term: {}", exp_term);
+
+    let b = ONE_OVER_SQRT_TWO_PI * exp_term * expansion;
+    println!("b: {}", b);
+
+    let result = b.abs().max(0.0);
+    println!("result: {}", result);
+
+    Ok(result)
 }
 
 /// Computes the normalized Black call option value using a small-t expansion.
@@ -92,56 +121,89 @@ pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64>
 
     let a = 1.0 + h * (0.5 * SQRT_2PI) * erfcx(-FRAC_1_SQRT_2 * h);
 
+    println!("a: {}", a);
+
     // 12th order Taylor expansion with 6 terms
     let y_diff = {
-        let term1 = a.mul_add(1.0, -1.0); // -1.0 + a
-        let term2 = h2.mul_add(a, 3.0 * a - 7.0); // -7.0 + 15.0 * a + h2 * (-1.0 + 10.0 * a + a * h2)
-        let term3 = h2
-            .mul_add(h2.mul_add(a, 21.0 * a - 1.0), 105.0 * a - 18.0)
-            .mul_add(1.0, 105.0 * a - 57.0);
-        let term4 = h2
-            .mul_add(
-                h2.mul_add(h2.mul_add(a, 36.0 * a - 1.0), 378.0 * a - 33.0),
-                1260.0 * a - 285.0,
-            )
-            .mul_add(1.0, 945.0 * a - 561.0);
-        let term5 = h2
-            .mul_add(
+        let term1 = a.mul_add(h2 + 3.0, -1.0) / 6.0;
+        let term2 = h2.mul_add(a.mul_add(h2 + 10.0, -1.0), a.mul_add(15.0, -7.0)) / 120.0;
+        let term3 = h2.mul_add(
+            h2.mul_add(a.mul_add(h2 + 21.0, -1.0), a.mul_add(105.0, -18.0)),
+            a.mul_add(105.0, -57.0),
+        ) / 5040.0;
+        let term4 = h2.mul_add(
+            h2.mul_add(
+                h2.mul_add(a.mul_add(h2 + 36.0, -1.0), a.mul_add(378.0, -33.0)),
+                a.mul_add(1260.0, -285.0),
+            ),
+            a.mul_add(945.0, -561.0),
+        ) / 362880.0;
+
+        let term5 = h2.mul_add(
+            h2.mul_add(
                 h2.mul_add(
-                    h2.mul_add(h2.mul_add(a, 55.0 * a - 1.0), 990.0 * a - 52.0),
-                    6930.0 * a - 840.0,
+                    h2.mul_add(a.mul_add(h2 + 55.0, -1.0), a.mul_add(990.0, -52.0)),
+                    a.mul_add(6930.0, -840.0),
                 ),
-                17325.0 * a - 4680.0,
-            )
-            .mul_add(1.0, 10395.0 * a - 6555.0);
+                a.mul_add(17325.0, -4680.0),
+            ),
+            a.mul_add(10395.0, -6555.0),
+        ) / 39916800.0;
+        let term6 = h2.mul_add(
+            h2.mul_add(
+                h2.mul_add(
+                    h2.mul_add(
+                        h2.mul_add(a.mul_add(h2 + 78.0, -1.0), a.mul_add(2145.0, -75.0)),
+                        a.mul_add(25740.0, -1926.0),
+                    ),
+                    a.mul_add(135135.0, -20370.0),
+                ),
+                a.mul_add(270270.0, -82845.0),
+            ),
+            a.mul_add(135135.0, -89055.0),
+        ) / 6227020800.0;
 
         let t2_squared = t2 * t2;
         let t2_cubed = t2_squared * t2;
         let t2_quartic = t2_squared * t2_squared;
         let t2_quintic = t2_cubed * t2_squared;
+        let t2_sextic = t2_cubed * t2_cubed;
+
+        println!("term1: {}", term1);
+        println!("term2: {}", term2);
+        println!("term3: {}", term3);
+        println!("term4: {}", term4);
+        println!("term5: {}", term5);
+        println!("term6: {}", term6);
 
         2.0 * t
             * (a.mul_add(
-                1.0,
-                term1.mul_add(
-                    t2 / 6.0,
-                    term2.mul_add(
-                        t2_squared / 120.0,
-                        term3.mul_add(
-                            t2_cubed / 5040.0,
-                            term4.mul_add(t2_quartic / 362880.0, term5 * t2_quintic / 39916800.0),
+            1.0,
+            term1.mul_add(
+                t2,
+                term2.mul_add(
+                    t2_squared,
+                    term3.mul_add(
+                        t2_cubed,
+                        term4.mul_add(
+                            t2_quartic,
+                            term5.mul_add(t2_quintic, term6 * t2_sextic),
                         ),
                     ),
                 ),
-            ))
+            ),
+        ))
     };
 
+    println!("expansion: {}", y_diff);
     let exp_term = (-0.5 * (h2 + t2)).exp();
     let black_value = ONE_OVER_SQRT_TWO_PI * exp_term * y_diff;
+    // let b = ONE_OVER_SQRT_TWO_PI * (-0.5 * (h * h + t * t)).exp() * expansion;
 
     Some(black_value.abs().max(0.0))
 }
 
+#[allow(dead_code)]
 pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
     let b = 0.5
         * (-0.5 * (h * h + t * t)).exp()
@@ -176,13 +238,13 @@ pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
     normalised_black_call_with_optimal_use_of_codys_functions(x, s)
 }
 
-pub(crate) fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
-    normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
+pub(crate) fn normalised_black(x: f64, s: f64, option_type: OptionType) -> f64 {
+    normalised_black_call(option_type * x, s) /* Reciprocal-strike call-put equivalence */
 }
 
 // TODO: to remove?
 #[rustfmt::skip]
-pub fn asymptotic_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 {
+pub fn asymptotic_expansion_of_normalised_black_call_old(h: f64, t: f64) -> Result<f64, &'static str> {
     let e = (t / h) * (t / h);
     let r = (h + t) * (h - t);
     let q = (h / r) * (h / r);
@@ -207,7 +269,7 @@ pub fn asymptotic_expansion_of_normalised_black_call_old(h: f64, t: f64) -> f64 
             + 33.0 * (-70.0 + e * (-130900.0 + e * (-649264.0 + e * (-13449040.0 + e * (-141214920.0 + e * (-834451800.0 + e * (-2952675600.0 + e * (-6495886320.0 + e * (-9075135300.0 + e * (-8119857900.0 + e * (-4639918800.0 + e * (-1668903600.0 + e * (-367158792.0 + e * (-47071640.0 + e * (-3246320.0 + e * (-104720.0 + e * (-1190.0 - 2.0 * e))))))))))))))))) * q))))))))))))))));
 
     let b = ONE_OVER_SQRT_TWO_PI * ((-0.5 * (h * h + t * t)).exp()) * (t / r) * asymptotic_expansion_sum;
-    b.abs().max(0.0)
+    Ok(b.abs().max(0.0))
 }
 
 /// Computes the asymptotic expansion of the normalized Black call price.

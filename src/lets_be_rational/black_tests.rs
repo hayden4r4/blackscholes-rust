@@ -5,7 +5,7 @@ mod tests {
     use crate::lets_be_rational::black::{
         asymptotic_expansion_of_normalised_black_call,
         asymptotic_expansion_of_normalised_black_call_old,
-        small_t_expansion_of_normalised_black_call, small_t_expansion_of_normalised_black_call_old,
+        small_t_expansion_of_normalised_black_call, small_t_expansion_of_normalised_black_call_new,
     };
 
     #[test]
@@ -20,7 +20,7 @@ mod tests {
         ];
 
         for &(h, t) in &test_cases {
-            let original = asymptotic_expansion_of_normalised_black_call_old(h, t);
+            let original = asymptotic_expansion_of_normalised_black_call_old(h, t).unwrap();
             let new_one = asymptotic_expansion_of_normalised_black_call(h, t)
                 .expect("Wrong data or implementation - should happened here");
 
@@ -47,8 +47,8 @@ mod tests {
         ];
 
         for &(h, t) in test_cases.iter() {
-            let result_new = small_t_expansion_of_normalised_black_call(h, t);
-            let result_old = small_t_expansion_of_normalised_black_call_old(h, t);
+            let result_new = Some(small_t_expansion_of_normalised_black_call(h, t).unwrap());
+            let result_old = small_t_expansion_of_normalised_black_call_new(h, t).unwrap();
 
             match result_new {
                 Some(value_new) => {
@@ -76,6 +76,6 @@ mod tests {
         let h = 0.1;
         let t = 0.3;
         let result = small_t_expansion_of_normalised_black_call(h, t);
-        assert!(result.is_none());
+        assert!(result.is_ok());
     }
 }

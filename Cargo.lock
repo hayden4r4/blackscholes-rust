@@ -76,6 +76,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "proptest",
+ "rand",
  "statrs",
 ]
 
