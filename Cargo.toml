@@ -22,7 +22,6 @@ proptest = "1.5.0"
 rand = "0.8.5"
 
 [dependencies]
-log = "0.4.22"
 num-traits = "0.2.19"
 once_cell = "1.19.0"
 statrs = "0.17.1"

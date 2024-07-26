@@ -72,7 +72,6 @@ dependencies = [
  "approx",
  "assert_approx_eq",
  "criterion",
- "log",
  "num-traits",
  "once_cell",
  "proptest",
