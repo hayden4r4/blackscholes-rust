@@ -1,4 +1,4 @@
-use criterion::{BenchmarkId, black_box, Criterion, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::Rng;
 
 use blackscholes::OptionType;
@@ -28,7 +28,6 @@ fn abs_vs_equality_benchmarks(c: &mut Criterion) {
         });
     }
 }
-
 
 fn generate_random_test_cases(n: usize) -> Vec<(OptionType, f64)> {
     let mut rng = rand::thread_rng();
@@ -68,21 +67,29 @@ fn mul_benchmarks(c: &mut Criterion) {
     for size in [10, 100, 1000].iter() {
         let test_cases = generate_random_test_cases(*size);
 
-        group.bench_with_input(BenchmarkId::new("mul_impl_size", size), &test_cases, |b, tc| {
-            b.iter(|| {
-                for &(x, y) in tc.iter() {
-                    black_box(x * y);
-                }
-            })
-        });
+        group.bench_with_input(
+            BenchmarkId::new("mul_impl_size", size),
+            &test_cases,
+            |b, tc| {
+                b.iter(|| {
+                    for &(x, y) in tc.iter() {
+                        black_box(x * y);
+                    }
+                })
+            },
+        );
 
-        group.bench_with_input(BenchmarkId::new("cast_mul_size", size), &test_cases, |b, tc| {
-            b.iter(|| {
-                for &(x, y) in tc.iter() {
-                    black_box(x as i8 as f64 * y);
-                }
-            })
-        });
+        group.bench_with_input(
+            BenchmarkId::new("cast_mul_size", size),
+            &test_cases,
+            |b, tc| {
+                b.iter(|| {
+                    for &(x, y) in tc.iter() {
+                        black_box(x as i8 as f64 * y);
+                    }
+                })
+            },
+        );
     }
 
     group.finish();
