@@ -3,6 +3,7 @@ use rand::Rng;
 
 use blackscholes::OptionType;
 
+#[allow(dead_code)]
 fn abs_vs_equality_benchmarks(c: &mut Criterion) {
     let test_cases = vec![
         (1.0f64, 1.0f64),                // Identical values

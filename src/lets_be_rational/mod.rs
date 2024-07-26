@@ -3,7 +3,7 @@ use crate::OptionType;
 
 mod black;
 mod intrinsic;
-mod normal_distribution;
+pub(crate) mod normal_distribution;
 mod rational_cubic;
 mod so_rational;
 

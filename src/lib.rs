@@ -16,11 +16,10 @@
 //!
 //! See the [Github Repo](https://github.com/hayden4r4/blackscholes-rust/tree/master) for full source code.  Other implementations such as a [npm WASM package](https://www.npmjs.com/package/@haydenr4/blackscholes_wasm) and a [python module](https://pypi.org/project/blackscholes/) are also available.
 
-use statrs::distribution::{ContinuousCDF, Normal};
-
 pub use greeks::Greeks;
 pub use implied_volatility::ImpliedVolatility;
 pub use inputs::{Inputs, OptionType};
+use lets_be_rational::normal_distribution::{standard_normal_cdf, standard_normal_pdf};
 pub use pricing::Pricing;
 
 mod greeks;
@@ -28,8 +27,6 @@ mod implied_volatility;
 mod inputs;
 pub mod lets_be_rational;
 mod pricing;
-
-const FRAC_1_SQRT_2PI: f64 = std::f64::consts::FRAC_2_SQRT_PI * 0.5;
 
 pub(crate) const DAYS_PER_YEAR: f64 = 365.25;
 
@@ -80,22 +77,12 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), String> {
 pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), String> {
     let (d1, d2) = calc_d1d2(inputs)?;
 
-    let n: Normal = Normal::new(0.0, 1.0).unwrap();
-
     // Calculates the nd1 and nd2 values
     // Checks if OptionType is Call or Put
-    let nd1nd2 = match inputs.option_type {
-        OptionType::Call => (n.cdf(d1), n.cdf(d2)),
-        OptionType::Put => (n.cdf(-d1), n.cdf(-d2)),
-    };
-    Ok(nd1nd2)
-}
-
-/// Calculates the n probability density function (PDF) for the given input.
-/// # Returns
-/// f64 of the value of the n probability density function.
-pub(crate) fn calc_npdf(x: f64) -> f64 {
-    (-0.5 * x * x).exp() * FRAC_1_SQRT_2PI
+    match inputs.option_type {
+        OptionType::Call => Ok((standard_normal_cdf(d1), standard_normal_cdf(d2))),
+        OptionType::Put => Ok((standard_normal_cdf(-d1), standard_normal_cdf(-d2))),
+    }
 }
 
 /// # Returns
@@ -104,7 +91,7 @@ pub fn calc_nprimed1(inputs: &Inputs) -> Result<f64, String> {
     let (d1, _) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
-    let nprimed1 = calc_npdf(d1);
+    let nprimed1 = standard_normal_pdf(d1);
     Ok(nprimed1)
 }
 
@@ -114,6 +101,6 @@ pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f64, String> {
     let (_, d2) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
-    let nprimed2 = calc_npdf(d2);
+    let nprimed2 = standard_normal_pdf(d2);
     Ok(nprimed2)
 }
