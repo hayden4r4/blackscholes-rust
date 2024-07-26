@@ -1,6 +1,6 @@
 use num_traits::Float;
 use statrs::consts::SQRT_2PI;
-use std::f64::consts::{E, PI};
+use std::f64::consts::PI;
 
 use crate::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
 use crate::{greeks::Greeks, pricing::Pricing, Inputs, *};
@@ -44,7 +44,7 @@ impl ImpliedVolatility<f64> for Inputs {
         // commented out to replace with modified corrado-miller method.
         // let mut sigma: f64 = (PI2 / inputs.t).sqrt() * (p / inputs.s);
 
-        let X: f64 = inputs.k * E.powf(-inputs.r * inputs.t);
+        let X: f64 = inputs.k * (-inputs.r * inputs.t).exp();
         let fminusX: f64 = inputs.s - X;
         let fplusX: f64 = inputs.s + X;
         let oneoversqrtT: f64 = 1.0 / inputs.t.sqrt();

@@ -1,5 +1,3 @@
-use std::f64::consts::E;
-
 use num_traits::Float;
 
 use crate::{lets_be_rational, Inputs, OptionType, *};
@@ -30,11 +28,11 @@ impl Pricing<f64> for Inputs {
         let price: f64 = match self.option_type {
             OptionType::Call => f64::max(
                 0.0,
-                nd1 * self.s * E.powf(-self.q * self.t) - nd2 * self.k * E.powf(-self.r * self.t),
+                nd1 * self.s * (-self.q * self.t).exp() - nd2 * self.k * (-self.r * self.t).exp(),
             ),
             OptionType::Put => f64::max(
                 0.0,
-                nd2 * self.k * E.powf(-self.r * self.t) - nd1 * self.s * E.powf(-self.q * self.t),
+                nd2 * self.k * (-self.r * self.t).exp() - nd1 * self.s * (-self.q * self.t).exp(),
             ),
         };
         Ok(price)

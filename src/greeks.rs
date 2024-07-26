@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::f64::consts::E;
 
 use num_traits::Float;
 
@@ -44,7 +43,7 @@ impl Greeks<f64> for Inputs {
     fn calc_delta(&self) -> Result<f64, String> {
         let (nd1, _): (f64, f64) = calc_nd1nd2(self)?;
 
-        let delta = self.option_type * E.powf(-self.q * self.t) * nd1;
+        let delta = self.option_type * (-self.q * self.t).exp() * nd1;
 
         Ok(delta)
     }
@@ -66,7 +65,7 @@ impl Greeks<f64> for Inputs {
             .ok_or("Expected Some(f64) for self.sigma, received None")?;
 
         let nprimed1: f64 = calc_nprimed1(self)?;
-        let gamma: f64 = E.powf(-self.q * self.t) * nprimed1 / (self.s * sigma * self.t.sqrt());
+        let gamma: f64 = (-self.q * self.t).exp() * nprimed1 / (self.s * sigma * self.t.sqrt());
         Ok(gamma)
     }
 
@@ -91,10 +90,10 @@ impl Greeks<f64> for Inputs {
         let (nd1, nd2): (f64, f64) = calc_nd1nd2(self)?;
 
         // Calculation uses 365.25 for f64: Time of days per year.
-        let theta = (-(self.s * sigma * E.powf(-self.q * self.t) * nprimed1
+        let theta = (-(self.s * sigma * (-self.q * self.t).exp() * nprimed1
             / (2.0 * self.t.sqrt()))
-            - self.r * self.k * E.powf(-self.r * self.t) * nd2 * self.option_type
-            + self.q * self.s * E.powf(-self.q * self.t) * nd1 * self.option_type)
+            - self.r * self.k * (-self.r * self.t).exp() * nd2 * self.option_type
+            + self.q * self.s * (-self.q * self.t).exp() * nd1 * self.option_type)
             / DAYS_PER_YEAR;
 
         Ok(theta)
@@ -113,7 +112,7 @@ impl Greeks<f64> for Inputs {
     /// ```
     fn calc_vega(&self) -> Result<f64, String> {
         let nprimed1: f64 = calc_nprimed1(self)?;
-        let vega: f64 = 0.01 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
+        let vega: f64 = 0.01 * self.s * (-self.q * self.t).exp() * self.t.sqrt() * nprimed1;
         Ok(vega)
     }
 
@@ -131,7 +130,7 @@ impl Greeks<f64> for Inputs {
     fn calc_rho(&self) -> Result<f64, String> {
         let (_, nd2): (f64, f64) = calc_nd1nd2(self)?;
 
-        let rho = self.option_type * self.k * self.t * E.powf(-self.r * self.t) * nd2 / 100.0;
+        let rho = self.option_type * self.k * self.t * (-self.r * self.t).exp() * nd2 / 100.0;
 
         Ok(rho)
     }
@@ -155,7 +154,7 @@ impl Greeks<f64> for Inputs {
     /// ```
     fn calc_epsilon(&self) -> Result<f64, String> {
         let (nd1, _) = calc_nd1nd2(self)?;
-        let e_negqt = E.powf(-self.q * self.t);
+        let e_negqt = (-self.q * self.t).exp();
 
         let epsilon: f64 = -self.s * self.t * e_negqt * nd1 * self.option_type;
 
@@ -196,7 +195,7 @@ impl Greeks<f64> for Inputs {
 
         let nprimed1 = calc_nprimed1(self)?;
         let (_, d2) = calc_d1d2(self)?;
-        let vanna: f64 = d2 * E.powf(-self.q * self.t) * nprimed1 * -0.01 / sigma;
+        let vanna: f64 = d2 * (-self.q * self.t).exp() * nprimed1 * -0.01 / sigma;
         Ok(vanna)
     }
 
@@ -218,7 +217,7 @@ impl Greeks<f64> for Inputs {
         let nprimed1 = calc_nprimed1(self)?;
         let (nd1, _) = calc_nd1nd2(self)?;
         let (_, d2) = calc_d1d2(self)?;
-        let e_negqt = E.powf(-self.q * self.t);
+        let e_negqt = (-self.q * self.t).exp();
 
         let charm: f64 = self.option_type * self.q * e_negqt * nd1
             - e_negqt * nprimed1 * (2.0 * (self.r - self.q) * self.t - d2 * sigma * self.t.sqrt())
@@ -244,7 +243,7 @@ impl Greeks<f64> for Inputs {
             .ok_or("Expected Some(f64) for self.sigma, received None")?;
         let nprimed1 = calc_nprimed1(self)?;
         let (d1, d2) = calc_d1d2(self)?;
-        let e_negqt = E.powf(-self.q * self.t);
+        let e_negqt = (-self.q * self.t).exp();
 
         let veta = -self.s
             * e_negqt
@@ -337,7 +336,7 @@ impl Greeks<f64> for Inputs {
             .ok_or("Expected Some(f64) for self.sigma, received None")?;
         let (d1, d2) = calc_d1d2(self)?;
         let nprimed1 = calc_nprimed1(self)?;
-        let e_negqt = E.powf(-self.q * self.t);
+        let e_negqt = (-self.q * self.t).exp();
 
         let color = -e_negqt
             * (nprimed1 / (2.0 * self.s * self.t * sigma * self.t.sqrt()))
@@ -384,7 +383,7 @@ impl Greeks<f64> for Inputs {
     /// ```
     fn calc_dual_delta(&self) -> Result<f64, String> {
         let (_, nd2) = calc_nd1nd2(self)?;
-        let e_negqt = E.powf(-self.q * self.t);
+        let e_negqt = (-self.q * self.t).exp();
 
         let dual_delta = match self.option_type {
             OptionType::Call => -e_negqt * nd2,
@@ -409,7 +408,7 @@ impl Greeks<f64> for Inputs {
             .sigma
             .ok_or("Expected Some(f64) for self.sigma, received None")?;
         let nprimed2 = calc_nprimed2(self)?;
-        let e_negqt = E.powf(-self.q * self.t);
+        let e_negqt = (-self.q * self.t).exp();
 
         let dual_gamma = e_negqt * (nprimed2 / (self.k * sigma * self.t.sqrt()));
         Ok(dual_gamma)
