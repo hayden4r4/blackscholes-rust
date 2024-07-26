@@ -1,3 +1,7 @@
+// NOTE: To run current bench you need to make pub `mod black;` line in src/lets_be_rational/mod.rs
+// and uncomment bench in toml file
+// and uncomment the following code
+
 // extern crate criterion;
 //
 //

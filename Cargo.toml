@@ -27,9 +27,6 @@ num-traits = "0.2.19"
 once_cell = "1.19.0"
 statrs = "0.17.1"
 
-[features]
-testing = []
-
 #[[bench]]
 #name = "black"
 #harness = false

@@ -4,6 +4,7 @@ use statrs::consts::SQRT_2PI;
 
 // NOTE: if black is public then `calc_rational_iv` is decreased to 320
 // ns but when private everything twice lower - wtf
+// if someone know why I will be glad to know too...
 mod black;
 
 mod intrinsic;
