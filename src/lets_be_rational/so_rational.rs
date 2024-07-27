@@ -165,7 +165,7 @@ pub(crate) fn unchecked_normalised_implied_volatility_from_a_transformed_rationa
     n: i32,
 ) -> f64 {
     let beta = if option_type * x > 0.0 {
-        (beta - normalised_intrinsic(x, option_type)).abs().max(0.0)
+        (beta - normalised_intrinsic(x, option_type)).max(0.0)
     } else {
         beta
     };

@@ -25,7 +25,7 @@ fn normalised_black_call_using_norm_cdf(x: f64, s: f64) -> f64 {
     let t = 0.5 * s;
     let b_max = (0.5 * x).exp();
     let b = standard_normal_cdf(h + t) * b_max - standard_normal_cdf(h - t) / b_max;
-    b.abs().max(0.0)
+    b.max(0.0)
 }
 
 fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> f64 {
@@ -47,7 +47,7 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
         two_b = (-0.5 * (h * h + t * t)).exp() * (erfcx(q1) - erfcx(q2));
     }
 
-    (0.5 * two_b).abs().max(0.0)
+    (0.5 * two_b).max(0.0)
 }
 
 /// Computes the normalized Black call option value using a small-t expansion.
@@ -138,7 +138,7 @@ pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64>
     let exp_term = (-0.5 * (h2 + t2)).exp();
     let black_value = ONE_OVER_SQRT_TWO_PI * exp_term * y_diff;
 
-    Some(black_value.abs().max(0.0))
+    Some(black_value.max(0.0))
 }
 
 #[allow(dead_code)]
@@ -146,7 +146,7 @@ pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
     let b = 0.5
         * (-0.5 * (h * h + t * t)).exp()
         * (erfcx(-FRAC_1_SQRT_2 * (h + t)) - erfcx(-FRAC_1_SQRT_2 * (h - t)));
-    b.abs().max(0.0)
+    b.max(0.0)
 }
 
 pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
