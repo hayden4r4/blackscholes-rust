@@ -79,6 +79,42 @@ pub fn black(
     }
 }
 
+/// Calculates the implied volatility of an option using a rational guess.
+///
+/// This function estimates the implied volatility of a European call or put option based on the market price, forward price, strike price, time to maturity, and option type. It uses a rational guess approach with limited iterations (2) to find the implied volatility.
+///
+/// # Arguments
+/// * `market_price` - The market price of the option.
+/// * `forward_price` - The forward price of the underlying asset.
+/// * `strike_price` - The strike price of the option.
+/// * `time_to_maturity` - The time to maturity of the option, in years.
+/// * `option_type` - The type of the option (call or put), represented by `OptionType`.
+///
+/// # Returns
+/// The implied volatility of the option as a `f64`.
+///
+/// # Examples
+/// ```
+/// use blackscholes::{OptionType, lets_be_rational::implied_volatility_from_a_transformed_rational_guess};
+///
+/// let market_price = 10.0;
+/// let forward_price = 100.0;
+/// let strike_price = 95.0;
+/// let time_to_maturity = 1.0;
+/// let option_type = OptionType::Call;
+///
+/// let implied_volatility = implied_volatility_from_a_transformed_rational_guess(
+///     market_price,
+///     forward_price,
+///     strike_price,
+///     time_to_maturity,
+///     option_type,
+/// );
+/// println!("The implied volatility of the option is: {}", implied_volatility);
+/// ```
+///
+/// # Note
+/// This function is suitable for European options *only* and uses a rational guess approach with limited iterations (2) to estimate the implied volatility.
 pub fn implied_volatility_from_a_transformed_rational_guess(
     market_price: f64,
     forward_price: f64,
