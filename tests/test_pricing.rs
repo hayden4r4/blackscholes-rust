@@ -58,8 +58,9 @@ fn price_put_otm() {
 }
 #[test]
 fn price_put_itm() {
-    assert!((INPUTS_PUT_ITM.calc_price().unwrap() - 10.0103).abs() < 0.001);
+    assert_approx_eq!(INPUTS_PUT_ITM.calc_price().unwrap(), 10.0103, 0.001);
 }
+
 #[test]
 fn price_using_lets_be_rational() {
     // compare the results from calc_price() and calc_rational_price() for the options above
