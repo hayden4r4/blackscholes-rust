@@ -82,7 +82,7 @@ fn price_using_lets_be_rational() {
     );
 
     assert_approx_eq!(
-        INPUTS_PUT_ITM.calc_price().unwrap() as f64,
+        INPUTS_PUT_ITM.calc_price().unwrap(),
         INPUTS_PUT_ITM.calc_rational_price().unwrap(),
         0.001
     );

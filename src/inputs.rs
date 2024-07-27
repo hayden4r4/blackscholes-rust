@@ -1,9 +1,10 @@
+use num_traits::ConstZero;
 use std::fmt::{Display, Formatter, Result as fmtResult};
 use std::ops::Neg;
 
 /// The type of option to be priced (call or put).
 #[derive(Debug, Clone, Eq, PartialEq, Copy)]
-#[repr(i32)]
+#[repr(i8)]
 pub enum OptionType {
     Call = 1,
     Put = -1,
@@ -12,6 +13,7 @@ pub enum OptionType {
 impl Neg for OptionType {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         match self {
             OptionType::Call => OptionType::Put,
@@ -29,11 +31,60 @@ impl Display for OptionType {
     }
 }
 
-impl From<OptionType> for f64 {
-    fn from(val: OptionType) -> Self {
-        val as i32 as f64
-    }
+macro_rules! impl_option_type {
+    ($type:ty) => {
+        impl From<OptionType> for $type {
+            #[inline]
+            fn from(val: OptionType) -> Self {
+                <$type>::from(val as i8)
+            }
+        }
+
+        impl From<$type> for OptionType {
+            #[inline]
+            fn from(value: $type) -> Self {
+                if value >= <$type>::ZERO {
+                    OptionType::Call
+                } else {
+                    OptionType::Put
+                }
+            }
+        }
+
+        impl std::ops::Mul<OptionType> for $type {
+            type Output = $type;
+
+            #[inline]
+            fn mul(self, rhs: OptionType) -> Self::Output {
+                match rhs {
+                    OptionType::Call => self,
+                    OptionType::Put => -self,
+                }
+            }
+        }
+
+        impl std::ops::Mul<$type> for OptionType {
+            type Output = $type;
+
+            #[inline]
+            fn mul(self, rhs: $type) -> Self::Output {
+                match self {
+                    OptionType::Call => rhs,
+                    OptionType::Put => -rhs,
+                }
+            }
+        }
+    };
 }
+
+impl_option_type!(f32);
+impl_option_type!(f64);
+impl_option_type!(i8);
+impl_option_type!(i16);
+impl_option_type!(i32);
+impl_option_type!(i64);
+impl_option_type!(i128);
+impl_option_type!(isize);
 
 /// The inputs to the Black-Scholes-Merton model.
 #[derive(Debug, Clone, PartialEq)]
@@ -41,19 +92,19 @@ pub struct Inputs {
     /// The type of the option (call or put)
     pub option_type: OptionType,
     /// Stock price
-    pub s: f32,
+    pub s: f64,
     /// Strike price
-    pub k: f32,
+    pub k: f64,
     /// Option price
-    pub p: Option<f32>,
+    pub p: Option<f64>,
     /// Risk-free rate
-    pub r: f32,
+    pub r: f64,
     /// Dividend yield
-    pub q: f32,
+    pub q: f64,
     /// Time to maturity in years
-    pub t: f32,
+    pub t: f64,
     /// Volatility
-    pub sigma: Option<f32>,
+    pub sigma: Option<f64>,
 }
 
 /// Methods for calculating the price, greeks, and implied volatility of an option.
@@ -78,13 +129,13 @@ impl Inputs {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         option_type: OptionType,
-        s: f32,
-        k: f32,
-        p: Option<f32>,
-        r: f32,
-        q: f32,
-        t: f32,
-        sigma: Option<f32>,
+        s: f64,
+        k: f64,
+        p: Option<f64>,
+        r: f64,
+        q: f64,
+        t: f64,
+        sigma: Option<f64>,
     ) -> Self {
         Self {
             option_type,

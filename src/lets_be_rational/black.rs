@@ -19,6 +19,7 @@ fn erfcx(x: f64) -> f64 {
     (x * x).exp() * erfc(x)
 }
 
+#[allow(dead_code)]
 fn normalised_black_call_using_norm_cdf(x: f64, s: f64) -> f64 {
     let h = x / s;
     let t = 0.5 * s;
@@ -140,6 +141,7 @@ pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64>
     Some(black_value.abs().max(0.0))
 }
 
+#[allow(dead_code)]
 pub fn normalised_black_call_using_erfcx(h: f64, t: f64) -> f64 {
     let b = 0.5
         * (-0.5 * (h * h + t * t)).exp()
@@ -174,8 +176,8 @@ pub(crate) fn normalised_black_call(x: f64, s: f64) -> f64 {
     normalised_black_call_with_optimal_use_of_codys_functions(x, s)
 }
 
-pub(crate) fn normalised_black(x: f64, s: f64, q: f64) -> f64 {
-    normalised_black_call(if q < 0.0 { -x } else { x }, s) /* Reciprocal-strike call-put equivalence */
+pub(crate) fn normalised_black(x: f64, s: f64, option_type: OptionType) -> f64 {
+    normalised_black_call(option_type * x, s) /* Reciprocal-strike call-put equivalence */
 }
 /// Computes the asymptotic expansion of the normalized Black call price.
 ///
