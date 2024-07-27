@@ -1,5 +1,4 @@
 use assert_approx_eq::assert_approx_eq;
-
 use blackscholes::{Inputs, OptionType, Pricing};
 
 const INPUTS_CALL_OTM: Inputs = Inputs {

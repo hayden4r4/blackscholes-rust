@@ -1,6 +1,6 @@
-use crate::lets_be_rational::black::normalised_black;
-use crate::OptionType;
 use statrs::consts::SQRT_2PI;
+
+use crate::{lets_be_rational::black::normalised_black, OptionType};
 
 // NOTE: if black is public then `calc_rational_iv` is decreased to 320
 // ns but when private everything twice lower - wtf

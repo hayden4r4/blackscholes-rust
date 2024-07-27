@@ -1,7 +1,6 @@
+use blackscholes::OptionType;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::Rng;
-
-use blackscholes::OptionType;
 
 #[allow(dead_code)]
 fn abs_vs_equality_benchmarks(c: &mut Criterion) {

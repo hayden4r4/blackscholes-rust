@@ -1,12 +1,14 @@
-use statrs::consts::SQRT_2PI;
-use statrs::function::erf::erfc;
 use std::f64::consts::FRAC_1_SQRT_2;
 
-use crate::lets_be_rational::{
-    intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf,
-    DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+use statrs::{consts::SQRT_2PI, function::erf::erfc};
+
+use crate::{
+    lets_be_rational::{
+        intrinsic::normalised_intrinsic, normal_distribution::standard_normal_cdf,
+        DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+    },
+    OptionType,
 };
-use crate::OptionType;
 const H_LARGE: f64 = -10.0;
 
 const ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD: f64 = -10.0;
