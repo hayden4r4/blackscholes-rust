@@ -2,12 +2,12 @@ mod tests {
     use blackscholes::{ImpliedVolatility, Inputs, OptionType, Pricing};
 
     // Tolerance is a bit higher due to IV being an approximation
-    const TOLERANCE: f64 = 0.0001;
+    const TOLERANCE: f64 = 1e-8;
 
     #[test]
     fn test_put_otm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.25);
+        let sigma: Option<f64> = Some(0.25);
         let mut inputs_put_otm: Inputs = Inputs {
             option_type: OptionType::Put,
             s: 90.0,
@@ -29,13 +29,13 @@ mod tests {
 
         // assert
         println!("Put OTM: {}", iv);
-        assert!((iv - sigma.unwrap() as f64).abs() < TOLERANCE);
+        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
     }
 
     #[test]
     fn test_call_itm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.15);
+        let sigma: Option<f64> = Some(0.15);
         let mut inputs_call_itm: Inputs = Inputs {
             option_type: OptionType::Call,
             s: 120.0,
@@ -57,13 +57,13 @@ mod tests {
 
         // assert
         println!("Call ITM: {}", iv);
-        assert!((iv - sigma.unwrap() as f64).abs() < TOLERANCE);
+        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
     }
 
     #[test]
     fn test_put_itm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.18);
+        let sigma: Option<f64> = Some(0.18);
         let mut inputs_put_itm: Inputs = Inputs {
             option_type: OptionType::Put,
             s: 80.0,
@@ -85,13 +85,13 @@ mod tests {
 
         // assert
         println!("Put ITM: {}", iv);
-        assert!((iv - sigma.unwrap() as f64).abs() < TOLERANCE);
+        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
     }
 
     #[test]
     fn test_call_atm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.2);
+        let sigma: Option<f64> = Some(0.2);
         let mut inputs_call_atm: Inputs = Inputs {
             option_type: OptionType::Call,
             s: 100.0,
@@ -113,13 +113,13 @@ mod tests {
 
         // assert
         println!("Call ATM: {}", iv);
-        assert!((iv - sigma.unwrap() as f64).abs() < TOLERANCE);
+        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
     }
 
     #[test]
     fn test_put_atm_rational_iv() {
         // arrange
-        let sigma: Option<f32> = Some(0.22);
+        let sigma: Option<f64> = Some(0.22);
         let mut inputs_put_atm: Inputs = Inputs {
             option_type: OptionType::Put,
             s: 100.0,
@@ -141,6 +141,6 @@ mod tests {
 
         // assert
         println!("Put ATM: {}", iv);
-        assert!((iv - sigma.unwrap() as f64).abs() < TOLERANCE);
+        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
     }
 }
