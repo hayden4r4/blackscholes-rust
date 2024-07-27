@@ -56,7 +56,7 @@ pub fn black(
     option_type: OptionType,
 ) -> f64 {
     let signed_diff = option_type * (forward_price - strike_price);
-    let intrinsic = signed_diff.max(0.0).abs();
+    let intrinsic = signed_diff.max(0.0);
     // Map in-the-money to out-of-the-money
     if signed_diff > 0.0 {
         intrinsic

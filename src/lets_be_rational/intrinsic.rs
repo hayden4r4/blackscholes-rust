@@ -15,12 +15,11 @@ pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
             * (1.0
                 + x2 * ((1.0 / 24.0)
                     + x2 * ((1.0 / 1920.0) + x2 * ((1.0 / 322560.0) + (1.0 / 92897280.0) * x2)))))
-            .max(0.0)
-            .abs();
+            .max(0.0);
     }
     let b_max = (0.5 * x).exp();
     let one_over_b_max = 1.0 / b_max;
-    (option_type * (b_max - one_over_b_max)).max(0.0).abs()
+    (option_type * (b_max - one_over_b_max)).max(0.0)
 }
 
 #[cfg(test)]
