@@ -7,6 +7,7 @@ use crate::{lets_be_rational::black::normalised_black, OptionType};
 // if someone know why I will be glad to know too...
 mod black;
 
+mod cody;
 mod intrinsic;
 pub(crate) mod normal_distribution;
 mod rational_cubic;
