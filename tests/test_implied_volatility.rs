@@ -1,4 +1,5 @@
 mod tests {
+    use assert_approx_eq::assert_approx_eq;
     use blackscholes::{ImpliedVolatility, Inputs, OptionType, Pricing};
 
     // Tolerance is a bit higher due to IV being an approximation
@@ -29,7 +30,7 @@ mod tests {
 
         // assert
         println!("Put OTM: {}", iv);
-        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
@@ -57,7 +58,7 @@ mod tests {
 
         // assert
         println!("Call ITM: {}", iv);
-        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
@@ -85,7 +86,7 @@ mod tests {
 
         // assert
         println!("Put ITM: {}", iv);
-        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
@@ -113,7 +114,7 @@ mod tests {
 
         // assert
         println!("Call ATM: {}", iv);
-        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 
     #[test]
@@ -141,6 +142,6 @@ mod tests {
 
         // assert
         println!("Put ATM: {}", iv);
-        assert!((iv - sigma.unwrap()).abs() < TOLERANCE);
+        assert_approx_eq!(iv, sigma.unwrap(), TOLERANCE);
     }
 }

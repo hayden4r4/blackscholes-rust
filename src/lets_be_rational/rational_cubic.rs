@@ -155,8 +155,9 @@ pub fn convex_rational_cubic_control_parameter(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use assert_approx_eq::assert_approx_eq;
+
+    use super::*;
 
     const EPSILON: f64 = 1e-10;
 
