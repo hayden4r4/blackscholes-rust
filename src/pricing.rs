@@ -1,6 +1,6 @@
 use num_traits::Float;
 
-use crate::{error::BlackScholesError, lets_be_rational, Inputs, OptionType, *};
+use crate::{error::BlackScholesError, lets_be_rational, Inputs, *};
 
 pub trait Pricing<T>
 where
