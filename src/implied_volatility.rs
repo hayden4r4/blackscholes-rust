@@ -4,16 +4,17 @@ use num_traits::Float;
 use statrs::consts::SQRT_2PI;
 
 use crate::{
-    greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
-    pricing::Pricing, Inputs, *,
+    error::BlackScholesError, greeks::Greeks,
+    lets_be_rational::implied_volatility_from_a_transformed_rational_guess, pricing::Pricing,
+    Inputs, *,
 };
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
     T: Float,
 {
-    fn calc_iv(&self, tolerance: T) -> Result<T, String>;
-    fn calc_rational_iv(&self) -> Result<f64, String>;
+    fn calc_iv(&self, tolerance: T) -> Result<T, BlackScholesError>;
+    fn calc_rational_iv(&self) -> Result<f64, BlackScholesError>;
 }
 
 impl ImpliedVolatility<f64> for Inputs {
@@ -37,17 +38,16 @@ impl ImpliedVolatility<f64> for Inputs {
     /// A more accurate method is the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// however this method is much more complicated, it is available as calc_rational_iv().
     #[allow(non_snake_case)]
-    fn calc_iv(&self, tolerance: f64) -> Result<f64, String> {
+    fn calc_iv(&self, tolerance: f64) -> Result<f64, BlackScholesError> {
         let mut inputs: Inputs = self.clone();
 
-        let p = self
-            .p
-            .ok_or("inputs.p must contain Some(f64), found None".to_string())?;
+        let p = self.p.ok_or(BlackScholesError::ExpectedPrice)?;
+
         // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
         // commented out to replace with modified corrado-miller method.
         // let mut sigma: f64 = (PI2 / inputs.t).sqrt() * (p / inputs.s);
 
-        let X: f64 = inputs.k * (-inputs.r * inputs.t).exp();
+        let X: f64 = inputs.k * (-inputs.r * inputs.t).exp(); //?
         let fminusX: f64 = inputs.s - X;
         let fplusX: f64 = inputs.s + X;
         let oneoversqrtT: f64 = 1.0 / inputs.t.sqrt();
@@ -67,7 +67,7 @@ impl ImpliedVolatility<f64> for Inputs {
             + F * y / x;
 
         if sigma.is_nan() {
-            Err("Failed to converge".to_string())?
+            Err(BlackScholesError::FailedToConverge)?
         }
 
         // Initialize diff to 100 for use in while loop
@@ -82,7 +82,7 @@ impl ImpliedVolatility<f64> for Inputs {
             sigma -= diff / (Inputs::calc_vega(&inputs)? * 100.0);
 
             if sigma.is_nan() || sigma.is_infinite() {
-                Err("Failed to converge".to_string())?
+                Err(BlackScholesError::FailedToConverge)?
             }
         }
         Ok(sigma)
@@ -103,9 +103,9 @@ impl ImpliedVolatility<f64> for Inputs {
     /// Uses the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// from Jackel's C++ implementation, imported through the C FFI.  The C++ implementation is available at [here](http://www.jaeckel.org/LetsBeRational.7z)
     /// Per Jackel's whitepaper, this method can solve for the implied volatility to f64 precision in 2 iterations.
-    fn calc_rational_iv(&self) -> Result<f64, String> {
+    fn calc_rational_iv(&self) -> Result<f64, BlackScholesError> {
         // extract price, or return error
-        let p = self.p.ok_or("Option price is required".to_string())?;
+        let p = self.p.ok_or(BlackScholesError::ExpectedPrice)?;
 
         // "let's be rational" works with the forward and undiscounted option price, so remove the discount
         let rate_inv_discount = (self.r * self.t).exp();
@@ -125,7 +125,7 @@ impl ImpliedVolatility<f64> for Inputs {
         );
 
         if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
-            Err("Implied volatility failed to converge".to_string())?
+            Err(BlackScholesError::FailedToConverge)?
         }
         Ok(sigma)
     }
