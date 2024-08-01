@@ -2,30 +2,30 @@ use std::collections::HashMap;
 
 use num_traits::Float;
 
-use crate::{Inputs, OptionType, Pricing, *};
+use crate::{error::BlackScholesError, Inputs, OptionType, Pricing, *};
 
 pub trait Greeks<T>: Pricing<T>
 where
     T: Float,
 {
-    fn calc_delta(&self) -> Result<T, String>;
-    fn calc_gamma(&self) -> Result<T, String>;
-    fn calc_theta(&self) -> Result<T, String>;
-    fn calc_vega(&self) -> Result<T, String>;
-    fn calc_rho(&self) -> Result<T, String>;
-    fn calc_epsilon(&self) -> Result<T, String>;
-    fn calc_lambda(&self) -> Result<T, String>;
-    fn calc_vanna(&self) -> Result<T, String>;
-    fn calc_charm(&self) -> Result<T, String>;
-    fn calc_veta(&self) -> Result<T, String>;
-    fn calc_vomma(&self) -> Result<T, String>;
-    fn calc_speed(&self) -> Result<T, String>;
-    fn calc_zomma(&self) -> Result<T, String>;
-    fn calc_color(&self) -> Result<T, String>;
-    fn calc_ultima(&self) -> Result<T, String>;
-    fn calc_dual_delta(&self) -> Result<T, String>;
-    fn calc_dual_gamma(&self) -> Result<T, String>;
-    fn calc_all_greeks(&self) -> Result<HashMap<String, T>, String>;
+    fn calc_delta(&self) -> Result<T, BlackScholesError>;
+    fn calc_gamma(&self) -> Result<T, BlackScholesError>;
+    fn calc_theta(&self) -> Result<T, BlackScholesError>;
+    fn calc_vega(&self) -> Result<T, BlackScholesError>;
+    fn calc_rho(&self) -> Result<T, BlackScholesError>;
+    fn calc_epsilon(&self) -> Result<T, BlackScholesError>;
+    fn calc_lambda(&self) -> Result<T, BlackScholesError>;
+    fn calc_vanna(&self) -> Result<T, BlackScholesError>;
+    fn calc_charm(&self) -> Result<T, BlackScholesError>;
+    fn calc_veta(&self) -> Result<T, BlackScholesError>;
+    fn calc_vomma(&self) -> Result<T, BlackScholesError>;
+    fn calc_speed(&self) -> Result<T, BlackScholesError>;
+    fn calc_zomma(&self) -> Result<T, BlackScholesError>;
+    fn calc_color(&self) -> Result<T, BlackScholesError>;
+    fn calc_ultima(&self) -> Result<T, BlackScholesError>;
+    fn calc_dual_delta(&self) -> Result<T, BlackScholesError>;
+    fn calc_dual_gamma(&self) -> Result<T, BlackScholesError>;
+    fn calc_all_greeks(&self) -> Result<HashMap<String, T>, BlackScholesError>;
 }
 
 impl Greeks<f64> for Inputs {
@@ -40,7 +40,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let delta = inputs.calc_delta().unwrap();
     /// ```
-    fn calc_delta(&self) -> Result<f64, String> {
+    fn calc_delta(&self) -> Result<f64, BlackScholesError> {
         let (nd1, _): (f64, f64) = calc_nd1nd2(self)?;
 
         let delta = self.option_type * (-self.q * self.t).exp() * nd1;
@@ -59,10 +59,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let gamma = inputs.calc_gamma().unwrap();
     /// ```
-    fn calc_gamma(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_gamma(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
 
         let nprimed1: f64 = calc_nprimed1(self)?;
         let gamma: f64 = (-self.q * self.t).exp() * nprimed1 / (self.s * sigma * self.t.sqrt());
@@ -81,10 +79,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let theta = inputs.calc_theta().unwrap();
     /// ```
-    fn calc_theta(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_theta(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
 
         let nprimed1: f64 = calc_nprimed1(self)?;
         let (nd1, nd2): (f64, f64) = calc_nd1nd2(self)?;
@@ -110,7 +106,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vega = inputs.calc_vega().unwrap();
     /// ```
-    fn calc_vega(&self) -> Result<f64, String> {
+    fn calc_vega(&self) -> Result<f64, BlackScholesError> {
         let nprimed1: f64 = calc_nprimed1(self)?;
         let vega: f64 = 0.01 * self.s * (-self.q * self.t).exp() * self.t.sqrt() * nprimed1;
         Ok(vega)
@@ -127,7 +123,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let rho = inputs.calc_rho().unwrap();
     /// ```
-    fn calc_rho(&self) -> Result<f64, String> {
+    fn calc_rho(&self) -> Result<f64, BlackScholesError> {
         let (_, nd2): (f64, f64) = calc_nd1nd2(self)?;
 
         let rho = self.option_type * self.k * self.t * (-self.r * self.t).exp() * nd2 / 100.0;
@@ -152,7 +148,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let epsilon = inputs.calc_epsilon().unwrap();
     /// ```
-    fn calc_epsilon(&self) -> Result<f64, String> {
+    fn calc_epsilon(&self) -> Result<f64, BlackScholesError> {
         let (nd1, _) = calc_nd1nd2(self)?;
         let e_negqt = (-self.q * self.t).exp();
 
@@ -172,7 +168,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let lambda = inputs.calc_lambda().unwrap();
     /// ```
-    fn calc_lambda(&self) -> Result<f64, String> {
+    fn calc_lambda(&self) -> Result<f64, BlackScholesError> {
         let delta = self.calc_delta()?;
         Ok(delta * self.s / self.calc_price()?)
     }
@@ -188,10 +184,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vanna = inputs.calc_vanna().unwrap();
     /// ```
-    fn calc_vanna(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_vanna(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
 
         let nprimed1 = calc_nprimed1(self)?;
         let (_, d2) = calc_d1d2(self)?;
@@ -210,10 +204,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let charm = inputs.calc_charm().unwrap();
     /// ```
-    fn calc_charm(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_charm(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let nprimed1 = calc_nprimed1(self)?;
         let (nd1, _) = calc_nd1nd2(self)?;
         let (_, d2) = calc_d1d2(self)?;
@@ -237,10 +229,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let veta = inputs.calc_veta().unwrap();
     /// ```
-    fn calc_veta(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_veta(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let nprimed1 = calc_nprimed1(self)?;
         let (d1, d2) = calc_d1d2(self)?;
         let e_negqt = (-self.q * self.t).exp();
@@ -265,10 +255,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vomma = inputs.calc_vomma().unwrap();
     /// ```
-    fn calc_vomma(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_vomma(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let (d1, d2) = calc_d1d2(self)?;
 
         let vomma = Inputs::calc_vega(self)? * ((d1 * d2) / sigma);
@@ -286,10 +274,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let speed = inputs.calc_speed().unwrap();
     /// ```
-    fn calc_speed(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_speed(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let (d1, _) = calc_d1d2(self)?;
         let gamma = Inputs::calc_gamma(self)?;
 
@@ -308,10 +294,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let zomma = inputs.calc_zomma().unwrap();
     /// ```
-    fn calc_zomma(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_zomma(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let (d1, d2) = calc_d1d2(self)?;
         let gamma = Inputs::calc_gamma(self)?;
 
@@ -330,10 +314,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let color = inputs.calc_color().unwrap();
     /// ```
-    fn calc_color(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_color(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let (d1, d2) = calc_d1d2(self)?;
         let nprimed1 = calc_nprimed1(self)?;
         let e_negqt = (-self.q * self.t).exp();
@@ -359,10 +341,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let ultima = inputs.calc_ultima().unwrap();
     /// ```
-    fn calc_ultima(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_ultima(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let (d1, d2) = calc_d1d2(self)?;
         let vega = Inputs::calc_vega(self)?;
 
@@ -381,7 +361,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let dual_delta = inputs.calc_dual_delta().unwrap();
     /// ```
-    fn calc_dual_delta(&self) -> Result<f64, String> {
+    fn calc_dual_delta(&self) -> Result<f64, BlackScholesError> {
         let (_, nd2) = calc_nd1nd2(self)?;
         let e_negqt = (-self.q * self.t).exp();
 
@@ -403,10 +383,8 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let dual_gamma = inputs.calc_dual_gamma().unwrap();
     /// ```
-    fn calc_dual_gamma(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_dual_gamma(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
         let nprimed2 = calc_nprimed2(self)?;
         let e_negqt = (-self.q * self.t).exp();
 
@@ -425,7 +403,7 @@ impl Greeks<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let greeks = inputs.calc_all_greeks().unwrap();
     /// ```
-    fn calc_all_greeks(&self) -> Result<HashMap<String, f64>, String> {
+    fn calc_all_greeks(&self) -> Result<HashMap<String, f64>, BlackScholesError> {
         let mut greeks: HashMap<String, f64> = HashMap::with_capacity(17);
         greeks.insert("delta".into(), self.calc_delta()?);
         greeks.insert("gamma".into(), self.calc_gamma()?);

@@ -6,8 +6,8 @@ pub trait Pricing<T>
 where
     T: Float,
 {
-    fn calc_price(&self) -> Result<T, String>;
-    fn calc_rational_price(&self) -> Result<f64, String>;
+    fn calc_price(&self) -> Result<T, BlackScholesError>;
+    fn calc_rational_price(&self) -> Result<f64, BlackScholesError>;
 }
 
 impl Pricing<f64> for Inputs {
@@ -22,7 +22,7 @@ impl Pricing<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_price().unwrap();
     /// ```
-    fn calc_price(&self) -> Result<f64, String> {
+    fn calc_price(&self) -> Result<f64, BlackScholesError> {
         // Calculates the price of the option
         let (nd1, nd2): (f64, f64) = calc_nd1nd2(self)?;
         let price: f64 = match self.option_type {
@@ -49,10 +49,8 @@ impl Pricing<f64> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_rational_price().unwrap();
     /// ```
-    fn calc_rational_price(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    fn calc_rational_price(&self) -> Result<f64, BlackScholesError> {
+        let sigma = self.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
 
         // let's be rational wants the forward price, not the spot price.
         let forward = self.s * ((self.r - self.q) * self.t).exp();
