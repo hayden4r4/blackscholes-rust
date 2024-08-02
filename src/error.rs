@@ -1,19 +1,19 @@
-use thiserror::Error;
-
-#[derive(Error, Debug)]
+//
+// #[derive( Debug)]
+#[repr(i8)]
 pub enum BlackScholesError {
-    #[error("Expected Some(f64) for self.sigma, received None")]
+    // #[error("Expected Some(f64) for self.sigma, received None")]
     ExpectedSigma,
 
-    #[error("Log from s/k is infinity")]
+    // #[error("Log from s/k is infinity")]
     LogSdivKInfinity,
 
-    #[error("Expected Some(f64) for self.p, received None")]
+    // #[error("Expected Some(f64) for self.p, received None")]
     ExpectedPrice,
 
-    #[error("Implied volatility failed to converge")]
+    // #[error("Implied volatility failed to converge")]
     FailedToConverge,
 
-    #[error("Time to maturity is 0")]
+    // #[error("Time to maturity is 0")]
     ZeroTimeToMaturity,
 }

@@ -4,6 +4,8 @@ use std::{
 };
 
 use num_traits::ConstZero;
+use crate::calc_nd1nd2;
+use crate::error::BlackScholesError;
 
 /// The type of option to be priced (call or put).
 #[derive(Debug, Clone, Eq, PartialEq, Copy)]
@@ -150,6 +152,44 @@ impl Inputs {
             t,
             sigma,
         }
+    }
+
+    /// Calculates the price of the option.
+    /// # Requires
+    /// s, k, r, q, t, sigma.
+    /// # Returns
+    /// f64 of the price of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::{Inputs, OptionType, Pricing};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
+    /// let price = inputs.calc_price()?;
+    /// ```
+    pub fn calc_price(&self) -> Result<f64, BlackScholesError> {
+        // Calculates the price of the option
+        let (nd1, nd2) = if let Ok((nd1, nd2)) = calc_nd1nd2(self) {
+            (nd1, nd2)
+        }
+        else {
+            // NOTE: Different perf behavior Enum vs String
+            // Tt is not possible based on enum benches tests
+            println!("Error in calc_nd1nd2");
+            // return Err("ExpectedSigma".to_string());
+            return Err(BlackScholesError::ExpectedSigma);
+            // return Err(1);
+        };
+
+        let price: f64 = match self.option_type {
+            OptionType::Call => f64::max(
+                0.0,
+                nd1 * self.s * (-self.q * self.t).exp() - nd2 * self.k * (-self.r * self.t).exp(),
+            ),
+            OptionType::Put => f64::max(
+                0.0,
+                nd2 * self.k * (-self.r * self.t).exp() - nd1 * self.s * (-self.q * self.t).exp(),
+            ),
+        };
+        Ok(price)
     }
 }
 

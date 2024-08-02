@@ -22,7 +22,6 @@ pub use inputs::{Inputs, OptionType};
 use lets_be_rational::normal_distribution::{standard_normal_cdf, standard_normal_pdf};
 pub use pricing::Pricing;
 
-use crate::error::BlackScholesError;
 
 mod error;
 mod greeks;
@@ -45,13 +44,13 @@ pub(crate) const F: f64 = -2.102_376_9e-5;
 /// s, k, r, q, t, sigma.
 /// # Returns
 /// Tuple (f64, f64) of (d1, d2)
-pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), BlackScholesError> {
-    let sigma = inputs.sigma.ok_or(BlackScholesError::ExpectedSigma)?;
+pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), String> {
+    let sigma = inputs.sigma.ok_or("3".to_string())?;
     // Calculating numerator of d1
     let part1 = (inputs.s / inputs.k).ln();
 
     if part1.is_infinite() {
-        return Err(BlackScholesError::LogSdivKInfinity);
+        return Err("3".to_string());
     }
 
     let part2 = (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
@@ -59,7 +58,7 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), BlackScholesError
 
     // Calculating denominator of d1 and d2
     if inputs.t == 0.0 {
-        return Err(BlackScholesError::ZeroTimeToMaturity);
+        return Err("4".to_string());
     }
 
     let den = sigma * (inputs.t.sqrt());
@@ -75,7 +74,7 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), BlackScholesError
 /// s, k, r, q, t, sigma
 /// # Returns
 /// Tuple (f64, f64) of (nd1, nd2)
-pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), BlackScholesError> {
+pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), String> {
     let (d1, d2) = calc_d1d2(inputs)?;
 
     // Calculates the nd1 and nd2 values
@@ -88,7 +87,7 @@ pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f64, f64), BlackScholesErr
 
 /// # Returns
 /// f64 of the derivative of the nd1.
-pub fn calc_nprimed1(inputs: &Inputs) -> Result<f64, BlackScholesError> {
+pub fn calc_nprimed1(inputs: &Inputs) -> Result<f64, String> {
     let (d1, _) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
@@ -98,7 +97,7 @@ pub fn calc_nprimed1(inputs: &Inputs) -> Result<f64, BlackScholesError> {
 
 /// # Returns
 /// f64 of the derivative of the nd2.
-pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f64, BlackScholesError> {
+pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f64, String> {
     let (_, d2) = calc_d1d2(inputs)?;
 
     // Get the standard n probability density function value of d1
