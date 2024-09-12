@@ -60,8 +60,8 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
 ///
 /// # Returns
 ///
-/// * `Some(f64)` containing the computed value if t < 0.21
-/// * `None` if t >= 0.21, indicating the approximation is not valid
+/// * `Some(f64)` containing the computed value if t < 0.21132486540518713
+/// * `None` otherwise, indicating the approximation is not valid
 pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64> {
     if t >= SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD {
         return None;
