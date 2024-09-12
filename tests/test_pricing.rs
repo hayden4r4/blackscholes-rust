@@ -87,3 +87,19 @@ fn price_using_lets_be_rational() {
         0.001
     );
 }
+
+#[test]
+fn test_rational_price_near_branch_cut() {
+    Inputs {
+        option_type: OptionType::Put,
+        s: 1.0,
+        k: 1.0,
+        p: None,
+        r: 0.0,
+        q: 0.0,
+        sigma: Some(0.421),
+        t: 1.0,
+    }
+    .calc_rational_price()
+    .unwrap();
+}
