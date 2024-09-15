@@ -42,6 +42,17 @@ const INPUTS_PUT_ITM: Inputs = Inputs {
     sigma: Some(0.2),
 };
 
+const INPUTS_BRANCH_CUT: Inputs = Inputs {
+    option_type: OptionType::Put,
+    s: 100.0,
+    k: 100.0,
+    p: None,
+    r: 0.0,
+    q: 0.0,
+    sigma: Some(0.421),
+    t: 1.0,
+};
+
 #[test]
 fn price_call_otm() {
     assert_approx_eq!(INPUTS_CALL_OTM.calc_price().unwrap(), 0.0376, 0.001);
@@ -84,6 +95,15 @@ fn price_using_lets_be_rational() {
     assert_approx_eq!(
         INPUTS_PUT_ITM.calc_price().unwrap(),
         INPUTS_PUT_ITM.calc_rational_price().unwrap(),
+        0.001
+    );
+}
+
+#[test]
+fn test_rational_price_near_branch_cut() {
+    assert_approx_eq!(
+        INPUTS_BRANCH_CUT.calc_rational_price().unwrap(),
+        16.67224,
         0.001
     );
 }

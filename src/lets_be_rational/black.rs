@@ -60,12 +60,10 @@ fn normalised_black_call_with_optimal_use_of_codys_functions(x: f64, s: f64) -> 
 ///
 /// # Returns
 ///
-/// * `Some(f64)` containing the computed value if t < 0.21
-/// * `None` if t >= 0.21, indicating the approximation is not valid
+/// * `Some(f64)` containing the computed value if t < 0.21132486540518713
+/// * `None` otherwise, indicating the approximation is not valid
 pub fn small_t_expansion_of_normalised_black_call(h: f64, t: f64) -> Option<f64> {
-    const T_THRESHOLD: f64 = 0.21;
-
-    if t >= T_THRESHOLD {
+    if t >= SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD {
         return None;
     }
 
@@ -192,11 +190,11 @@ pub(crate) fn normalised_black(x: f64, s: f64, option_type: OptionType) -> f64 {
 /// * `Ok(f64)` - The computed price
 /// * `Err(String)` - An error message if the input is out of the valid range
 pub fn asymptotic_expansion_of_normalised_black_call(h: f64, t: f64) -> Result<f64, &'static str> {
-    let tau_small: f64 = 2.0 * f64::EPSILON.sqrt().powi(16);
-
     // Check if we're in the correct region
     // From section 6: "In the region of large negative h, we can realize these preferences by the aid of the formulation (6.10) for the normalized Black function"
-    if h > H_LARGE || t >= (h.abs() - H_LARGE.abs() + tau_small) {
+    if h > H_LARGE
+        || t >= (h.abs() - H_LARGE.abs() + SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD)
+    {
         return Err("This asymptotic expansion is only valid for large negative h and small t");
     }
 
