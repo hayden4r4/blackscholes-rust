@@ -9,7 +9,7 @@
 //! let price: f64 = inputs.calc_price().unwrap();
 //! ```
 //!
-//! Criterion benchmark can be ran by running:
+//! Criterion benchmark can be run by running:
 //! ```bash
 //! cargo bench
 //! ```
@@ -22,6 +22,8 @@ pub use inputs::{Inputs, OptionType};
 use lets_be_rational::normal_distribution::{standard_normal_cdf, standard_normal_pdf};
 pub use pricing::Pricing;
 
+
+mod error;
 mod greeks;
 mod implied_volatility;
 mod inputs;
@@ -43,14 +45,12 @@ pub(crate) const F: f64 = -2.102_376_9e-5;
 /// # Returns
 /// Tuple (f64, f64) of (d1, d2)
 pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), String> {
-    let sigma = inputs
-        .sigma
-        .ok_or("Expected Some(f64) for self.sigma, received None")?;
+    let sigma = inputs.sigma.ok_or("3".to_string())?;
     // Calculating numerator of d1
     let part1 = (inputs.s / inputs.k).ln();
 
     if part1.is_infinite() {
-        return Err("Log from s/k is infinity".to_string());
+        return Err("3".to_string());
     }
 
     let part2 = (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
@@ -58,7 +58,7 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f64, f64), String> {
 
     // Calculating denominator of d1 and d2
     if inputs.t == 0.0 {
-        return Err("Time to maturity is 0".to_string());
+        return Err("4".to_string());
     }
 
     let den = sigma * (inputs.t.sqrt());
