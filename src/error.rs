@@ -1,5 +1,5 @@
 //
-// #[derive( Debug)]
+#[derive( Debug)]
 #[repr(i8)]
 pub enum BlackScholesError {
     // #[error("Expected Some(f64) for self.sigma, received None")]
