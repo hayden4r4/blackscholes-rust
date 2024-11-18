@@ -13,7 +13,13 @@ const INPUTS: Inputs = Inputs {
 };
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("calc_price", |b| b.iter(|| black_box(INPUTS.calc_price())));
+    c.bench_function("calc_price", |b| {
+        b.iter(|| {
+            let input = black_box(INPUTS);
+            let result = input.calc_price().map_err(|e| black_box(e)).unwrap();
+            black_box(result + 1.0);
+        })
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
