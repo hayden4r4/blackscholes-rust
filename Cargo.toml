@@ -23,7 +23,7 @@ rand = { version = "0.8.5", default-features = false }
 
 [dependencies]
 num-traits = "0.2.19"
-statrs = "0.17.1"
+statrs = "0.18.0"
 
 [target.wasm32-unknown-unknown.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
