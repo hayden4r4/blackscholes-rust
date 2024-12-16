@@ -18,7 +18,7 @@ lto = "fat"
 approx = "0.5.1"
 assert_approx_eq = "1.1.0"
 criterion = "0.5.1"
-proptest = "1.5.0"
+proptest = "1.6.0"
 rand = { version = "0.8.5", default-features = false }
 
 [dependencies]
