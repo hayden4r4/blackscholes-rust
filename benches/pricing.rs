@@ -1,4 +1,5 @@
-use blackscholes::{Inputs, OptionType, Pricing};
+use blackscholes::OptionType;
+use blackscholes::valuators::black_scholes::{Inputs, Pricing};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 const INPUTS: Inputs = Inputs {
@@ -8,7 +9,7 @@ const INPUTS: Inputs = Inputs {
     p: None,
     r: 0.0,
     q: 0.0,
-    t: 25.0 / 360.0,
+    t: 25.0 / 365.25,
     sigma: Some(0.5),
 };
 

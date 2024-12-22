@@ -1,6 +1,10 @@
 use num_traits::Float;
 
-use crate::{lets_be_rational, Inputs, OptionType, *};
+use crate::OptionType;
+use crate::{
+    lets_be_rational,
+    valuators::black_scholes::{distributions::*, Inputs},
+};
 
 pub trait Pricing<T>
 where
@@ -18,7 +22,8 @@ impl Pricing<f64> for Inputs {
     /// f64 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Inputs, OptionType, Pricing};
+    /// use blackscholes::OptionType;
+    /// use blackscholes::valuators::black_scholes::{Inputs, Pricing};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_price().unwrap();
     /// ```
@@ -45,7 +50,8 @@ impl Pricing<f64> for Inputs {
     /// f64 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Inputs, OptionType, Pricing};
+    /// use blackscholes::OptionType;
+    /// use blackscholes::valuators::black_scholes::{Inputs, Pricing};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_rational_price().unwrap();
     /// ```

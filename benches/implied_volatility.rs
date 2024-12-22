@@ -1,4 +1,5 @@
-use blackscholes::{ImpliedVolatility, Inputs, OptionType};
+use blackscholes::OptionType;
+use blackscholes::valuators::black_scholes::{ImpliedVolatility, Inputs};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 const INPUTS: Inputs = Inputs {
@@ -8,7 +9,7 @@ const INPUTS: Inputs = Inputs {
     p: Some(1.24),
     r: 0.0,
     q: 0.0,
-    t: 45.0 / 360.0,
+    t: 45.0 / 365.25,
     sigma: None,
 };
 

@@ -1,6 +1,7 @@
 mod tests {
     use assert_approx_eq::assert_approx_eq;
-    use blackscholes::{ImpliedVolatility, Inputs, OptionType, Pricing};
+    use blackscholes::OptionType;
+    use blackscholes::valuators::black_scholes::{Pricing, Inputs, ImpliedVolatility};
 
     // Tolerance is a bit higher due to IV being an approximation
     const TOLERANCE: f64 = 1e-8;

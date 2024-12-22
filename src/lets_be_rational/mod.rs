@@ -1,6 +1,7 @@
 use statrs::consts::SQRT_2PI;
 
-use crate::{lets_be_rational::black::normalised_black, OptionType};
+use crate::lets_be_rational::black::normalised_black;
+use crate::OptionType;
 
 // NOTE: if black is public then `calc_rational_iv` is decreased to 320
 // ns but when private everything twice lower - wtf
@@ -33,7 +34,8 @@ pub(crate) const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_2PI;
 ///
 /// # Examples
 /// ```
-/// use blackscholes::{OptionType, lets_be_rational::black};
+/// use blackscholes::OptionType;
+/// use blackscholes::lets_be_rational::black;
 ///
 /// let forward_price = 100.0;
 /// let strike_price = 95.0;
@@ -96,7 +98,8 @@ pub fn black(
 ///
 /// # Examples
 /// ```
-/// use blackscholes::{OptionType, lets_be_rational::implied_volatility_from_a_transformed_rational_guess};
+/// use blackscholes::OptionType;
+/// use blackscholes::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
 ///
 /// let market_price = 10.0;
 /// let forward_price = 100.0;

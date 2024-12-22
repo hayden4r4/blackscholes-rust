@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use blackscholes::{Greeks, Inputs, OptionType};
+    use blackscholes::OptionType;
+    use blackscholes::valuators::black_scholes::{Greeks, Inputs};
 
     #[test]
     fn test_calc_delta_zero_stock_price() {

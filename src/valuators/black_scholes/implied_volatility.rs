@@ -1,12 +1,8 @@
-use std::f64::consts::PI;
-
 use num_traits::Float;
-use statrs::consts::SQRT_2PI;
 
-use crate::{
-    greeks::Greeks, lets_be_rational::implied_volatility_from_a_transformed_rational_guess,
-    pricing::Pricing, Inputs, *,
-};
+use crate::constants::*;
+use crate::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
+use crate::valuators::black_scholes::{constants::*, Greeks, Inputs, Pricing};
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
@@ -29,7 +25,8 @@ impl ImpliedVolatility<f64> for Inputs {
     /// f64 of the implied volatility of the option.
     /// # Example:
     /// ```
-    /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
+    /// use blackscholes::OptionType;
+    /// use blackscholes::valuators::black_scholes::{Inputs, ImpliedVolatility};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.5), 0.05, 0.2, 20.0/365.25, None);
     /// let iv = inputs.calc_iv(0.0001).unwrap();
     /// ```
@@ -95,7 +92,8 @@ impl ImpliedVolatility<f64> for Inputs {
     /// f64 of the implied volatility of the option.
     /// # Example:
     /// ```
-    /// use blackscholes::{Inputs, OptionType, ImpliedVolatility};
+    /// use blackscholes::OptionType;
+    /// use blackscholes::valuators::black_scholes::{Inputs, ImpliedVolatility};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 0.05, 20.0/365.25, None);
     /// let iv = inputs.calc_rational_iv().unwrap();
     /// ```

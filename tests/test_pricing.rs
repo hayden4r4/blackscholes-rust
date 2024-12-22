@@ -1,5 +1,6 @@
 use assert_approx_eq::assert_approx_eq;
-use blackscholes::{Inputs, OptionType, Pricing};
+use blackscholes::OptionType;
+use blackscholes::valuators::black_scholes::{Inputs, Pricing};
 
 const INPUTS_CALL_OTM: Inputs = Inputs {
     option_type: OptionType::Call,
