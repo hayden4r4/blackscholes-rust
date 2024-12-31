@@ -1,21 +1,18 @@
-use statrs::consts::SQRT_2PI;
-
-use crate::{lets_be_rational::black::normalised_black, OptionType};
+use crate::{
+    lets_be_rational::{black::normalised_black, constants::*},
+    OptionType,
+};
 
 // NOTE: if black is public then `calc_rational_iv` is decreased to 320
 // ns but when private everything twice lower - wtf
 // if someone know why I will be glad to know too...
 mod black;
-
 mod cody;
+mod constants;
 mod intrinsic;
 pub(crate) mod normal_distribution;
 mod rational_cubic;
 mod so_rational;
-
-const IMPLIED_VOLATILITY_MAXIMUM_ITERATIONS: i32 = 2;
-pub(crate) const DENORMALISATION_CUTOFF: f64 = 0.0;
-pub(crate) const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_2PI;
 
 /// Calculates the price of a European option using the Black model.
 ///
@@ -33,7 +30,8 @@ pub(crate) const ONE_OVER_SQRT_TWO_PI: f64 = 1.0 / SQRT_2PI;
 ///
 /// # Examples
 /// ```
-/// use blackscholes::{OptionType, lets_be_rational::black};
+/// use option_valuators::OptionType;
+/// use option_valuators::lets_be_rational::black;
 ///
 /// let forward_price = 100.0;
 /// let strike_price = 95.0;
@@ -96,7 +94,8 @@ pub fn black(
 ///
 /// # Examples
 /// ```
-/// use blackscholes::{OptionType, lets_be_rational::implied_volatility_from_a_transformed_rational_guess};
+/// use option_valuators::OptionType;
+/// use option_valuators::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
 ///
 /// let market_price = 10.0;
 /// let forward_price = 100.0;

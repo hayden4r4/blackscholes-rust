@@ -1,4 +1,4 @@
-use blackscholes::OptionType;
+use option_valuators::OptionType;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::Rng;
 

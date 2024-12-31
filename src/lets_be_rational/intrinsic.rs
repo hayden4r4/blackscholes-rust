@@ -1,8 +1,4 @@
-use crate::OptionType;
-
-const FOURTH_ROOT_DBL_EPSILON: f64 = 0.0001220703125;
-
-const NORMALISED_X2_THRESHOLD: f64 = 98.0 * FOURTH_ROOT_DBL_EPSILON;
+use crate::{OptionType, lets_be_rational::constants::*};
 
 pub(crate) fn normalised_intrinsic(x: f64, option_type: OptionType) -> f64 {
     if option_type * x <= 0.0 {
