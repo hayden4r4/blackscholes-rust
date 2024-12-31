@@ -1,5 +1,4 @@
-use blackscholes::OptionType;
-use blackscholes::valuators::black_scholes::{Inputs, Pricing};
+use blackscholes::{OptionType, Pricing, valuators::black_scholes::Inputs};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 const INPUTS: Inputs = Inputs {

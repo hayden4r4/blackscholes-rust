@@ -1,7 +1,8 @@
 use crate::{
     OptionType,
     Pricing,
-    valuators::black_scholes::{distributions::*, Inputs},
+    Shift,
+    valuators::black_76::{distributions::*, Inputs},
 };
 
 impl Pricing<f64> for Inputs {
@@ -13,21 +14,26 @@ impl Pricing<f64> for Inputs {
     /// # Example
     /// ```
     /// use blackscholes::OptionType;
-    /// use blackscholes::valuators::black_scholes::{Inputs, Pricing};
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
+    /// use blackscholes::valuators::black_76::{Inputs, Pricing};
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2), true);
     /// let price = inputs.calc_price().unwrap();
     /// ```
     fn calc_price(&self) -> Result<f64, String> {
         // Calculates the price of the option
         let (nd1, nd2): (f64, f64) = calc_nd1nd2(self)?;
+        let (f, k) = if self.shifted {
+            self.shift()
+        } else {
+            (self.f, self.k)
+        };
         let price: f64 = match self.option_type {
             OptionType::Call => f64::max(
                 0.0,
-                nd1 * self.s * (-self.q * self.t).exp() - nd2 * self.k * (-self.r * self.t).exp(),
+                nd1 * f - nd2 * k * (-self.r * self.t).exp(),
             ),
             OptionType::Put => f64::max(
                 0.0,
-                nd2 * self.k * (-self.r * self.t).exp() - nd1 * self.s * (-self.q * self.t).exp(),
+                nd2 * k - nd1 * f * (-self.r * self.t).exp(),
             ),
         };
         Ok(price)

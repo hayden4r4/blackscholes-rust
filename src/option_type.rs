@@ -1,4 +1,3 @@
-//! Option Types
 use std::{
     fmt::{Display, Formatter, Result as fmtResult},
     ops::Neg,
