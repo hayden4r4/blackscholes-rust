@@ -1,22 +1,12 @@
-use std::f64::consts::FRAC_1_SQRT_2;
-
-use statrs::consts::SQRT_2PI;
-
-use crate::lets_be_rational::{
-    cody::optimized::{erfc, erfcx},
-    intrinsic::normalised_intrinsic,
-    normal_distribution::standard_normal_cdf,
-    DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+use crate::{
+    lets_be_rational::{
+        cody::optimized::{erfc, erfcx},
+        constants::*,
+        intrinsic::normalised_intrinsic,
+        normal_distribution::standard_normal_cdf,
+    },
+    OptionType,
 };
-use crate::OptionType;
-
-const H_LARGE: f64 = -10.0;
-
-const ASYMPTOTIC_EXPANSION_ACCURACY_THRESHOLD: f64 = -10.0;
-const SIXTEENTH_ROOT_DBL_EPSILON: f64 = 0.10566243270259357;
-const CODYS_THRESHOLD: f64 = 0.46875;
-
-const SMALL_T_EXPANSION_OF_NORMALISED_BLACK_THRESHOLD: f64 = 2.0 * SIXTEENTH_ROOT_DBL_EPSILON;
 
 #[allow(dead_code)]
 fn normalised_black_call_using_norm_cdf(x: f64, s: f64) -> f64 {

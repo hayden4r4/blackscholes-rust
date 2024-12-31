@@ -1,8 +1,4 @@
-const FRAC_1_SQRT_PI: f64 = 0.564_189_583_547_756_3_f64;
-
-const THRESHOLD: f64 = 0.46875;
-const XNEG: f64 = -26.6287357137514;
-const XBIG: f64 = 26.543;
+use crate::lets_be_rational::constants::{FRAC_1_SQRT_PI, THRESHOLD, XBIG, XNEG};
 
 const A: [f64; 5] = [
     3.1611237438705656,

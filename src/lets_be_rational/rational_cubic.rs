@@ -1,7 +1,5 @@
 use num_traits::Zero;
-
-const MINIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE: f64 = -(1.0 - 1.4901161193847656e-8); // -(1.0 - f64::EPSILON.sqrt());
-const MAXIMUM_RATIONAL_CUBIC_CONTROL_PARAMETER_VALUE: f64 = 2.0 / (f64::EPSILON * f64::EPSILON);
+use crate::lets_be_rational::constants::*;
 
 pub fn rational_cubic_interpolation(
     x: f64,

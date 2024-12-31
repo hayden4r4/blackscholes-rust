@@ -5,26 +5,9 @@ use crate::lets_be_rational::{
     intrinsic::normalised_intrinsic,
     normal_distribution::{inverse_f_upper_map, inverse_normal_cdf, standard_normal_cdf},
     rational_cubic::{convex_rational_cubic_control_parameter, rational_cubic_interpolation, Side},
-    DENORMALISATION_CUTOFF, ONE_OVER_SQRT_TWO_PI,
+    constants::*,
 };
 use crate::OptionType;
-
-const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_ABOVE_MAXIMUM: f64 = f64::MAX;
-
-const VOLATILITY_VALUE_TO_SIGNAL_PRICE_IS_BELOW_INTRINSIC: f64 = -f64::MAX;
-
-const SQRT_DBL_MIN: f64 = 1.4916681462400413e-154;
-const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_6e154;
-
-const SQRT_THREE: f64 = 1.732_050_807_568_877_2; //3.0_f64.sqrt();
-
-const TWO_PI_OVER_SQRT_TWENTY_SEVEN: f64 = 1.209_199_576_156_145_2; // f64::PI() * 2.0 / sqrt(27.0);
-
-const SQRT_PI_OVER_TWO: f64 = 1.253_314_137_315_500_3; //sqrt(f64::PI() / 2.0_f64);
-
-const SQRT_ONE_OVER_THREE: f64 = 0.577_350_269_189_625_7; // sqrt(1.0 / 3.0_f64);
-
-const PI_OVER_SIX: f64 = PI / 6.0;
 
 fn is_below_horizon(x: f64) -> bool {
     x.abs() < DENORMALISATION_CUTOFF
