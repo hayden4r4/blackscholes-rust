@@ -1,7 +1,7 @@
 use crate::{
-    OptionType,
-    Pricing,
+    lets_be_rational::black,
     valuators::black_scholes::{distributions::*, Inputs},
+    OptionType, Pricing,
 };
 
 impl Pricing<f64> for Inputs {
@@ -12,8 +12,8 @@ impl Pricing<f64> for Inputs {
     /// f64 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::OptionType;
-    /// use blackscholes::valuators::black_scholes::{Inputs, Pricing};
+    /// use blackscholes::{OptionType, Pricing};
+    /// use blackscholes::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_price().unwrap();
     /// ```
@@ -30,6 +30,36 @@ impl Pricing<f64> for Inputs {
                 nd2 * self.k * (-self.r * self.t).exp() - nd1 * self.s * (-self.q * self.t).exp(),
             ),
         };
+        Ok(price)
+    }
+}
+
+impl Inputs {
+    /// Calculates the price of the option using the "Let's Be Rational" implementation.
+    /// # Requires
+    /// s, k, r, q, t, sigma.
+    /// # Returns
+    /// f64 of the price of the option.
+    /// # Example
+    /// ```
+    /// use blackscholes::{OptionType, Pricing};
+    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
+    /// let price = inputs.calc_rational_price().unwrap();
+    /// ```
+    pub fn calc_rational_price(&self) -> Result<f64, String> {
+        let sigma = self
+            .sigma
+            .ok_or("Expected Some(f64) for self.sigma, received None")?;
+
+        // let's be rational wants the forward price, not the spot price.
+        let forward = self.s * ((self.r - self.q) * self.t).exp();
+
+        // price using `black`
+        let undiscounted_price = black(forward, self.k, sigma, self.t, self.option_type);
+
+        // discount the price
+        let price = undiscounted_price * (-self.r * self.t).exp();
         Ok(price)
     }
 }

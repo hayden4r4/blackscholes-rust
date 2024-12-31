@@ -38,7 +38,7 @@ impl Inputs {
     /// ```
     /// use blackscholes::OptionType;
     /// use blackscholes::valuators::black_76::Inputs;
-    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2), true);
+    /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 20.0/365.25, Some(0.2), true);
     /// ```
     /// # Returns
     /// An instance of the `Inputs` struct.
