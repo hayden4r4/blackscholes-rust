@@ -21,6 +21,10 @@ impl ImpliedVolatility<f64> for Inputs {
     fn calc_iv(&self) -> Result<f64, String> {
         // extract price, or return error
         let p = self.p.ok_or("Option price is required".to_string())?;
+        
+        // "let's be rational" works with the forward and undiscounted option price, so remove the discount“
+        let rate_inv_discount = (self.r * self.t).exp();
+        let p = p * rate_inv_discount;
 
         let sigma = implied_volatility_from_a_transformed_rational_guess(
             p,

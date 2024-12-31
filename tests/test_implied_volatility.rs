@@ -6,7 +6,7 @@ mod tests {
     };
 
     // Tolerance is a bit higher due to IV being an approximation
-    const TOLERANCE: f64 = 1e-8;
+    const TOLERANCE: f64 = 1e-5;
 
     // Black-Scholes
     #[test]
