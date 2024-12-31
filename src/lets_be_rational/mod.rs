@@ -30,8 +30,8 @@ mod so_rational;
 ///
 /// # Examples
 /// ```
-/// use blackscholes::OptionType;
-/// use blackscholes::lets_be_rational::black;
+/// use option_valuators::OptionType;
+/// use option_valuators::lets_be_rational::black;
 ///
 /// let forward_price = 100.0;
 /// let strike_price = 95.0;
@@ -94,8 +94,8 @@ pub fn black(
 ///
 /// # Examples
 /// ```
-/// use blackscholes::OptionType;
-/// use blackscholes::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
+/// use option_valuators::OptionType;
+/// use option_valuators::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
 ///
 /// let market_price = 10.0;
 /// let forward_price = 100.0;

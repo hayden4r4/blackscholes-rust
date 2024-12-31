@@ -11,8 +11,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the delta of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let delta = inputs.calc_delta().unwrap();
     /// ```
@@ -31,8 +31,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the gamma of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let gamma = inputs.calc_gamma().unwrap();
     /// ```
@@ -54,8 +54,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of theta per day (not per year).
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let theta = inputs.calc_theta().unwrap();
     /// ```
@@ -84,8 +84,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the vega of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vega = inputs.calc_vega().unwrap();
     /// ```
@@ -102,8 +102,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the rho of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let rho = inputs.calc_rho().unwrap();
     /// ```
@@ -128,8 +128,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the epsilon of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let epsilon = inputs.calc_epsilon().unwrap();
     /// ```
@@ -149,8 +149,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the lambda of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let lambda = inputs.calc_lambda().unwrap();
     /// ```
@@ -166,8 +166,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the vanna of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vanna = inputs.calc_vanna().unwrap();
     /// ```
@@ -189,8 +189,8 @@ impl Greeks<f64> for Inputs {
     // /// f64 of the charm of the option.
     // /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let charm = inputs.calc_charm().unwrap();
     /// ```
@@ -217,8 +217,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the veta of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let veta = inputs.calc_veta().unwrap();
     /// ```
@@ -246,8 +246,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the vomma of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vomma = inputs.calc_vomma().unwrap();
     /// ```
@@ -268,8 +268,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the speed of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let speed = inputs.calc_speed().unwrap();
     /// ```
@@ -291,8 +291,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the zomma of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let zomma = inputs.calc_zomma().unwrap();
     /// ```
@@ -314,8 +314,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the color of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let color = inputs.calc_color().unwrap();
     /// ```
@@ -344,8 +344,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the ultima of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let ultima = inputs.calc_ultima().unwrap();
     /// ```
@@ -367,8 +367,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the dual delta of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let dual_delta = inputs.calc_dual_delta().unwrap();
     /// ```
@@ -390,8 +390,8 @@ impl Greeks<f64> for Inputs {
     /// f64 of the dual gamma of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let dual_gamma = inputs.calc_dual_gamma().unwrap();
     /// ```
@@ -413,8 +413,8 @@ impl Greeks<f64> for Inputs {
     /// HashMap of type <String, f64> of all Greeks of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{Greeks, OptionType};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{Greeks, OptionType};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let greeks = inputs.calc_all_greeks().unwrap();
     /// ```

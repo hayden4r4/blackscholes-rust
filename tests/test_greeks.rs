@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use blackscholes::valuators::black_scholes::Inputs;
-    use blackscholes::{Greeks, OptionType};
+    use option_valuators::valuators::black_scholes::Inputs;
+    use option_valuators::{Greeks, OptionType};
 
     // Black-Scholes
     #[test]

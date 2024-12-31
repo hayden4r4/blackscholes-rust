@@ -7,7 +7,7 @@
 //
 // use criterion::{black_box, Criterion, criterion_group};
 //
-// use blackscholes::lets_be_rational::black::{
+// use option_valuators::lets_be_rational::black::{
 //     asymptotic_expansion_of_normalised_black_call, small_t_expansion_of_normalised_black_call,
 // };
 //

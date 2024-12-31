@@ -1,4 +1,4 @@
-use blackscholes::{OptionType, ImpliedVolatility, valuators::black_scholes::Inputs};
+use option_valuators::{OptionType, ImpliedVolatility, valuators::black_scholes::Inputs};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 const INPUTS: Inputs = Inputs {

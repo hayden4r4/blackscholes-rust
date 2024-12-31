@@ -12,8 +12,8 @@ impl Pricing<f64> for Inputs {
     /// f64 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{OptionType, Pricing};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{OptionType, Pricing};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_price().unwrap();
     /// ```
@@ -42,8 +42,8 @@ impl Inputs {
     /// f64 of the price of the option.
     /// # Example
     /// ```
-    /// use blackscholes::{OptionType, Pricing};
-    /// use blackscholes::valuators::black_scholes::Inputs;
+    /// use option_valuators::{OptionType, Pricing};
+    /// use option_valuators::valuators::black_scholes::Inputs;
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let price = inputs.calc_rational_price().unwrap();
     /// ```

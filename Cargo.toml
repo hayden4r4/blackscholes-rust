@@ -1,6 +1,6 @@
 ########## Crate Info ##########
 [package]
-name = "blackscholes"
+name = "option_valuators"
 version = "0.24.0"
 edition = "2021"
 license = "MIT"

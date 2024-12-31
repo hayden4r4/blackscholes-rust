@@ -11,7 +11,7 @@ impl ImpliedVolatility<f64> for Inputs {
     /// f64 of the implied volatility of the option.
     /// # Example:
     /// ```
-    /// use blackscholes::{valuators::black_76::Inputs, OptionType, ImpliedVolatility};
+    /// use option_valuators::{valuators::black_76::Inputs, OptionType, ImpliedVolatility};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 20.0/365.25, None, true);
     /// let iv = inputs.calc_iv().unwrap();
     /// ```
@@ -21,7 +21,7 @@ impl ImpliedVolatility<f64> for Inputs {
     fn calc_iv(&self) -> Result<f64, String> {
         // extract price, or return error
         let p = self.p.ok_or("Option price is required".to_string())?;
-        
+
         // "let's be rational" works with the forward and undiscounted option price, so remove the discount“
         let rate_inv_discount = (self.r * self.t).exp();
         let p = p * rate_inv_discount;

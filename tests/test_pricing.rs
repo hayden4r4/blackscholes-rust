@@ -1,5 +1,5 @@
 use assert_approx_eq::assert_approx_eq;
-use blackscholes::{
+use option_valuators::{
     valuators::{black_76::Inputs as b76Inputs, black_scholes::Inputs as bsInputs},
     OptionType, Pricing,
 };

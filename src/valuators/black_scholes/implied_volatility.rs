@@ -12,7 +12,7 @@ impl ImpliedVolatility<f64> for Inputs {
     /// f64 of the implied volatility of the option.
     /// # Example:
     /// ```
-    /// use blackscholes::{valuators::black_scholes::Inputs, OptionType, ImpliedVolatility};
+    /// use option_valuators::{valuators::black_scholes::Inputs, OptionType, ImpliedVolatility};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, Some(0.2), 0.05, 0.05, 20.0/365.25, None);
     /// let iv = inputs.calc_iv().unwrap();
     /// ```
