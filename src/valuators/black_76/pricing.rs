@@ -29,11 +29,11 @@ impl Pricing<f64> for Inputs {
         let price: f64 = match self.option_type {
             OptionType::Call => f64::max(
                 0.0,
-                nd1 * f - nd2 * k * (-self.r * self.t).exp(),
+                nd1 * f * (-self.r * self.t).exp() - nd2 * k * (-self.r * self.t).exp(),
             ),
             OptionType::Put => f64::max(
                 0.0,
-                nd2 * k - nd1 * f * (-self.r * self.t).exp(),
+                nd2 * k * (-self.r * self.t).exp() - nd1 * f * (-self.r * self.t).exp(),
             ),
         };
         Ok(price)
