@@ -16,6 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
       - name: Check version
         run: |
           CURRENT_VERSION=$(sed -n -e 's/^version = "\(.*\)"/\1/p' Cargo.toml)

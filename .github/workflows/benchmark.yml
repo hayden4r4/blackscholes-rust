@@ -1,0 +1,158 @@
+name: Performance Benchmarks
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allow manual triggering
+  schedule:
+    - cron: '0 12 * * 0'  # Run weekly on Sundays at 12:00 UTC
+
+jobs:
+  benchmarks:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnuplot libfontconfig1-dev
+      
+      - name: Run core benchmarks
+        run: |
+          cargo bench --bench single_option -- --save-baseline base
+          cargo bench --bench single_greeks -- --save-baseline base
+          cargo bench --bench single_iv -- --save-baseline base
+      
+      - name: Run batch benchmarks
+        run: |
+          cargo bench --bench batch_pricing --features bench_throughput -- --save-baseline base
+          cargo bench --bench batch_greeks --features bench_throughput -- --save-baseline base
+      
+      - name: Run throughput benchmarks
+        run: |
+          cargo bench --bench throughput --features bench_throughput -- --save-baseline base
+          cargo bench --bench batch_size_study --features bench_throughput -- --save-baseline base
+      
+      - name: Compare with previous benchmark results (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Checking for significant performance regressions..."
+          
+          # Clone the base branch to get baseline benchmarks
+          git fetch origin ${{ github.base_ref }}
+          git checkout FETCH_HEAD
+          
+          # Run benchmark comparison with a threshold for regression detection
+          cargo bench --bench single_option -- --baseline base
+          cargo bench --bench single_greeks -- --baseline base
+          cargo bench --bench single_iv -- --baseline base
+          
+          # Check batch benchmarks
+          cargo bench --bench batch_pricing --features bench_throughput -- --baseline base
+          cargo bench --bench batch_greeks --features bench_throughput -- --baseline base
+          
+          # Check throughput benchmarks
+          cargo bench --bench throughput --features bench_throughput -- --baseline base
+          cargo bench --bench batch_size_study --features bench_throughput -- --baseline base
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: target/criterion/
+          retention-days: 30
+      
+      - name: Generate HTML report
+        run: |
+          mkdir -p target/criterion
+          
+          # Create index.html with links to all benchmark reports
+          cat > target/criterion/index.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="UTF-8">
+              <title>BlackScholes Performance Benchmark Report</title>
+              <style>
+                  body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+                  h1 { color: #333; }
+                  .benchmark-list { margin-top: 20px; }
+                  .benchmark-card { margin-bottom: 15px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+                  .benchmark-card h3 { margin-top: 0; }
+              </style>
+          </head>
+          <body>
+              <h1>BlackScholes Performance Benchmark Report</h1>
+              <p>Generated on $(date)</p>
+              
+              <div class="benchmark-list">
+                  <div class="benchmark-card">
+                      <h3>Single Option Pricing</h3>
+                      <a href="./single_option/report/index.html">View Report</a>
+                  </div>
+                  
+                  <div class="benchmark-card">
+                      <h3>Single Greeks</h3>
+                      <a href="./single_greeks/report/index.html">View Report</a>
+                  </div>
+                  
+                  <div class="benchmark-card">
+                      <h3>Implied Volatility</h3>
+                      <a href="./single_iv/report/index.html">View Report</a>
+                  </div>
+                  
+                  <div class="benchmark-card">
+                      <h3>Batch Processing</h3>
+                      <a href="./batch_pricing/report/index.html">View Report</a>
+                  </div>
+                  
+                  <div class="benchmark-card">
+                      <h3>Batch Greeks</h3>
+                      <a href="./batch_greeks/report/index.html">View Report</a>
+                  </div>
+                  
+                  <div class="benchmark-card">
+                      <h3>Throughput</h3>
+                      <a href="./throughput/report/index.html">View Report</a>
+                  </div>
+                  
+                  <div class="benchmark-card">
+                      <h3>Batch Size Study</h3>
+                      <a href="./batch_size_study/report/index.html">View Report</a>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+      
+      - name: Deploy benchmark results to GitHub Pages
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: JamesIves/github-pages-deploy-action@4.1.5
+        with:
+          branch: gh-pages
+          folder: target/criterion
+          clean: true 

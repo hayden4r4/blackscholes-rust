@@ -1,0 +1,218 @@
+name: Benchmark Regression Detection
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-C target-cpu=native"
+  # Define performance regression thresholds (percentage)
+  WARNING_THRESHOLD: 5
+  FAILURE_THRESHOLD: 10
+
+jobs:
+  detect-regression:
+    name: Detect Performance Regressions
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnuplot jq libfontconfig1-dev
+          
+          # Install custom benchmark comparison tool
+          mkdir -p scripts/tools
+          
+          # Create a benchmark comparison tool to detect regressions
+          cat > scripts/tools/compare_benchmarks.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          # Process benchmark results and detect regressions
+          PR_RESULTS="$1"
+          BASE_RESULTS="$2"
+          WARNING_THRESHOLD="$3"
+          FAILURE_THRESHOLD="$4"
+          
+          if [ ! -f "$PR_RESULTS" ] || [ ! -f "$BASE_RESULTS" ]; then
+            echo "Error: Benchmark result files not found"
+            exit 1
+          fi
+          
+          # Extract benchmark times from JSON
+          PR_TIME=$(jq '.mean.point_estimate' "$PR_RESULTS")
+          BASE_TIME=$(jq '.mean.point_estimate' "$BASE_RESULTS")
+          
+          if [ -z "$PR_TIME" ] || [ -z "$BASE_TIME" ] || [ "$BASE_TIME" = "null" ] || [ "$PR_TIME" = "null" ]; then
+            echo "Error: Could not extract benchmark times"
+            exit 1
+          fi
+          
+          # Calculate regression percentage
+          PERCENT_CHANGE=$(echo "scale=2; 100 * ($PR_TIME - $BASE_TIME) / $BASE_TIME" | bc)
+          
+          # Format outputs (remove decimals for comparison but keep for display)
+          PERCENT_CHANGE_DISPLAY=$PERCENT_CHANGE
+          PERCENT_CHANGE_INT=$(echo "$PERCENT_CHANGE" | awk '{print int($1)}')
+          WARNING_THRESHOLD_INT=$(echo "$WARNING_THRESHOLD" | awk '{print int($1)}')
+          FAILURE_THRESHOLD_INT=$(echo "$FAILURE_THRESHOLD" | awk '{print int($1)}')
+          
+          BENCH_NAME=$(basename $(dirname "$PR_RESULTS"))
+          
+          # Detect regression
+          if [ "$PERCENT_CHANGE_INT" -ge "$FAILURE_THRESHOLD_INT" ]; then
+            echo "::error::❌ CRITICAL REGRESSION in $BENCH_NAME: ${PERCENT_CHANGE_DISPLAY}% slower! (${BASE_TIME} ns → ${PR_TIME} ns)"
+            exit 1
+          elif [ "$PERCENT_CHANGE_INT" -ge "$WARNING_THRESHOLD_INT" ]; then
+            echo "::warning::⚠️ POSSIBLE REGRESSION in $BENCH_NAME: ${PERCENT_CHANGE_DISPLAY}% slower (${BASE_TIME} ns → ${PR_TIME} ns)"
+          elif [ "$PERCENT_CHANGE_INT" -le "-$WARNING_THRESHOLD_INT" ]; then
+            echo "::notice::✅ IMPROVEMENT in $BENCH_NAME: ${PERCENT_CHANGE_DISPLAY}% faster (${BASE_TIME} ns → ${PR_TIME} ns)"
+          else
+            echo "✓ No significant change in $BENCH_NAME: ${PERCENT_CHANGE_DISPLAY}% (${BASE_TIME} ns → ${PR_TIME} ns)"
+          fi
+          
+          # Return exit code 0 always to continue processing other benchmarks
+          exit 0
+          EOF
+          
+          chmod +x scripts/tools/compare_benchmarks.sh
+      
+      - name: Run PR branch benchmarks
+        run: |
+          # Create directory for results
+          mkdir -p target/bench-comparison/pr
+          
+          # Run key benchmarks with minimum iterations to speed up CI
+          # We focus on the most critical operations that must not regress
+          cargo bench --bench single_option -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+            --save-baseline pr
+          cargo bench --bench single_greeks -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+            --save-baseline pr
+          cargo bench --bench batch_pricing --features bench_throughput -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+            --save-baseline pr
+      
+      - name: Checkout base branch
+        run: |
+          # Determine the base branch
+          TARGET_BRANCH=${{ github.base_ref }}
+          echo "Checking out base branch: $TARGET_BRANCH"
+          git checkout origin/$TARGET_BRANCH
+      
+      - name: Run base branch benchmarks
+        run: |
+          # Create directory for results
+          mkdir -p target/bench-comparison/base
+          
+          # Run same benchmarks on base branch
+          cargo bench --bench single_option -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+            --save-baseline base
+          cargo bench --bench single_greeks -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+            --save-baseline base
+          cargo bench --bench batch_pricing --features bench_throughput -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+            --save-baseline base
+      
+      - name: Extract and compare benchmark results
+        run: |
+          echo "Comparing benchmark results between PR and base branch..."
+          echo "Warning threshold: $WARNING_THRESHOLD%, Failure threshold: $FAILURE_THRESHOLD%"
+          
+          # Find all benchmark JSON files
+          PR_RESULTS=$(find target/criterion -name "new.json" | sort)
+          
+          # Process each benchmark result
+          SUCCESS=true
+          
+          for PR_FILE in $PR_RESULTS; do
+            # Find corresponding base file
+            RELATIVE_PATH=${PR_FILE#"target/criterion/"}
+            BASE_FILE="target/criterion/${RELATIVE_PATH/new/base}"
+            
+            if [ -f "$BASE_FILE" ]; then
+              # Compare the benchmarks
+              if ! scripts/tools/compare_benchmarks.sh "$PR_FILE" "$BASE_FILE" $WARNING_THRESHOLD $FAILURE_THRESHOLD; then
+                SUCCESS=false
+              fi
+            fi
+          done
+          
+          # Check if we found any critical regressions
+          if [ "$SUCCESS" = false ]; then
+            echo "::error::Critical performance regressions detected! Review benchmark results."
+            exit 1
+          fi
+      
+      - name: Generate summary report
+        if: success() || failure()
+        run: |
+          echo "# Benchmark Comparison Summary" > $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Comparing performance between PR and base branch" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Benchmark | Base | PR | Change |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|------|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Add each benchmark result to the summary
+          PR_RESULTS=$(find target/criterion -name "new.json" | sort)
+          for PR_FILE in $PR_RESULTS; do
+            # Extract benchmark name
+            BENCH_NAME=$(basename $(dirname "$PR_FILE"))
+            
+            # Find corresponding base file
+            RELATIVE_PATH=${PR_FILE#"target/criterion/"}
+            BASE_FILE="target/criterion/${RELATIVE_PATH/new/base}"
+            
+            if [ -f "$BASE_FILE" ]; then
+              PR_TIME=$(jq '.mean.point_estimate' "$PR_FILE")
+              BASE_TIME=$(jq '.mean.point_estimate' "$BASE_FILE")
+              
+              if [ -n "$PR_TIME" ] && [ -n "$BASE_TIME" ] && [ "$BASE_TIME" != "null" ] && [ "$PR_TIME" != "null" ]; then
+                PERCENT_CHANGE=$(echo "scale=2; 100 * ($PR_TIME - $BASE_TIME) / $BASE_TIME" | bc)
+                
+                # Format the change cell with color indicators
+                CHANGE_CELL="$PERCENT_CHANGE%"
+                if (( $(echo "$PERCENT_CHANGE >= $FAILURE_THRESHOLD" | bc -l) )); then
+                  CHANGE_CELL="⛔ $PERCENT_CHANGE% slower"
+                elif (( $(echo "$PERCENT_CHANGE >= $WARNING_THRESHOLD" | bc -l) )); then
+                  CHANGE_CELL="⚠️ $PERCENT_CHANGE% slower"
+                elif (( $(echo "$PERCENT_CHANGE <= -$WARNING_THRESHOLD" | bc -l) )); then
+                  CHANGE_CELL="✅ $PERCENT_CHANGE% faster"
+                fi
+                
+                echo "| $BENCH_NAME | ${BASE_TIME%.*} ns | ${PR_TIME%.*} ns | $CHANGE_CELL |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Thresholds: Warning at $WARNING_THRESHOLD%, Failure at $FAILURE_THRESHOLD%" >> $GITHUB_STEP_SUMMARY 

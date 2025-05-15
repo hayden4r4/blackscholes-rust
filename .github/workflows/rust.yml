@@ -26,6 +26,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
       - name: Install target
         run: rustup target add ${{ matrix.target }}
       - name: Build
@@ -36,6 +40,10 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
       - name: Fmt
         run: cargo fmt --all --check
       - name: Clippy
@@ -46,6 +54,10 @@ jobs:
     needs: fmt_clippy
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
       - name: Tests
         run: cargo test --all-targets --verbose
 
@@ -54,6 +66,10 @@ jobs:
     needs: fmt_clippy
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev gnuplot
       - name: Bench
         run: cargo bench --all-targets --verbose
 
@@ -72,6 +88,10 @@ jobs:
     needs: [ bench, tests, security_audit ]
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage

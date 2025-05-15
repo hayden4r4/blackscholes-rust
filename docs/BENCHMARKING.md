@@ -6,6 +6,24 @@ This document outlines the benchmarking infrastructure for the BlackScholes libr
 
 The benchmarking system is built around Criterion.rs, a statistics-driven benchmarking framework for Rust. We have extended it with custom scripts for visualization, regression detection, and reporting.
 
+## System Dependencies
+
+Before running benchmarks, ensure you have the following system dependencies installed:
+
+- **Fontconfig**: Required for plotting and visualization
+  - Ubuntu/Debian: `sudo apt-get install libfontconfig1-dev`
+  - Fedora/RHEL: `sudo dnf install fontconfig-devel`
+  - Arch Linux: `sudo pacman -S fontconfig`
+  - macOS: `brew install fontconfig`
+
+- **Gnuplot**: Required for generating benchmark plots
+  - Ubuntu/Debian: `sudo apt-get install gnuplot`
+  - Fedora/RHEL: `sudo dnf install gnuplot`
+  - Arch Linux: `sudo pacman -S gnuplot`
+  - macOS: `brew install gnuplot`
+
+The benchmark scripts will check for these dependencies and provide instructions if they're missing.
+
 ## Directory Structure
 
 ```
