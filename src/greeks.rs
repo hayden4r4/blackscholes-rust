@@ -1,8 +1,31 @@
-use std::collections::HashMap;
-
 use num_traits::Float;
 
 use crate::{Inputs, OptionType, Pricing, *};
+
+// Static error message to avoid allocation
+static ERR_MISSING_SIGMA: &str = "Expected Some(f32) for self.sigma, received None";
+
+/// Contains all calculated Greek values for an option
+#[derive(Debug, Clone)]
+pub struct GreekResults {
+    pub delta: f32,
+    pub gamma: f32,
+    pub theta: f32,
+    pub vega: f32,
+    pub rho: f32,
+    pub epsilon: f32,
+    pub lambda: f32,
+    pub vanna: f32,
+    pub charm: f32,
+    pub veta: f32,
+    pub vomma: f32,
+    pub speed: f32,
+    pub zomma: f32,
+    pub color: f32,
+    pub ultima: f32,
+    pub dual_delta: f32,
+    pub dual_gamma: f32,
+}
 
 pub trait Greeks<T>: Pricing<T>
 where
@@ -25,7 +48,7 @@ where
     fn calc_ultima(&self) -> Result<T, String>;
     fn calc_dual_delta(&self) -> Result<T, String>;
     fn calc_dual_gamma(&self) -> Result<T, String>;
-    fn calc_all_greeks(&self) -> Result<HashMap<String, T>, String>;
+    fn calc_all_greeks(&self) -> Result<GreekResults, String>;
 }
 
 impl Greeks<f32> for Inputs {
@@ -40,6 +63,7 @@ impl Greeks<f32> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let delta = inputs.calc_delta().unwrap();
     /// ```
+    #[inline]
     fn calc_delta(&self) -> Result<f32, String> {
         let (nd1, _): (f32, f32) = calc_nd1nd2(self)?;
 
@@ -60,6 +84,7 @@ impl Greeks<f32> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let gamma = inputs.calc_gamma().unwrap();
     /// ```
+    #[inline]
     fn calc_gamma(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
@@ -82,6 +107,7 @@ impl Greeks<f32> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let theta = inputs.calc_theta().unwrap();
     /// ```
+    #[inline]
     fn calc_theta(&self) -> Result<f32, String> {
         let sigma = self
             .sigma
@@ -112,6 +138,7 @@ impl Greeks<f32> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let vega = inputs.calc_vega().unwrap();
     /// ```
+    #[inline]
     fn calc_vega(&self) -> Result<f32, String> {
         let nprimed1: f32 = calc_nprimed1(self)?;
         let vega: f32 = 0.01 * self.s * E.powf(-self.q * self.t) * self.t.sqrt() * nprimed1;
@@ -129,6 +156,7 @@ impl Greeks<f32> for Inputs {
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let rho = inputs.calc_rho().unwrap();
     /// ```
+    #[inline]
     fn calc_rho(&self) -> Result<f32, String> {
         let (_, nd2): (f32, f32) = calc_nd1nd2(self)?;
 
@@ -424,32 +452,127 @@ impl Greeks<f32> for Inputs {
     /// # Requires
     /// s, k, r, q, t, sigma
     /// # Returns
-    /// HashMap of type <String, f32> of all Greeks of the option.
+    /// GreekResults struct containing all Greeks of the option.
     /// # Example
     /// ```
     /// use blackscholes::{Inputs, OptionType, Greeks};
     /// let inputs = Inputs::new(OptionType::Call, 100.0, 100.0, None, 0.05, 0.2, 20.0/365.25, Some(0.2));
     /// let greeks = inputs.calc_all_greeks().unwrap();
     /// ```
-    fn calc_all_greeks(&self) -> Result<HashMap<String, f32>, String> {
-        let mut greeks: HashMap<String, f32> = HashMap::with_capacity(17);
-        greeks.insert("delta".into(), self.calc_delta()?);
-        greeks.insert("gamma".into(), self.calc_gamma()?);
-        greeks.insert("theta".into(), self.calc_theta()?);
-        greeks.insert("vega".into(), self.calc_vega()?);
-        greeks.insert("rho".into(), self.calc_rho()?);
-        greeks.insert("epsilon".into(), self.calc_epsilon()?);
-        greeks.insert("lambda".into(), self.calc_lambda()?);
-        greeks.insert("vanna".into(), self.calc_vanna()?);
-        greeks.insert("charm".into(), self.calc_charm()?);
-        greeks.insert("veta".into(), self.calc_veta()?);
-        greeks.insert("vomma".into(), self.calc_vomma()?);
-        greeks.insert("speed".into(), self.calc_speed()?);
-        greeks.insert("zomma".into(), self.calc_zomma()?);
-        greeks.insert("color".into(), self.calc_color()?);
-        greeks.insert("ultima".into(), self.calc_ultima()?);
-        greeks.insert("dual_delta".into(), self.calc_dual_delta()?);
-        greeks.insert("dual_gamma".into(), self.calc_dual_gamma()?);
-        Ok(greeks)
+    fn calc_all_greeks(&self) -> Result<GreekResults, String> {
+        // Validate and extract sigma once
+        let sigma = self.sigma.ok_or(ERR_MISSING_SIGMA)?;
+        
+        // Pre-calculate common values used across multiple Greeks
+        let sqrt_t = self.t.sqrt();
+        let e_negrt = E.powf(-self.r * self.t);
+        let e_negqt = E.powf(-self.q * self.t);
+        
+        // Calculate d1 and d2 once
+        let (d1, d2) = calc_d1d2(self)?;
+        
+        // Calculate normal distribution values once
+        let (nd1, nd2) = calc_nd1nd2(self)?;
+        
+        // Calculate derivatives once
+        let nprimed1 = calc_npdf(d1);
+        let nprimed2 = calc_npdf(d2);
+        
+        // Calculate common terms for multiple Greeks
+        let option_type_sign = match self.option_type {
+            OptionType::Call => 1.0f32,
+            OptionType::Put => -1.0f32,
+        };
+        
+        // Calculate Greeks using cached values
+        
+        // Delta
+        let delta = option_type_sign * e_negqt * nd1;
+        
+        // Gamma
+        let gamma = e_negqt * nprimed1 / (self.s * sigma * sqrt_t);
+        
+        // Vega (scaled by 0.01)
+        let vega = 0.01 * self.s * e_negqt * sqrt_t * nprimed1;
+        
+        // Rho (scaled by 0.01)
+        let rho = option_type_sign / 100.0 * self.k * self.t * e_negrt * nd2;
+        
+        // Theta (daily)
+        let theta = (-(self.s * sigma * e_negqt * nprimed1 / (2.0 * sqrt_t))
+            - self.r * self.k * e_negrt * nd2 * option_type_sign
+            + self.q * self.s * e_negqt * nd1 * option_type_sign)
+            / DAYS_PER_YEAR;
+        
+        // Epsilon
+        let epsilon = -self.s * self.t * e_negqt * nd1 * option_type_sign;
+        
+        // Lambda
+        let lambda = delta * self.s / Inputs::calc_price(self)?;
+        
+        // Vanna
+        let vanna = -e_negqt * nprimed1 * d2 / sigma * 0.01;
+        
+        // Charm
+        let charm = -(self.q * e_negqt * nd1 * option_type_sign
+            - e_negqt * nprimed1 * (2.0 * (self.r - self.q) * sqrt_t - d2 * sigma * sqrt_t)
+                / (2.0 * self.t * sigma * sqrt_t))
+            / DAYS_PER_YEAR;
+        
+        // Veta
+        let veta = -self.s * e_negqt * nprimed1 * sqrt_t
+            * (self.q + (self.r - self.q) * d1 / (sigma * sqrt_t)
+                - (1.0 + d1 * d2) / (2.0 * self.t))
+            * 0.01 / DAYS_PER_YEAR;
+        
+        // Vomma
+        let vomma = vega * (d1 * d2 / sigma);
+        
+        // Speed
+        let speed = -gamma / self.s * (d1 / (sigma * sqrt_t) + 1.0);
+        
+        // Zomma
+        let zomma = gamma * ((d1 * d2 - 1.0) / sigma);
+        
+        // Color
+        let color = -e_negqt
+            * (nprimed1 / (2.0 * self.s * self.t * sigma * sqrt_t))
+            * (2.0 * self.q * self.t
+                + 1.0
+                + (2.0 * (self.r - self.q) * self.t - d2 * sigma * sqrt_t)
+                    / (sigma * sqrt_t)
+                    * d1);
+        
+        // Ultima
+        let ultima = -vega / sigma.powf(2.0) * (d1 * d2 * (1.0 - d1 * d2) + d1.powf(2.0) + d2.powf(2.0));
+        
+        // Dual Delta
+        let dual_delta = match self.option_type {
+            OptionType::Call => -e_negqt * nd2,
+            OptionType::Put => e_negqt * nd2,
+        };
+        
+        // Dual Gamma
+        let dual_gamma = e_negqt * (nprimed2 / (self.k * sigma * sqrt_t));
+
+        Ok(GreekResults {
+            delta,
+            gamma,
+            theta,
+            vega,
+            rho,
+            epsilon,
+            lambda,
+            vanna,
+            charm,
+            veta,
+            vomma,
+            speed,
+            zomma,
+            color,
+            ultima,
+            dual_delta,
+            dual_gamma,
+        })
     }
 }

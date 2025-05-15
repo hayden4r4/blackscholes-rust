@@ -1,7 +1,14 @@
 use num_traits::Float;
+use once_cell::sync::Lazy;
 
 use crate::lets_be_rational::implied_volatility_from_a_transformed_rational_guess;
 use crate::{greeks::Greeks, pricing::Pricing, Inputs, *};
+
+// Static error messages to avoid string allocations
+static ERR_MISSING_PRICE: Lazy<String> = Lazy::new(|| "inputs.p must contain Some(f32), found None".to_string());
+static ERR_FAILED_CONVERGE: Lazy<String> = Lazy::new(|| "Failed to converge".to_string());
+static ERR_IV_FAILED: Lazy<String> = Lazy::new(|| "Implied volatility failed to converge".to_string());
+static ERR_OPTION_PRICE_REQUIRED: Lazy<String> = Lazy::new(|| "Option price is required".to_string());
 
 pub trait ImpliedVolatility<T>: Pricing<T> + Greeks<T>
 where
@@ -29,26 +36,21 @@ impl ImpliedVolatility<f32> for Inputs {
     /// let iv = inputs.calc_iv(0.0001).unwrap();
     /// ```
     /// Initial estimation of sigma using Modified Corrado-Miller from ["A MODIFIED CORRADO-MILLER IMPLIED VOLATILITY ESTIMATOR" (2007) by Piotr P√luciennik](https://sin.put.poznan.pl/files/download/37938) method of calculating initial iv estimation.
-    /// A more accurate method is the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
+    /// A more accurate method is the "Let's be rational" method from ["Let's be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// however this method is much more complicated, it is available as calc_rational_iv().
     #[allow(non_snake_case)]
     fn calc_iv(&self, tolerance: f32) -> Result<f32, String> {
-        let mut inputs: Inputs = self.clone();
-
-        let p = self
-            .p
-            .ok_or("inputs.p must contain Some(f32), found None".to_string())?;
-        // Initialize estimation of sigma using Brenn and Subrahmanyam (1998) method of calculating initial iv estimation.
-        // commented out to replace with modified corrado-miller method.
-        // let mut sigma: f32 = (PI2 / inputs.t).sqrt() * (p / inputs.s);
-
-        let X: f32 = inputs.k * E.powf(-inputs.r * inputs.t);
-        let fminusX: f32 = inputs.s - X;
-        let fplusX: f32 = inputs.s + X;
-        let oneoversqrtT: f32 = 1.0 / inputs.t.sqrt();
+        // Avoid cloning the entire input struct by copying only the necessary fields
+        let p = self.p.ok_or_else(|| ERR_MISSING_PRICE.clone())?;
+        
+        // Initialize estimation of sigma using Modified Corrado-Miller method
+        let X: f32 = self.k * E.powf(-self.r * self.t);
+        let fminusX: f32 = self.s - X;
+        let fplusX: f32 = self.s + X;
+        let oneoversqrtT: f32 = 1.0 / self.t.sqrt();
 
         let x: f32 = oneoversqrtT * (SQRT_2PI / (fplusX));
-        let y: f32 = p - (inputs.s - inputs.k) / 2.0
+        let y: f32 = p - (self.s - self.k) / 2.0
             + ((p - fminusX / 2.0).powf(2.0) - fminusX.powf(2.0) / PI).sqrt();
 
         let mut sigma: f32 = oneoversqrtT
@@ -62,22 +64,34 @@ impl ImpliedVolatility<f32> for Inputs {
             + F * y / x;
 
         if sigma.is_nan() {
-            Err("Failed to converge".to_string())?
+            return Err(ERR_FAILED_CONVERGE.clone());
         }
 
-        // Initialize diff to 100 for use in while loop
-        let mut diff: f32 = 100.0;
+        // Initialize diff to a value greater than tolerance
+        let mut diff: f32 = tolerance * 2.0;
+        
+        // Create a mutable copy of inputs only when needed
+        let mut inputs_copy = Inputs {
+            option_type: self.option_type,
+            s: self.s,
+            k: self.k,
+            p: self.p,
+            r: self.r,
+            q: self.q,
+            t: self.t,
+            sigma: Some(sigma),
+        };
 
         // Uses Newton Raphson algorithm to calculate implied volatility.
         // Test if the difference between calculated option price and actual option price is > tolerance,
         // if so then iterate until the difference is less than tolerance
         while diff.abs() > tolerance {
-            inputs.sigma = Some(sigma);
-            diff = Inputs::calc_price(&inputs)? - p;
-            sigma -= diff / (Inputs::calc_vega(&inputs)? * 100.0);
+            inputs_copy.sigma = Some(sigma);
+            diff = Inputs::calc_price(&inputs_copy)? - p;
+            sigma -= diff / (Inputs::calc_vega(&inputs_copy)? * 100.0);
 
             if sigma.is_nan() || sigma.is_infinite() {
-                Err("Failed to converge".to_string())?
+                return Err(ERR_FAILED_CONVERGE.clone());
             }
         }
         Ok(sigma)
@@ -95,12 +109,12 @@ impl ImpliedVolatility<f32> for Inputs {
     /// let iv = inputs.calc_rational_iv().unwrap();
     /// ```
     ///
-    /// Uses the "Let's be rational" method from ["Let’s be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
+    /// Uses the "Let's be rational" method from ["Let's be rational" (2016) by Peter Jackel](http://www.jaeckel.org/LetsBeRational.pdf)
     /// from Jackel's C++ implementation, imported through the C FFI.  The C++ implementation is available at [here](http://www.jaeckel.org/LetsBeRational.7z)
     /// Per Jackel's whitepaper, this method can solve for the implied volatility to f64 precision in 2 iterations.
     fn calc_rational_iv(&self) -> Result<f64, String> {
         // extract price, or return error
-        let p = self.p.ok_or("Option price is required".to_string())?;
+        let p = self.p.ok_or_else(|| ERR_OPTION_PRICE_REQUIRED.clone())?;
 
         // "let's be rational" works with the forward and undiscounted option price, so remove the discount
         let rate_inv_discount = (self.r * self.t).exp();
@@ -120,7 +134,7 @@ impl ImpliedVolatility<f32> for Inputs {
         );
 
         if sigma.is_nan() || sigma.is_infinite() || sigma < 0.0 {
-            Err("Implied volatility failed to converge".to_string())?
+            return Err(ERR_IV_FAILED.clone());
         }
         Ok(sigma)
     }

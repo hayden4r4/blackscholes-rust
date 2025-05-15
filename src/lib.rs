@@ -32,6 +32,12 @@ mod inputs;
 pub mod lets_be_rational;
 mod pricing;
 
+// Static error messages to avoid string allocations
+static ERR_MISSING_SIGMA: &str = "Expected Some(f32) for self.sigma, received None";
+static ERR_INFINITY: &str = "Log from s/k is infinity";
+static ERR_ZERO_MATURITY: &str = "Time to maturity is 0";
+static ERR_NUM_CAST: &str = "Failed to cast f64 to f32";
+
 pub(crate) const N_MEAN: f32 = 0.0;
 pub(crate) const N_STD_DEV: f32 = 1.0;
 pub(crate) const SQRT_2PI: f32 = 2.5066282;
@@ -50,15 +56,16 @@ pub(crate) const F: f32 = -2.102_376_9e-5;
 /// s, k, r, q, t, sigma.
 /// # Returns
 /// Tuple (f32, f32) of (d1, d2)
+#[inline]
 pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
     let sigma = inputs
         .sigma
-        .ok_or("Expected Some(f32) for self.sigma, received None")?;
+        .ok_or(ERR_MISSING_SIGMA)?;
     // Calculating numerator of d1
     let part1 = (inputs.s / inputs.k).ln();
 
     if part1.is_infinite() {
-        return Err("Log from s/k is infinity".to_string());
+        return Err(ERR_INFINITY.to_string());
     }
 
     let part2 = (inputs.r - inputs.q + (sigma.powi(2)) / 2.0) * inputs.t;
@@ -66,7 +73,7 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
 
     // Calculating denominator of d1 and d2
     if inputs.t == 0.0 {
-        return Err("Time to maturity is 0".to_string());
+        return Err(ERR_ZERO_MATURITY.to_string());
     }
 
     let den = sigma * (inputs.t.sqrt());
@@ -82,27 +89,27 @@ pub(crate) fn calc_d1d2(inputs: &Inputs) -> Result<(f32, f32), String> {
 /// s, k, r, q, t, sigma
 /// # Returns
 /// Tuple (f32, f32) of (nd1, nd2)
+#[inline]
 pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f32, f32), String> {
     let nd1nd2 = {
         let d1d2 = calc_d1d2(inputs)?;
 
         let n: Normal = Normal::new(N_MEAN as f64, N_STD_DEV as f64).unwrap();
 
-        let num_cast_err: String = "Failed to cast f64 to f32".into();
         // Calculates the nd1 and nd2 values
         // Checks if OptionType is Call or Put
         match inputs.option_type {
             OptionType::Call => (
-                NumCast::from(n.cdf(NumCast::from(d1d2.0).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
-                NumCast::from(n.cdf(NumCast::from(d1d2.1).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
+                NumCast::from(n.cdf(NumCast::from(d1d2.0).ok_or(ERR_NUM_CAST)?))
+                    .ok_or(ERR_NUM_CAST)?,
+                NumCast::from(n.cdf(NumCast::from(d1d2.1).ok_or(ERR_NUM_CAST)?))
+                    .ok_or(ERR_NUM_CAST)?,
             ),
             OptionType::Put => (
-                NumCast::from(n.cdf(NumCast::from(-d1d2.0).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
-                NumCast::from(n.cdf(NumCast::from(-d1d2.1).ok_or(&num_cast_err)?))
-                    .ok_or(&num_cast_err)?,
+                NumCast::from(n.cdf(NumCast::from(-d1d2.0).ok_or(ERR_NUM_CAST)?))
+                    .ok_or(ERR_NUM_CAST)?,
+                NumCast::from(n.cdf(NumCast::from(-d1d2.1).ok_or(ERR_NUM_CAST)?))
+                    .ok_or(ERR_NUM_CAST)?,
             ),
         }
     };
@@ -112,6 +119,7 @@ pub(crate) fn calc_nd1nd2(inputs: &Inputs) -> Result<(f32, f32), String> {
 /// Calculates the n probability density function (PDF) for the given input.
 /// # Returns
 /// f32 of the value of the n probability density function.
+#[inline]
 pub(crate) fn calc_npdf(x: f32) -> f32 {
     let d: f32 = (x - N_MEAN) / N_STD_DEV;
     (-HALF * d * d).exp() / (SQRT_2PI * N_STD_DEV)
@@ -119,6 +127,7 @@ pub(crate) fn calc_npdf(x: f32) -> f32 {
 
 /// # Returns
 /// f32 of the derivative of the nd1.
+#[inline]
 pub fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
     let (d1, _) = calc_d1d2(inputs)?;
 
@@ -129,6 +138,7 @@ pub fn calc_nprimed1(inputs: &Inputs) -> Result<f32, String> {
 
 /// # Returns
 /// f32 of the derivative of the nd2.
+#[inline]
 pub(crate) fn calc_nprimed2(inputs: &Inputs) -> Result<f32, String> {
     let (_, d2) = calc_d1d2(inputs)?;
 

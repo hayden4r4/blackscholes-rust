@@ -4,6 +4,9 @@ use num_traits::Float;
 
 use crate::{lets_be_rational, Inputs, OptionType, *};
 
+// Static error message to avoid allocation
+static ERR_MISSING_SIGMA: &str = "Expected Some(f32) for self.sigma, received None";
+
 pub trait Pricing<T>
 where
     T: Float,
@@ -25,18 +28,23 @@ impl Pricing<f32> for Inputs {
     /// let price = inputs.calc_price().unwrap();
     /// ```
     fn calc_price(&self) -> Result<f32, String> {
-        // Calculates the price of the option
+        // Pre-calculate common exponential terms
+        let discount_r = E.powf(-self.r * self.t);
+        let discount_q = E.powf(-self.q * self.t);
+        
+        // Get normalized distribution values
         let (nd1, nd2): (f32, f32) = calc_nd1nd2(self)?;
+        
+        // Combine terms to minimize operations
+        let term1 = nd1 * self.s * discount_q;
+        let term2 = nd2 * self.k * discount_r;
+        
+        // Perform the option type-specific calculation
         let price: f32 = match self.option_type {
-            OptionType::Call => f32::max(
-                0.0,
-                nd1 * self.s * E.powf(-self.q * self.t) - nd2 * self.k * E.powf(-self.r * self.t),
-            ),
-            OptionType::Put => f32::max(
-                0.0,
-                nd2 * self.k * E.powf(-self.r * self.t) - nd1 * self.s * E.powf(-self.q * self.t),
-            ),
+            OptionType::Call => f32::max(0.0, term1 - term2),
+            OptionType::Put => f32::max(0.0, term2 - term1),
         };
+        
         Ok(price)
     }
 
@@ -52,24 +60,34 @@ impl Pricing<f32> for Inputs {
     /// let price = inputs.calc_rational_price().unwrap();
     /// ```
     fn calc_rational_price(&self) -> Result<f64, String> {
-        let sigma = self
-            .sigma
-            .ok_or("Expected Some(f32) for self.sigma, received None")?;
+        let sigma = self.sigma.ok_or(ERR_MISSING_SIGMA)?;
 
-        // let's be rational wants the forward price, not the spot price.
-        let forward = self.s * ((self.r - self.q) * self.t).exp();
+        // Pre-calculate the time component once - exp((r-q)*t)
+        let time_factor = ((self.r - self.q) * self.t).exp();
+        
+        // Calculate forward price using the time factor
+        let forward = self.s * time_factor;
 
-        // price using `black`
+        // Convert input parameters to f64 once, outside the function call
+        let forward_f64 = forward as f64;
+        let strike_f64 = self.k as f64;
+        let sigma_f64 = sigma as f64;
+        let time_f64 = self.t as f64;
+        
+        // Get undiscounted price
         let undiscounted_price = lets_be_rational::black(
-            forward as f64,
-            self.k as f64,
-            sigma as f64,
-            self.t as f64,
+            forward_f64,
+            strike_f64,
+            sigma_f64,
+            time_f64,
             self.option_type,
         );
 
-        // discount the price
-        let price = undiscounted_price * (-self.r as f64 * self.t as f64).exp();
+        // Pre-calculate discount factor as f64 to avoid type conversion in multiplication
+        let discount_factor = (-self.r as f64 * time_f64).exp();
+        
+        // Apply discount 
+        let price = undiscounted_price * discount_factor;
         Ok(price)
     }
 }
