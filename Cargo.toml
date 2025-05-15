@@ -29,3 +29,7 @@ harness = false
 [[bench]]
 name = "implied_volatility"
 harness = false
+
+[[bench]]
+name = "greeks"
+harness = false
