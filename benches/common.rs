@@ -1,7 +1,7 @@
-use std::f64::consts::PI;
 use blackscholes::{Inputs, OptionType};
-use rand::prelude::*;
 use rand::distributions::{Distribution, Standard, Uniform};
+use rand::prelude::*;
+use std::f64::consts::PI;
 
 /// Defines different option moneyness categories
 #[derive(Debug, Clone, Copy)]
@@ -16,17 +16,17 @@ pub enum Moneyness {
 /// Defines time to maturity ranges
 #[derive(Debug, Clone, Copy)]
 pub enum TimeToMaturity {
-    ShortTerm,   // Less than 30 days
-    MediumTerm,  // 30-90 days
-    LongTerm,    // More than 90 days
+    ShortTerm,  // Less than 30 days
+    MediumTerm, // 30-90 days
+    LongTerm,   // More than 90 days
 }
 
 /// Defines volatility levels
 #[derive(Debug, Clone, Copy)]
 pub enum VolatilityLevel {
-    Low,     // < 15%
-    Medium,  // 15-30%
-    High,    // > 30%
+    Low,    // < 15%
+    Medium, // 15-30%
+    High,   // > 30%
 }
 
 /// Generates a standard set of inputs for benchmarking
@@ -37,37 +37,61 @@ pub fn generate_standard_inputs(
     vol_level: VolatilityLevel,
 ) -> Inputs {
     let spot = 100.0;
-    
+
     // Set strike based on moneyness
     let strike = match moneyness {
-        Moneyness::DeepInTheMoney => if option_type == OptionType::Call { 70.0 } else { 130.0 },
-        Moneyness::InTheMoney => if option_type == OptionType::Call { 90.0 } else { 110.0 },
+        Moneyness::DeepInTheMoney => {
+            if option_type == OptionType::Call {
+                70.0
+            } else {
+                130.0
+            }
+        }
+        Moneyness::InTheMoney => {
+            if option_type == OptionType::Call {
+                90.0
+            } else {
+                110.0
+            }
+        }
         Moneyness::AtTheMoney => 100.0,
-        Moneyness::OutOfTheMoney => if option_type == OptionType::Call { 110.0 } else { 90.0 },
-        Moneyness::DeepOutOfTheMoney => if option_type == OptionType::Call { 130.0 } else { 70.0 },
+        Moneyness::OutOfTheMoney => {
+            if option_type == OptionType::Call {
+                110.0
+            } else {
+                90.0
+            }
+        }
+        Moneyness::DeepOutOfTheMoney => {
+            if option_type == OptionType::Call {
+                130.0
+            } else {
+                70.0
+            }
+        }
     };
-    
+
     // Set time to maturity in years
     let time = match maturity {
         TimeToMaturity::ShortTerm => 15.0 / 365.25,
         TimeToMaturity::MediumTerm => 60.0 / 365.25,
         TimeToMaturity::LongTerm => 180.0 / 365.25,
     };
-    
+
     // Set volatility level
     let vol = match vol_level {
         VolatilityLevel::Low => 0.10,
         VolatilityLevel::Medium => 0.20,
         VolatilityLevel::High => 0.40,
     };
-    
+
     Inputs::new(
         option_type,
         spot,
         strike,
         None,
-        0.05,  // Risk-free rate
-        0.01,  // Dividend yield
+        0.05, // Risk-free rate
+        0.01, // Dividend yield
         time,
         Some(vol),
     )
@@ -76,18 +100,22 @@ pub fn generate_standard_inputs(
 /// Generates a batch of random inputs for benchmarking
 pub fn generate_random_inputs(size: usize, rng: &mut ThreadRng) -> Vec<Inputs> {
     let mut inputs = Vec::with_capacity(size);
-    
+
     // Define distributions for parameters
     let spot_dist = Uniform::from(50.0..150.0);
     let strike_dist = Uniform::from(50.0..150.0);
     let rate_dist = Uniform::from(0.0..0.10);
     let div_dist = Uniform::from(0.0..0.05);
-    let time_dist = Uniform::from(1.0/365.25..1.0);
+    let time_dist = Uniform::from(1.0 / 365.25..1.0);
     let vol_dist = Uniform::from(0.05..0.50);
-    
+
     for _ in 0..size {
-        let option_type = if rng.gen::<bool>() { OptionType::Call } else { OptionType::Put };
-        
+        let option_type = if rng.gen::<bool>() {
+            OptionType::Call
+        } else {
+            OptionType::Put
+        };
+
         inputs.push(Inputs::new(
             option_type,
             spot_dist.sample(rng),
@@ -99,7 +127,7 @@ pub fn generate_random_inputs(size: usize, rng: &mut ThreadRng) -> Vec<Inputs> {
             Some(vol_dist.sample(rng)),
         ));
     }
-    
+
     inputs
 }
 
@@ -128,11 +156,11 @@ impl InputsSoA {
             volatilities: Vec::with_capacity(capacity),
         }
     }
-    
+
     /// Convert Vec<Inputs> to InputsSoA format
     pub fn from_inputs(inputs: &[Inputs]) -> Self {
         let mut result = Self::with_capacity(inputs.len());
-        
+
         for input in inputs {
             result.option_types.push(input.option_type);
             result.spots.push(input.s);
@@ -142,25 +170,29 @@ impl InputsSoA {
             result.times.push(input.t);
             result.volatilities.push(input.sigma.unwrap_or(0.0));
         }
-        
+
         result
     }
-    
+
     /// Generate random SoA inputs directly
     pub fn random(size: usize, rng: &mut ThreadRng) -> Self {
         let mut result = Self::with_capacity(size);
-        
+
         // Define distributions for parameters
         let spot_dist = Uniform::from(50.0..150.0);
         let strike_dist = Uniform::from(50.0..150.0);
         let rate_dist = Uniform::from(0.0..0.10);
         let div_dist = Uniform::from(0.0..0.05);
-        let time_dist = Uniform::from(1.0/365.25..1.0);
+        let time_dist = Uniform::from(1.0 / 365.25..1.0);
         let vol_dist = Uniform::from(0.05..0.50);
-        
+
         for _ in 0..size {
-            let option_type = if rng.gen::<bool>() { OptionType::Call } else { OptionType::Put };
-            
+            let option_type = if rng.gen::<bool>() {
+                OptionType::Call
+            } else {
+                OptionType::Put
+            };
+
             result.option_types.push(option_type);
             result.spots.push(spot_dist.sample(rng));
             result.strikes.push(strike_dist.sample(rng));
@@ -169,15 +201,15 @@ impl InputsSoA {
             result.times.push(time_dist.sample(rng));
             result.volatilities.push(vol_dist.sample(rng));
         }
-        
+
         result
     }
-    
+
     /// Get the size of the SoA
     pub fn len(&self) -> usize {
         self.spots.len()
     }
-    
+
     /// Check if the SoA is empty
     pub fn is_empty(&self) -> bool {
         self.spots.is_empty()
@@ -198,7 +230,7 @@ pub enum BatchSize {
 /// Gets appropriate sample sizes and measurement time based on batch size
 pub fn get_sample_config(batch_size: usize) -> (usize, std::time::Duration) {
     use std::time::Duration;
-    
+
     match batch_size {
         0..=100 => (100, Duration::from_secs(5)),
         101..=1_000 => (50, Duration::from_secs(5)),
@@ -206,4 +238,4 @@ pub fn get_sample_config(batch_size: usize) -> (usize, std::time::Duration) {
         10_001..=100_000 => (10, Duration::from_secs(10)),
         _ => (3, Duration::from_secs(20)),
     }
-} 
+}

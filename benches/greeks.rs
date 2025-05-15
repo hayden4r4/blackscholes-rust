@@ -14,16 +14,18 @@ const INPUTS: Inputs = Inputs {
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("Greeks");
-    
+
     group.bench_function("delta", |b| b.iter(|| black_box(INPUTS.calc_delta())));
     group.bench_function("gamma", |b| b.iter(|| black_box(INPUTS.calc_gamma())));
     group.bench_function("theta", |b| b.iter(|| black_box(INPUTS.calc_theta())));
     group.bench_function("vega", |b| b.iter(|| black_box(INPUTS.calc_vega())));
     group.bench_function("rho", |b| b.iter(|| black_box(INPUTS.calc_rho())));
-    group.bench_function("all_greeks", |b| b.iter(|| black_box(INPUTS.calc_all_greeks())));
-    
+    group.bench_function("all_greeks", |b| {
+        b.iter(|| black_box(INPUTS.calc_all_greeks()))
+    });
+
     group.finish();
 }
 
 criterion_group!(benches, criterion_benchmark);
-criterion_main!(benches); 
+criterion_main!(benches);

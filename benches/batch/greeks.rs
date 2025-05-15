@@ -1,35 +1,37 @@
 use blackscholes::{Greeks, Inputs, OptionType, Pricing};
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, measurement::WallTime};
-use std::time::Duration;
+use criterion::{
+    black_box, criterion_group, criterion_main, measurement::WallTime, BenchmarkId, Criterion,
+};
 use rand::thread_rng;
+use std::time::Duration;
 
 #[path = "../common.rs"]
 mod common;
-use common::{generate_random_inputs, BatchSize, InputsSoA, get_sample_config};
+use common::{generate_random_inputs, get_sample_config, BatchSize, InputsSoA};
 
 // Batch Greeks calculation benchmark
 fn bench_batch_greeks(c: &mut Criterion) {
     let mut group = c.benchmark_group("Batch Greeks Calculation");
-    
+
     // Configure the benchmark group
     group.warm_up_time(Duration::from_millis(500));
-    
+
     let batch_sizes = [
         (BatchSize::Tiny as usize, "tiny"),
         (BatchSize::Small as usize, "small"),
     ];
-    
+
     let mut rng = thread_rng();
-    
+
     for &(size, size_name) in batch_sizes.iter() {
         // Adjust sample count and measurement time based on batch size
         let (sample_count, measurement_time) = get_sample_config(size);
         group.sample_size(sample_count);
         group.measurement_time(measurement_time);
-        
+
         // Generate random inputs for batch processing
         let inputs = generate_random_inputs(size, &mut rng);
-        
+
         // Benchmark naive batch processing of individual Greeks
         group.bench_function(BenchmarkId::new("delta", size_name), |b| {
             b.iter(|| {
@@ -40,7 +42,7 @@ fn bench_batch_greeks(c: &mut Criterion) {
                 black_box(results)
             })
         });
-        
+
         group.bench_function(BenchmarkId::new("gamma", size_name), |b| {
             b.iter(|| {
                 let mut results = Vec::with_capacity(inputs.len());
@@ -50,7 +52,7 @@ fn bench_batch_greeks(c: &mut Criterion) {
                 black_box(results)
             })
         });
-        
+
         group.bench_function(BenchmarkId::new("vega", size_name), |b| {
             b.iter(|| {
                 let mut results = Vec::with_capacity(inputs.len());
@@ -60,7 +62,7 @@ fn bench_batch_greeks(c: &mut Criterion) {
                 black_box(results)
             })
         });
-        
+
         // Benchmark batch all_greeks calculation
         group.bench_function(BenchmarkId::new("all_greeks", size_name), |b| {
             b.iter(|| {
@@ -71,10 +73,10 @@ fn bench_batch_greeks(c: &mut Criterion) {
                 black_box(results)
             })
         });
-        
+
         // Convert to SoA format for future optimization
         let inputs_soa = InputsSoA::from_inputs(&inputs);
-        
+
         // Placeholder for future SIMD-optimized batch Greeks calculation
         group.bench_function(BenchmarkId::new("delta_soa", size_name), |b| {
             b.iter(|| {
@@ -96,7 +98,7 @@ fn bench_batch_greeks(c: &mut Criterion) {
             })
         });
     }
-    
+
     group.finish();
 }
 
@@ -107,4 +109,4 @@ criterion_group!(
         .measurement_time(Duration::from_secs(10));
     targets = bench_batch_greeks
 );
-criterion_main!(benches); 
+criterion_main!(benches);
