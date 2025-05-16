@@ -24,27 +24,17 @@ jobs:
     
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all history
       
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
+          components: rustfmt, clippy
       
       - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+        uses: Swatinem/rust-cache@v2
       
       - name: Install dependencies
         run: |
@@ -113,13 +103,8 @@ jobs:
           # Create directory for results
           mkdir -p target/bench-comparison/pr
           
-          # Run key benchmarks with minimum iterations to speed up CI
-          # We focus on the most critical operations that must not regress
-          cargo bench --bench single_option -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
-            --save-baseline pr
-          cargo bench --bench single_greeks -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
-            --save-baseline pr
-          cargo bench --bench batch_pricing --features bench_throughput -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+          # Run all benchmarks with minimum iterations to speed up CI
+          cargo bench --all-targets -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
             --save-baseline pr
       
       - name: Checkout base branch
@@ -135,11 +120,7 @@ jobs:
           mkdir -p target/bench-comparison/base
           
           # Run same benchmarks on base branch
-          cargo bench --bench single_option -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
-            --save-baseline base
-          cargo bench --bench single_greeks -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
-            --save-baseline base
-          cargo bench --bench batch_pricing --features bench_throughput -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+          cargo bench --all-targets -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
             --save-baseline base
       
       - name: Extract and compare benchmark results
