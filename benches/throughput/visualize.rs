@@ -1,8 +1,9 @@
+use std::time::{Duration, Instant};
+
 use blackscholes::{Greeks, Inputs, Pricing};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use plotters::prelude::*;
 use rand::thread_rng;
-use std::time::{Duration, Instant};
 
 #[path = "../common.rs"]
 mod common;

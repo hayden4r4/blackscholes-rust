@@ -1,10 +1,9 @@
+use std::{fs::File, io::Write, time::Duration};
+
 use blackscholes::{Greeks, Inputs, Pricing};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::thread_rng;
-use std::fs::File;
-use std::io::Write;
-use std::time::Duration;
 
 #[path = "../common.rs"]
 mod common;

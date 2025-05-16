@@ -1,7 +1,10 @@
-use blackscholes::{Inputs, OptionType};
-use rand::distributions::{Distribution, Standard, Uniform};
-use rand::prelude::*;
 use std::f64::consts::PI;
+
+use blackscholes::{Inputs, OptionType};
+use rand::{
+    distributions::{Distribution, Standard, Uniform},
+    prelude::*,
+};
 
 /// Defines different option moneyness categories
 #[derive(Debug, Clone, Copy)]

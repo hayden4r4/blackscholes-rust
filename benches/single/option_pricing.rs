@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use blackscholes::{Inputs, OptionType, Pricing};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use std::time::Duration;
 
 // Fix the module import using a path relative to the crate root
 #[path = "../common.rs"]
