@@ -106,8 +106,8 @@ jobs:
           # Run tests first
           cargo test
           
-          # Run all benchmarks with minimum iterations to speed up CI
-          cargo bench -- --sample-size 10 --warm-up-time 1 --measurement-time 2
+          # Run all benchmarks without any options
+          cargo bench
       
       - name: Checkout base branch
         run: |
@@ -125,7 +125,7 @@ jobs:
           cargo test
           
           # Run same benchmarks on base branch
-          cargo bench -- --sample-size 10 --warm-up-time 1 --measurement-time 2
+          cargo bench
       
       - name: Extract and compare benchmark results
         run: |
