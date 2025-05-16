@@ -58,65 +58,66 @@ jobs:
           # Run benchmark comparison against baseline
           cargo bench
       
+      - name: Generate Markdown Benchmark Report
+        run: |
+          mkdir -p docs
+          
+          # Create markdown report
+          cat > docs/BENCHMARKS.md << EOF
+          # BlackScholes Performance Benchmark Report
+          
+          *Generated on $(date)*
+          
+          ## Benchmark Results
+          
+          | Benchmark | Average Time | Operations/second |
+          |-----------|-------------|------------------|
+          EOF
+          
+          # Extract benchmark results
+          for BENCH_DIR in $(find target/criterion -mindepth 1 -maxdepth 1 -type d | sort); do
+            BENCH_NAME=$(basename "$BENCH_DIR")
+            if [ -f "$BENCH_DIR/new/estimates.json" ]; then
+              # Extract the mean value in nanoseconds
+              MEAN_TIME=$(jq -r '.mean.point_estimate' "$BENCH_DIR/new/estimates.json")
+              OPS_SEC=$(echo "scale=2; 1000000000 / $MEAN_TIME" | bc)
+              
+              echo "| $BENCH_NAME | $(printf "%.2f" $MEAN_TIME) ns | $(printf "%.2f" $OPS_SEC) ops/sec |" >> docs/BENCHMARKS.md
+            fi
+          done
+          
+          # Add timestamp and extra info
+          cat >> docs/BENCHMARKS.md << EOF
+          
+          ## System Information
+          
+          - OS: $(uname -s) $(uname -r)
+          - CPU: $(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs || echo "Unknown")
+          - Rust: $(rustc --version)
+          
+          *Note: These benchmarks were run in a GitHub Actions environment. For more accurate results, run the benchmarks locally.*
+          EOF
+          
+          # If this is a push to main, commit the changes
+          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master") ]]; then
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            
+            # Update README.md to add/update benchmark link if not present
+            if ! grep -q "## Performance Benchmarks" README.md; then
+              echo -e "\n## Performance Benchmarks\n\nView the latest benchmark results in the [benchmark report](docs/BENCHMARKS.md)." >> README.md
+            fi
+            
+            git add docs/BENCHMARKS.md README.md
+            git commit -m "Update benchmark results [skip ci]" || echo "No changes to commit"
+            git push origin HEAD:${{ github.ref_name }} || echo "Could not push changes"
+          fi
+      
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
-          path: target/criterion/
-          retention-days: 30
-      
-      - name: Generate HTML report
-        run: |
-          mkdir -p target/criterion
-          
-          # Create index.html with links to all benchmark reports
-          cat > target/criterion/index.html << EOF
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <meta charset="UTF-8">
-              <title>BlackScholes Performance Benchmark Report</title>
-              <style>
-                  body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
-                  h1 { color: #333; }
-                  .benchmark-list { margin-top: 20px; }
-                  .benchmark-card { margin-bottom: 15px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
-                  .benchmark-card h3 { margin-top: 0; }
-              </style>
-          </head>
-          <body>
-              <h1>BlackScholes Performance Benchmark Report</h1>
-              <p>Generated on $(date)</p>
-              
-              <div class="benchmark-list">
-                  <div class="benchmark-card">
-                      <h3>Pricing Benchmarks</h3>
-                      <a href="./pricing/report/index.html">View Report</a>
-                  </div>
-                  
-                  <div class="benchmark-card">
-                      <h3>Black Method</h3>
-                      <a href="./black/report/index.html">View Report</a>
-                  </div>
-                  
-                  <div class="benchmark-card">
-                      <h3>Implied Volatility</h3>
-                      <a href="./implied_volatility/report/index.html">View Report</a>
-                  </div>
-                  
-                  <div class="benchmark-card">
-                      <h3>Additional Benchmarks</h3>
-                      <a href="./additional_benches_to_verify/report/index.html">View Report</a>
-                  </div>
-              </div>
-          </body>
-          </html>
-          EOF
-      
-      - name: Deploy benchmark results to GitHub Pages
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: target/criterion
-          clean: true 
+          path: |
+            target/criterion/
+            docs/BENCHMARKS.md
+          retention-days: 30 

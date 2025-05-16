@@ -57,6 +57,8 @@ jobs:
           
           if [ ! -f "$PR_RESULTS" ] || [ ! -f "$BASE_RESULTS" ]; then
             echo "Error: Benchmark result files not found"
+            echo "PR file: $PR_RESULTS (exists: $([ -f "$PR_RESULTS" ] && echo "yes" || echo "no"))"
+            echo "Base file: $BASE_RESULTS (exists: $([ -f "$BASE_RESULTS" ] && echo "yes" || echo "no"))"
             exit 1
           fi
           
@@ -66,6 +68,8 @@ jobs:
           
           if [ -z "$PR_TIME" ] || [ -z "$BASE_TIME" ] || [ "$BASE_TIME" = "null" ] || [ "$PR_TIME" = "null" ]; then
             echo "Error: Could not extract benchmark times"
+            echo "PR time value: $PR_TIME"
+            echo "Base time value: $BASE_TIME"
             exit 1
           fi
           
@@ -108,6 +112,10 @@ jobs:
           
           # Run all benchmarks without any options
           cargo bench
+          
+          # Debug output - show what criterion files were created
+          echo "=== PR Branch Benchmark Files ==="
+          find target/criterion -type f -name "*.json" | sort
       
       - name: Checkout base branch
         run: |
@@ -126,6 +134,10 @@ jobs:
           
           # Run same benchmarks on base branch
           cargo bench
+          
+          # Debug output - show what criterion files were created
+          echo "=== Base Branch Benchmark Files ==="
+          find target/criterion -type f -name "*.json" | sort
       
       - name: Extract and compare benchmark results
         run: |
@@ -135,21 +147,45 @@ jobs:
           # Find all benchmark JSON files
           PR_RESULTS=$(find target/criterion -name "new.json" | sort)
           
+          # Debugging - show what files were found
+          echo "Found $(echo "$PR_RESULTS" | wc -l) PR result files:"
+          echo "$PR_RESULTS"
+          
+          if [ -z "$PR_RESULTS" ]; then
+            echo "⚠️ No PR benchmark results found!"
+            echo "Checking for any JSON files..."
+            find target/criterion -name "*.json" | sort
+            
+            echo "Directory structure:"
+            find target/criterion -type d | sort
+          fi
+          
           # Process each benchmark result
           SUCCESS=true
+          FOUND_FILES=false
           
           for PR_FILE in $PR_RESULTS; do
             # Find corresponding base file
             RELATIVE_PATH=${PR_FILE#"target/criterion/"}
             BASE_FILE="target/criterion/${RELATIVE_PATH/new/base}"
             
+            echo "Checking $PR_FILE against $BASE_FILE"
+            
             if [ -f "$BASE_FILE" ]; then
+              FOUND_FILES=true
+              echo "Found matching file pair to compare"
               # Compare the benchmarks
               if ! scripts/tools/compare_benchmarks.sh "$PR_FILE" "$BASE_FILE" $WARNING_THRESHOLD $FAILURE_THRESHOLD; then
                 SUCCESS=false
               fi
+            else
+              echo "⚠️ Could not find matching base file: $BASE_FILE"
             fi
           done
+          
+          if [ "$FOUND_FILES" = false ]; then
+            echo "::warning::No matching benchmark files were found to compare!"
+          fi
           
           # Check if we found any critical regressions
           if [ "$SUCCESS" = false ]; then
@@ -198,6 +234,17 @@ jobs:
               fi
             fi
           done
+          
+          # Add debug info if no results were found
+          if [ -z "$PR_RESULTS" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **No benchmark results were found to compare**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Files in target/criterion:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            find target/criterion -type f -name "*.json" | sort >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Thresholds: Warning at $WARNING_THRESHOLD%, Failure at $FAILURE_THRESHOLD%" >> $GITHUB_STEP_SUMMARY 
