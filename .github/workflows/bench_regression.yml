@@ -103,10 +103,11 @@ jobs:
           # Create directory for results
           mkdir -p target/bench-comparison/pr
           
+          # Run tests first
+          cargo test
+          
           # Run all benchmarks with minimum iterations to speed up CI
-          # Target only bench directory to avoid running unit tests
-          cargo bench --benches -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
-            --save-baseline pr
+          cargo bench -- --sample-size 10 --warm-up-time 1 --measurement-time 2
       
       - name: Checkout base branch
         run: |
@@ -120,9 +121,11 @@ jobs:
           # Create directory for results
           mkdir -p target/bench-comparison/base
           
+          # Run tests first
+          cargo test
+          
           # Run same benchmarks on base branch
-          cargo bench --benches -- --sample-size 10 --warm-up-time 1 --measurement-time 2 \
-            --save-baseline base
+          cargo bench -- --sample-size 10 --warm-up-time 1 --measurement-time 2
       
       - name: Extract and compare benchmark results
         run: |
