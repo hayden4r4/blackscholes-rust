@@ -38,7 +38,8 @@ jobs:
       - name: Run all benchmarks
         run: |
           # Run all benchmarks at once and save baseline
-          cargo bench --all-targets -- --save-baseline base
+          # Target only bench directory to avoid running unit tests
+          cargo bench --benches -- --save-baseline base
       
       - name: Compare with previous benchmark results (PR only)
         if: github.event_name == 'pull_request'
@@ -50,7 +51,7 @@ jobs:
           git checkout FETCH_HEAD
           
           # Run benchmark comparison against baseline
-          cargo bench --all-targets -- --baseline base
+          cargo bench --benches -- --baseline base
       
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
