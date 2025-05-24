@@ -31,6 +31,7 @@ jobs:
     permissions:
       contents: write        # Allow gh-pages push
       pull-requests: write   # Allow PR commenting
+      deployments: write     # Allow GitHub Pages deployment
     
     steps:
       - uses: actions/checkout@v4
@@ -45,21 +46,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gnuplot
       
       - name: Run benchmarks
-        run: cargo bench -- --output-format=csv
-      
-      - name: Upload Criterion HTML Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: criterion-reports
-          path: target/criterion/
-          retention-days: 7
+        run: cargo bench | tee benchmark_output.txt
       
       - name: Store and Upload Benchmark Results
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: 'cargo'
-          output-file-path: target/criterion/*/new/raw.csv
+          output-file-path: benchmark_output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
           comment-on-alert: true
