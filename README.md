@@ -3,6 +3,7 @@ A library providing Black-Scholes option pricing, Greek calculations, and implie
 
 [![Crates.io](https://img.shields.io/crates/v/blackscholes.svg)](https://crates.io/crates/blackscholes)
 [![Documentation](https://docs.rs/blackscholes/badge.svg)](https://docs.rs/blackscholes)
+[![Benchmarks](https://img.shields.io/badge/Benchmarks-GitHub%20Pages-blue)](https://przemyslawolszewski.github.io/bs-rs/)
 
 A Black-Scholes option pricing, Greek calculation, and implied volatility calculation library.
 
@@ -30,12 +31,12 @@ This library is optimized for both single-option pricing and high-throughput bat
 
 The library includes a comprehensive benchmarking system for performance tracking:
 
-- **Multiple Benchmark Categories**: Single option, batch processing, and throughput measurements
-- **Performance Regression Detection**: CI-integrated tests to catch performance regressions
-- **Visualization Tools**: HTML reports, flamegraphs, and scaling analysis
-- **Comparison Tools**: Scripts to compare performance between versions
+- **Interactive Charts**: Professional benchmark visualizations on [GitHub Pages](https://przemyslawolszewski.github.io/bs-rs/)
+- **Automated Regression Detection**: CI-integrated tests that fail on performance regressions (>10% threshold)
+- **Historical Tracking**: Continuous monitoring of performance trends over time
+- **Pull Request Comments**: Automatic performance comparison comments on PRs
 
-For more details, see [Benchmarking Documentation](docs/BENCHMARKING.md).
+View live benchmark results at: https://przemyslawolszewski.github.io/bs-rs/
 
 ## Usage Examples
 

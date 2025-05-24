@@ -1,122 +1,41 @@
 # BlackScholes Performance Benchmarking
 
-This document outlines the benchmarking infrastructure for the BlackScholes library, explaining how to run benchmarks, analyze results, and track performance improvements.
+This document outlines the modern benchmarking infrastructure for the BlackScholes library, which leverages GitHub Actions and GitHub Pages for automated performance tracking and visualization.
 
 ## Overview
 
-The benchmarking system is built around Criterion.rs, a statistics-driven benchmarking framework for Rust. We have extended it with custom scripts for visualization, regression detection, and reporting.
+The benchmarking system is built around **Criterion.rs** and **github-action-benchmark**, providing:
 
-## System Dependencies
+- 📊 **Interactive Charts**: Professional visualizations hosted on GitHub Pages
+- 🔍 **Automated Regression Detection**: CI integration that catches performance regressions
+- 📈 **Historical Tracking**: Continuous monitoring of performance trends over time  
+- 💬 **PR Integration**: Automatic benchmark comparison comments on pull requests
 
-Before running benchmarks, ensure you have the following system dependencies installed:
+**Live Benchmark Results**: https://przemyslawolszewski.github.io/bs-rs/
 
-- **Fontconfig**: Required for plotting and visualization
-  - Ubuntu/Debian: `sudo apt-get install libfontconfig1-dev`
-  - Fedora/RHEL: `sudo dnf install fontconfig-devel`
-  - Arch Linux: `sudo pacman -S fontconfig`
-  - macOS: `brew install fontconfig`
+## Automated Benchmarking Workflow
 
-- **Gnuplot**: Required for generating benchmark plots
-  - Ubuntu/Debian: `sudo apt-get install gnuplot`
-  - Fedora/RHEL: `sudo dnf install gnuplot`
-  - Arch Linux: `sudo pacman -S gnuplot`
-  - macOS: `brew install gnuplot`
+### Trigger Conditions
 
-The benchmark scripts will check for these dependencies and provide instructions if they're missing.
+Benchmarks run automatically when:
 
-## Directory Structure
+- **Pull Requests**: Against `main`/`master` with changes to:
+  - `src/**` (source code changes)
+  - `benches/**` (benchmark changes) 
+  - `Cargo.*` (dependency changes)
+  - `.github/workflows/benchmark.yml` (workflow changes)
 
-```
-benches/
-├── single/            # Benchmarks for single option calculations
-│   ├── option_pricing.rs
-│   ├── greeks.rs
-│   └── implied_volatility.rs
-├── batch/             # Benchmarks for batch operations
-│   ├── pricing.rs
-│   └── greeks.rs
-├── throughput/        # Benchmarks focused on high-volume operations
-│   ├── option_pricing.rs
-│   ├── scaling.rs
-│   └── batch_size_study.rs
-└── common.rs          # Shared benchmark utilities
-```
+- **Pushes**: To `main`/`master` branch (updates the baseline and GitHub Pages)
 
-## Running Benchmarks
+- **Nightly**: Daily at 02:00 UTC to maintain continuous baseline data
 
-### Basic Usage
+### Workflow Features
 
-Run a specific benchmark:
-```bash
-cargo bench --bench single_option
-```
-
-Run all benchmarks (including throughput benchmarks):
-```bash
-cargo bench --features bench_all
-```
-
-### Using the Benchmark Report Script
-
-The `scripts/benchmark_report.sh` script automates running all benchmarks and generates an HTML report:
-
-```bash
-./scripts/benchmark_report.sh
-```
-
-This will:
-1. Run all benchmarks
-2. Generate HTML reports in `target/criterion/`
-3. Start a local HTTP server to view the reports
-
-### Performance Profiling with Flamegraphs
-
-Generate flamegraphs to identify performance hotspots:
-
-```bash
-# Install cargo-flamegraph if not already installed
-cargo install flamegraph
-
-# Generate flamegraph for a specific benchmark
-./scripts/generate_flamegraph.sh single_option
-
-# Generate flamegraphs for all benchmarks
-./scripts/generate_flamegraph.sh --all
-```
-
-Flamegraphs will be saved to `target/flamegraphs/`.
-
-## Detecting Performance Regressions
-
-### Local Regression Detection
-
-The `scripts/compare_benchmarks.sh` script helps detect performance regressions:
-
-```bash
-# First, save the current state as baseline
-./scripts/compare_benchmarks.sh --save
-
-# Make your changes, then compare against the baseline
-./scripts/compare_benchmarks.sh
-
-# Run specific benchmarks
-./scripts/compare_benchmarks.sh --bench single_option --bench single_greeks
-
-# Include batch benchmarks with required features
-./scripts/compare_benchmarks.sh --bench batch_pricing --features bench_throughput
-```
-
-The script will show a table with performance changes, highlighting improvements and regressions.
-
-### CI Integration
-
-Performance regression detection is integrated into the CI pipeline. It will:
-
-1. Run on pull requests to the main branch
-2. Compare benchmark results against the base branch
-3. Flag warnings for performance degradations of 5% or more
-4. Fail the build for degradations of 10% or more
-5. Generate a summary report in the GitHub PR
+- **Path Filtering**: Only runs on relevant file changes (performance optimization)
+- **Concurrency Control**: Prevents overlapping benchmark runs
+- **Pinned Environment**: Uses `ubuntu-22.04` for reproducible results
+- **Artifact Preservation**: Criterion HTML reports available for 7 days
+- **Security**: Minimal permissions with `contents:write` and `pull-requests:write`
 
 ## Benchmark Categories
 
@@ -142,28 +61,148 @@ Benchmarks focused on operations per second:
 - Throughput measurements with different processing strategies
 - Scaling behavior as batch size increases
 
+## Running Benchmarks Locally
+
+### Basic Usage
+
+Run a specific benchmark:
+```bash
+cargo bench --bench single_option
+```
+
+Run all benchmarks:
+```bash
+cargo bench
+```
+
+### Generate CSV Output (GitHub Action Compatible)
+
+To generate CSV output compatible with the GitHub Action:
+```bash
+cargo bench -- --output-format=csv
+```
+
+### View Local Results
+
+Criterion generates HTML reports in `target/criterion/`. Open `target/criterion/report/index.html` in your browser to view detailed results.
+
+## Performance Regression Detection
+
+### Automated Detection
+
+The GitHub Action automatically:
+- ✅ **Comments on PRs**: Shows performance comparison between PR and base branch
+- ⚠️ **Alert Threshold**: Warns when performance degrades by >10%
+- ❌ **Fail on Alert**: Fails the CI check if regression threshold is exceeded
+- 📊 **Summary Reports**: Provides structured benchmark comparison tables
+
+### Configuration
+
+Current thresholds:
+- **Alert Threshold**: 110% (10% slower triggers warning)
+- **Fail on Alert**: `true` (CI fails on regressions)
+- **Comment on Alert**: `true` (PR comments enabled)
+
+### Threshold Tuning
+
+To adjust sensitivity, modify `.github/workflows/benchmark.yml`:
+```yaml
+alert-threshold: '105%'  # 5% threshold (more sensitive)
+# or
+alert-threshold: '120%'  # 20% threshold (less sensitive)
+```
+
 ## Adding New Benchmarks
 
 To add a new benchmark:
 
-1. Create a new file in the appropriate directory
-2. Add the benchmark to `Cargo.toml`:
+1. **Create the benchmark file** in the appropriate directory:
+   ```rust
+   // benches/new_feature/my_benchmark.rs
+   use criterion::{criterion_group, criterion_main, Criterion};
+
+   fn benchmark_my_feature(c: &mut Criterion) {
+       c.bench_function("my_feature", |b| {
+           b.iter(|| {
+               // Your benchmark code here
+           })
+       });
+   }
+
+   criterion_group!(benches, benchmark_my_feature);
+   criterion_main!(benches);
+   ```
+
+2. **Add to Cargo.toml**:
    ```toml
    [[bench]]
    name = "my_benchmark"
-   path = "benches/category/my_benchmark.rs"
+   path = "benches/new_feature/my_benchmark.rs"
    harness = false
    ```
-3. If it requires features, add:
-   ```toml
-   required-features = ["bench_throughput"]
-   ```
 
-## Best Practices
+3. **Commit and push** - the workflow will automatically include your new benchmark!
 
-1. **Consistent Environments**: Run comparative benchmarks on the same hardware
-2. **Multiple Samples**: Don't rely on a single run; Criterion automatically runs multiple samples
-3. **Focus on Critical Paths**: Prioritize benchmarking performance-critical operations
-4. **Baseline Comparison**: Always compare against a baseline when evaluating optimizations
-5. **Profile First**: Use flamegraphs to identify hotspots before trying to optimize
-6. **Document Improvements**: Add notes about performance improvements to your PRs 
+## System Dependencies
+
+For local development, ensure you have:
+
+- **Gnuplot**: Required for Criterion's HTML reports
+  - Ubuntu/Debian: `sudo apt-get install gnuplot`
+  - Fedora/RHEL: `sudo dnf install gnuplot`  
+  - Arch Linux: `sudo pacman -S gnuplot`
+  - macOS: `brew install gnuplot`
+
+## Repository Configuration
+
+### GitHub Pages Setup
+
+**Repository Settings → Pages:**
+- Source: "Deploy from branch"
+- Branch: `gh-pages`
+- Folder: `/` (root)
+
+### Required Permissions
+
+**Repository Settings → Actions → General:**
+- Workflow permissions: "Read and write permissions"
+- "Allow GitHub Actions to create and approve pull requests": ✅
+
+## Monitoring and Maintenance
+
+### Historical Data
+
+- **Baseline Collection**: Nightly runs ensure continuous data even during quiet periods
+- **Trend Analysis**: GitHub Pages shows performance trends over time
+- **Version Tracking**: Each commit's performance is tracked and visualized
+
+### Best Practices
+
+1. **Monitor False Positives**: Adjust `alert-threshold` if too many false alerts occur
+2. **Review PR Comments**: Use benchmark comparison comments to validate performance changes
+3. **Check GitHub Pages**: Regularly review the trend charts for gradual performance changes
+4. **Local Reproduction**: Use the CSV format locally to reproduce CI results
+
+### Future Enhancements
+
+Consider these additions as the project evolves:
+
+- **Multi-Platform Testing**: Matrix builds for different Rust versions/platforms
+- **Benchmark Categorization**: Separate different benchmark suites
+- **External Integration**: Connect with performance monitoring tools
+- **Custom Metrics**: Add domain-specific performance measurements
+
+## Troubleshooting
+
+### Common Issues
+
+1. **No benchmark results**: Ensure Criterion outputs CSV with `--output-format=csv`
+2. **Permission errors**: Verify repository settings have write permissions enabled
+3. **Missing GitHub Pages**: Check that `gh-pages` branch exists and Pages is configured
+4. **Threshold too sensitive**: Adjust `alert-threshold` in the workflow file
+
+### Getting Help
+
+- Check the [GitHub Action logs](../../actions) for detailed error messages
+- Review the [github-action-benchmark documentation](https://github.com/benchmark-action/github-action-benchmark)
+- Examine the `target/criterion/` directory structure locally 

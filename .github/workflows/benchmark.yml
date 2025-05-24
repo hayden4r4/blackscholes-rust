@@ -1,123 +1,68 @@
-name: Performance Benchmarks
+name: Benchmark
 
 on:
-  pull_request:
-    branches: [ main, master ]
   push:
     branches: [ main, master ]
-  workflow_dispatch:  # Allow manual triggering
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.*'
+      - '.github/workflows/benchmark.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.*'
+      - '.github/workflows/benchmark.yml'
   schedule:
-    - cron: '0 12 * * 0'  # Run weekly on Sundays at 12:00 UTC
+    - cron: '0 2 * * *'  # Daily at 02:00 UTC for baseline data
 
-env:
-  CARGO_TERM_COLOR: always
-  RUSTFLAGS: "-C target-cpu=native"
+# Prevent concurrent benchmark runs that could interfere with gh-pages updates
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  benchmarks:
-    name: Run Performance Benchmarks
-    runs-on: ubuntu-latest
+  benchmark:
+    runs-on: ubuntu-22.04  # Pinned for reproducibility
+    
+    # Minimal permissions for security
+    permissions:
+      contents: write        # Allow gh-pages push
+      pull-requests: write   # Allow PR commenting
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
+      
+      - uses: Swatinem/rust-cache@v2
         with:
-          components: rustfmt, clippy
-      
-      - name: Cache cargo registry
-        uses: Swatinem/rust-cache@v2
+          shared-key: "bench-${{ runner.os }}"
       
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gnuplot libfontconfig1-dev
+        run: sudo apt-get update && sudo apt-get install -y gnuplot
       
-      - name: Run all benchmarks
-        run: |
-          # First run tests
-          cargo test
-
-          # Then run benchmarks with criterion options
-          cargo bench
+      - name: Run benchmarks
+        run: cargo bench -- --output-format=csv
       
-      - name: Compare with previous benchmark results (PR only)
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "Checking for significant performance regressions..."
-          
-          # Clone the base branch to get baseline benchmarks
-          git fetch origin ${{ github.base_ref }}
-          git checkout FETCH_HEAD
-          
-          # Run tests
-          cargo test
-          
-          # Run benchmark comparison against baseline
-          cargo bench
-      
-      - name: Generate Markdown Benchmark Report
-        run: |
-          mkdir -p docs
-          
-          # Create markdown report
-          cat > docs/BENCHMARKS.md << EOF
-          # BlackScholes Performance Benchmark Report
-          
-          *Generated on $(date)*
-          
-          ## Benchmark Results
-          
-          | Benchmark | Average Time | Operations/second |
-          |-----------|-------------|------------------|
-          EOF
-          
-          # Extract benchmark results
-          for BENCH_DIR in $(find target/criterion -mindepth 1 -maxdepth 1 -type d | sort); do
-            BENCH_NAME=$(basename "$BENCH_DIR")
-            if [ -f "$BENCH_DIR/new/estimates.json" ]; then
-              # Extract the mean value in nanoseconds
-              MEAN_TIME=$(jq -r '.mean.point_estimate' "$BENCH_DIR/new/estimates.json")
-              OPS_SEC=$(echo "scale=2; 1000000000 / $MEAN_TIME" | bc)
-              
-              echo "| $BENCH_NAME | $(printf "%.2f" $MEAN_TIME) ns | $(printf "%.2f" $OPS_SEC) ops/sec |" >> docs/BENCHMARKS.md
-            fi
-          done
-          
-          # Add timestamp and extra info
-          cat >> docs/BENCHMARKS.md << EOF
-          
-          ## System Information
-          
-          - OS: $(uname -s) $(uname -r)
-          - CPU: $(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs || echo "Unknown")
-          - Rust: $(rustc --version)
-          
-          *Note: These benchmarks were run in a GitHub Actions environment. For more accurate results, run the benchmarks locally.*
-          EOF
-          
-          # If this is a push to main, commit the changes
-          if [[ "${{ github.event_name }}" == "push" && ("${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master") ]]; then
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            
-            # Update README.md to add/update benchmark link if not present
-            if ! grep -q "## Performance Benchmarks" README.md; then
-              echo -e "\n## Performance Benchmarks\n\nView the latest benchmark results in the [benchmark report](docs/BENCHMARKS.md)." >> README.md
-            fi
-            
-            git add docs/BENCHMARKS.md README.md
-            git commit -m "Update benchmark results [skip ci]" || echo "No changes to commit"
-            git push origin HEAD:${{ github.ref_name }} || echo "Could not push changes"
-          fi
-      
-      - name: Upload benchmark results
+      - name: Upload Criterion HTML Reports
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: benchmark-results
-          path: |
-            target/criterion/
-            docs/BENCHMARKS.md
-          retention-days: 30 
+          name: criterion-reports
+          path: target/criterion/
+          retention-days: 7
+      
+      - name: Store and Upload Benchmark Results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: target/criterion/*/new/raw.csv
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+          comment-on-alert: true
+          alert-threshold: '110%'
+          fail-on-alert: true
+          summary-always: true 
