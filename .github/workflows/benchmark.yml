@@ -43,17 +43,15 @@ jobs:
           shared-key: "bench-${{ runner.os }}"
       
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y gnuplot python3
+        run: |
+          sudo apt-get update && sudo apt-get install -y gnuplot
+          cargo install cargo-criterion
+
       
       - name: Run benchmarks
         run: | 
-          cargo bench | tee criterion_output.txt
-          echo "Criterion benchmarks finished"
-      
-      - name: Convert Criterion output to libtest format
-        run: |
-          python3 scripts/convert_criterion_to_libtest.py criterion_output.txt benchmark_output.txt
-          echo "Conversion completed"
+          cargo criterion --output-format bencher | tee benchmark_output.txt
+          echo "Benchmarks finished"
       
       - name: Store and Upload Benchmark Results
         uses: benchmark-action/github-action-benchmark@v1
