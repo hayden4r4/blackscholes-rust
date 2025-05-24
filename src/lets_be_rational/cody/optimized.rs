@@ -112,7 +112,7 @@ pub fn erfc(x: f64) -> f64 {
 }
 
 fn erfcx_above_threshold(y: f64) -> f64 {
-    debug_assert!(!(y <= THRESHOLD));
+    debug_assert!(y > THRESHOLD);
     if y <= 4.0 {
         cd(y)
     } else {
