@@ -43,12 +43,17 @@ jobs:
           shared-key: "bench-${{ runner.os }}"
       
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y gnuplot
+        run: sudo apt-get update && sudo apt-get install -y gnuplot python3
       
       - name: Run benchmarks
         run: | 
-          cargo bench --benches | tee benchmark_output.txt
-          echo "Benchmark finished"
+          cargo bench | tee criterion_output.txt
+          echo "Criterion benchmarks finished"
+      
+      - name: Convert Criterion output to libtest format
+        run: |
+          python3 scripts/convert_criterion_to_libtest.py criterion_output.txt benchmark_output.txt
+          echo "Conversion completed"
       
       - name: Store and Upload Benchmark Results
         uses: benchmark-action/github-action-benchmark@v1
@@ -60,4 +65,10 @@ jobs:
           comment-on-alert: true
           alert-threshold: '110%'
           fail-on-alert: true
-          summary-always: true 
+          summary-always: true
+          name: Benchmark
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          skip-fetch-gh-pages: false
+          comment-always: false
+          save-data-file: true 
