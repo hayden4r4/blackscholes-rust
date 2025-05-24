@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +25,13 @@ jobs:
           "x86_64-pc-windows-gnu" ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
       - name: Install target
         run: rustup target add ${{ matrix.target }}
       - name: Build
@@ -35,7 +41,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
       - name: Fmt
         run: cargo fmt --all --check
       - name: Clippy
@@ -45,23 +59,23 @@ jobs:
     runs-on: ubuntu-latest
     needs: fmt_clippy
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
       - name: Tests
         run: cargo test --all-targets --verbose
-
-  bench:
-    runs-on: ubuntu-latest
-    needs: fmt_clippy
-    steps:
-      - uses: actions/checkout@v3
-      - name: Bench
-        run: cargo bench --all-targets --verbose
 
   security_audit:
     runs-on: ubuntu-latest
     needs: fmt_clippy
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
       - name: Install cargo-audit
         run: cargo install cargo-audit
       - name: Run cargo-audit
@@ -69,14 +83,20 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    needs: [ bench, tests, security_audit ]
+    needs: [ tests, security_audit ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
-# TODO: Dont work @hayden4r4
+# TODO: Doesn't work @hayden4r4
 #    - name: Upload coverage to Codecov
 #      uses: codecov/codecov-action@v3
 #      with:

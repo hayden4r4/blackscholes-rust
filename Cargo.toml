@@ -14,12 +14,25 @@ keywords = ["finance", "option", "pricing", "blackscholes", "option-pricing"]
 codegen-units = 1
 lto = "fat"
 
+[profile.bench]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+panic = "abort"
+
+[features]
+default = []
+bench_throughput = []
+bench_all = ["bench_throughput"]
+
 [dev-dependencies]
 approx = "0.5.1"
 assert_approx_eq = "1.1.0"
-criterion = "0.5.1"
+criterion = { version = "0.6.0", features = ["html_reports"] }
 proptest = "1.5.0"
 rand = { version = "0.8.5", default-features = false }
+plotters = "0.3"
+indicatif = "0.17"
 
 [dependencies]
 num-traits = "0.2.19"
@@ -27,7 +40,6 @@ statrs = "0.17.1"
 
 [target.wasm32-unknown-unknown.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
-
 
 #[[bench]]
 #name = "black"
@@ -42,7 +54,57 @@ harness = false
 name = "implied_volatility"
 harness = false
 
-# enable this to run additional benches
-# [[bench]]
-# name = "additional_benches_to_verify"
-# harness = false
+[[bench]]
+name = "greeks"
+harness = false
+
+[[bench]]
+name = "single_option"
+path = "benches/single/option_pricing.rs"
+harness = false
+
+[[bench]]
+name = "single_greeks"
+path = "benches/single/greeks.rs"
+harness = false
+
+[[bench]]
+name = "single_iv"
+path = "benches/single/implied_volatility.rs"
+harness = false
+
+[[bench]]
+name = "batch_pricing"
+path = "benches/batch/pricing.rs"
+harness = false
+required-features = ["bench_throughput"]
+
+[[bench]]
+name = "batch_greeks"
+path = "benches/batch/greeks.rs"
+harness = false
+required-features = ["bench_throughput"]
+
+[[bench]]
+name = "throughput"
+path = "benches/throughput/option_pricing.rs"
+harness = false
+required-features = ["bench_throughput"]
+
+[[bench]]
+name = "scaling"
+path = "benches/throughput/scaling.rs"
+harness = false
+required-features = ["bench_throughput"]
+
+[[bench]]
+name = "visualize"
+path = "benches/throughput/visualize.rs"
+harness = false
+required-features = ["bench_throughput"]
+
+[[bench]]
+name = "batch_size_study"
+path = "benches/throughput/batch_size_study.rs"
+harness = false
+required-features = ["bench_throughput"]

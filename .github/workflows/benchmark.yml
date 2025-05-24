@@ -1,0 +1,71 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.*'
+      - '.github/workflows/benchmark.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.*'
+      - '.github/workflows/benchmark.yml'
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 02:00 UTC for baseline data
+
+# Prevent concurrent benchmark runs that could interfere with gh-pages updates
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-22.04  # Pinned for reproducibility
+    
+    # Minimal permissions for security
+    permissions:
+      contents: write        # Allow gh-pages push
+      pull-requests: write   # Allow PR commenting
+      deployments: write     # Allow GitHub Pages deployment
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dtolnay/rust-toolchain@nightly
+      
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "bench-${{ runner.os }}"
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y gnuplot
+          cargo install cargo-criterion
+
+      
+      - name: Run benchmarks
+        run: | 
+          cargo criterion --message-format=json | tee benchmark_output.txt
+          echo "Benchmarks finished"
+      
+      - name: Store and Upload Benchmark Results
+        uses: brainstorm/github-action-benchmark@cargo-criterion-v2
+        with:
+          tool: 'cargo-criterion'
+          output-file-path: benchmark_output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+          comment-on-alert: true
+          alert-threshold: '110%'
+          fail-on-alert: true
+          name: Benchmark
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          skip-fetch-gh-pages: false
+          comment-always: true
+          save-data-file: true 

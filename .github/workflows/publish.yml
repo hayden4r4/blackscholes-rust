@@ -15,7 +15,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
       - name: Check version
         run: |
           CURRENT_VERSION=$(sed -n -e 's/^version = "\(.*\)"/\1/p' Cargo.toml)
@@ -31,20 +38,22 @@ jobs:
 
       - name: Run tests
         run: cargo test --verbose
+      
       - name: Update version in toml
         run: |
-          VERSION=${GITHUB_REF#refs/tags/version/}
           sed -i "s/^version = .*/version = \"${{ github.event.inputs.version }}\"/" Cargo.toml
+      
       - name: Commit and tag
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git commit -am "Bump version to ${{ github.event.inputs.version }}"
-          git push origin main
-          git tag version/${{ github.event.inputs.version }}
-          git push origin --tags
+          git push origin HEAD:${{ github.ref_name }}
+          git tag v${{ github.event.inputs.version }}
+          git push origin v${{ github.event.inputs.version }}
 
       - name: Login to crates.io
         run: echo "${{ secrets.CARGO_TOKEN }}" | cargo login
+      
       - name: Publish
         run: cargo publish --verbose
