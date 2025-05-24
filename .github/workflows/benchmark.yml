@@ -50,13 +50,13 @@ jobs:
       
       - name: Run benchmarks
         run: | 
-          cargo criterion --output-format bencher | tee benchmark_output.txt
+          cargo criterion | tee benchmark_output.txt
           echo "Benchmarks finished"
       
       - name: Store and Upload Benchmark Results
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: brainstorm/github-action-benchmark@cargo-criterion-tool-extractor
         with:
-          tool: 'cargo'
+          tool: 'cargo-criterion'
           output-file-path: benchmark_output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
