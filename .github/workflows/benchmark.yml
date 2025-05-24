@@ -50,7 +50,7 @@ jobs:
       
       - name: Run benchmarks
         run: | 
-          cargo criterion | tee benchmark_output.txt
+          cargo criterion --message-format=json | tee benchmark_output.txt
           echo "Benchmarks finished"
       
       - name: Store and Upload Benchmark Results
