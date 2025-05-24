@@ -54,7 +54,7 @@ jobs:
           echo "Benchmarks finished"
       
       - name: Store and Upload Benchmark Results
-        uses: brainstorm/github-action-benchmark@cargo-criterion-tool-extractor
+        uses: brainstorm/github-action-benchmark@cargo-criterion-v2
         with:
           tool: 'cargo-criterion'
           output-file-path: benchmark_output.txt
