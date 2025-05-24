@@ -3,7 +3,7 @@ use std::{hint::black_box, time::Duration};
 use blackscholes::{Greeks, Inputs, OptionType};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
-#[path = "../common.rs"]
+#[path = "../common/mod.rs"]
 mod common;
 use common::{generate_standard_inputs, Moneyness, TimeToMaturity, VolatilityLevel};
 

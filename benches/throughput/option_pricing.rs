@@ -4,7 +4,7 @@ use blackscholes::{Greeks, Inputs, OptionType, Pricing};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use rand::thread_rng;
 
-#[path = "../common.rs"]
+#[path = "../common/mod.rs"]
 mod common;
 use common::{generate_random_inputs, get_sample_config, BatchSize, InputsSoA};
 
