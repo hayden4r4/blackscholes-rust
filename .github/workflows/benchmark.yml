@@ -63,10 +63,9 @@ jobs:
           comment-on-alert: true
           alert-threshold: '110%'
           fail-on-alert: true
-          summary-always: true
           name: Benchmark
           gh-pages-branch: gh-pages
           benchmark-data-dir-path: dev/bench
           skip-fetch-gh-pages: false
-          comment-always: false
+          comment-always: true
           save-data-file: true 
