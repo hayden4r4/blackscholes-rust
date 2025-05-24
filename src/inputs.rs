@@ -159,14 +159,14 @@ impl Display for Inputs {
         writeln!(f, "Stock price: {:.2}", self.s)?;
         writeln!(f, "Strike price: {:.2}", self.k)?;
         match self.p {
-            Some(p) => writeln!(f, "Option price: {:.2}", p)?,
+            Some(p) => writeln!(f, "Option price: {p:.2}")?,
             None => writeln!(f, "Option price: None")?,
         }
         writeln!(f, "Risk-free rate: {:.4}", self.r)?;
         writeln!(f, "Dividend yield: {:.4}", self.q)?;
         writeln!(f, "Time to maturity: {:.4}", self.t)?;
         match self.sigma {
-            Some(sigma) => writeln!(f, "Volatility: {:.4}", sigma)?,
+            Some(sigma) => writeln!(f, "Volatility: {sigma:.4}")?,
             None => writeln!(f, "Volatility: None")?,
         }
         Ok(())

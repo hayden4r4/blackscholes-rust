@@ -6,7 +6,7 @@ use criterion::{
 };
 use rand::thread_rng;
 
-#[path = "../common.rs"]
+#[path = "../common/mod.rs"]
 mod common;
 use common::{generate_random_inputs, get_sample_config, BatchSize, InputsSoA};
 

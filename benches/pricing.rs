@@ -1,5 +1,7 @@
+use std::hint::black_box;
+
 use blackscholes::{Inputs, OptionType, Pricing};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 const INPUTS: Inputs = Inputs {
     option_type: OptionType::Call,

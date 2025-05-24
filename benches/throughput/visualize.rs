@@ -1,11 +1,14 @@
-use std::time::{Duration, Instant};
+use std::{
+    hint::black_box,
+    time::{Duration, Instant},
+};
 
 use blackscholes::{Greeks, Inputs, Pricing};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use plotters::prelude::*;
 use rand::thread_rng;
 
-#[path = "../common.rs"]
+#[path = "../common/mod.rs"]
 mod common;
 use common::{generate_random_inputs, BatchSize};
 
@@ -152,7 +155,7 @@ fn create_time_per_option_chart(
         .flat_map(|(_, points)| points.iter().map(|(_, y)| *y))
         .fold(0.0_f64, |acc: f64, y| acc.max(y));
 
-    let y_range = (min_y * 0.8)..=(max_y * 1.2);
+    let y_range = (min_y * 0.8)..(max_y * 1.2);
 
     // Create chart
     let mut chart = ChartBuilder::on(&root)
@@ -220,7 +223,7 @@ fn create_throughput_chart(
         .flat_map(|(_, points)| points.iter().map(|(_, y)| *y))
         .fold(0.0_f64, |acc: f64, y| acc.max(y));
 
-    let y_range = (min_y * 0.8)..=(max_y * 1.2);
+    let y_range = (min_y * 0.8)..(max_y * 1.2);
 
     // Create chart
     let mut chart = ChartBuilder::on(&root)
