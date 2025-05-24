@@ -15,10 +15,7 @@ on:
       - 'benches/**'
       - 'Cargo.*'
       - '.github/workflows/benchmark.yml'
-  schedule:
-    - cron: '0 2 * * *'  # Daily at 02:00 UTC for baseline data
 
-# Prevent concurrent benchmark runs that could interfere with gh-pages updates
 concurrency:
   group: benchmark-${{ github.ref }}
   cancel-in-progress: true
@@ -29,9 +26,7 @@ jobs:
     
     # Minimal permissions for security
     permissions:
-      contents: write        # Allow gh-pages push
       pull-requests: write   # Allow PR commenting
-      deployments: write     # Allow GitHub Pages deployment
     
     steps:
       - uses: actions/checkout@v4
@@ -42,11 +37,6 @@ jobs:
         with:
           shared-key: "bench-${{ runner.os }}"
       
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y gnuplot
-          cargo install cargo-criterion
-
       - uses: boa-dev/criterion-compare-action@v3
         with:
           branchName: ${{ github.base_ref }}
