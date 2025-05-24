@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       
       - uses: Swatinem/rust-cache@v2
         with:
@@ -46,7 +46,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y gnuplot
       
       - name: Run benchmarks
-        run: cargo bench | tee benchmark_output.txt
+        run: | 
+          cargo bench --benches | tee benchmark_output.txt
+          echo "Benchmark finished"
       
       - name: Store and Upload Benchmark Results
         uses: benchmark-action/github-action-benchmark@v1
