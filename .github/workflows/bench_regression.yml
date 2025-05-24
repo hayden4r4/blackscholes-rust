@@ -82,7 +82,10 @@ jobs:
           WARNING_THRESHOLD_INT=$(echo "$WARNING_THRESHOLD" | awk '{print int($1)}')
           FAILURE_THRESHOLD_INT=$(echo "$FAILURE_THRESHOLD" | awk '{print int($1)}')
           
-          BENCH_NAME=$(basename $(dirname "$PR_RESULTS"))
+          # Extract benchmark name from full path
+          # From /path/to/Group/test/new/estimates.json, get "Group/test"
+          DIR_PATH=$(dirname $(dirname "$PR_RESULTS"))
+          BENCH_NAME=${DIR_PATH#"target/criterion/"}
           
           # Detect regression
           if [ "$PERCENT_CHANGE_INT" -ge "$FAILURE_THRESHOLD_INT" ]; then
@@ -115,7 +118,7 @@ jobs:
           
           # Debug output - show what criterion files were created
           echo "=== PR Branch Benchmark Files ==="
-          find target/criterion -type f -name "*.json" | sort
+          find target/criterion -type f -name "estimates.json" | sort
       
       - name: Checkout base branch
         run: |
@@ -137,15 +140,15 @@ jobs:
           
           # Debug output - show what criterion files were created
           echo "=== Base Branch Benchmark Files ==="
-          find target/criterion -type f -name "*.json" | sort
+          find target/criterion -type f -name "estimates.json" | sort
       
       - name: Extract and compare benchmark results
         run: |
           echo "Comparing benchmark results between PR and base branch..."
           echo "Warning threshold: $WARNING_THRESHOLD%, Failure threshold: $FAILURE_THRESHOLD%"
           
-          # Find all benchmark JSON files
-          PR_RESULTS=$(find target/criterion -name "new.json" | sort)
+          # Find all benchmark estimates.json files under "new" directories
+          PR_RESULTS=$(find target/criterion -path "*/new/estimates.json" | sort)
           
           # Debugging - show what files were found
           echo "Found $(echo "$PR_RESULTS" | wc -l) PR result files:"
@@ -165,9 +168,8 @@ jobs:
           FOUND_FILES=false
           
           for PR_FILE in $PR_RESULTS; do
-            # Find corresponding base file
-            RELATIVE_PATH=${PR_FILE#"target/criterion/"}
-            BASE_FILE="target/criterion/${RELATIVE_PATH/new/base}"
+            # Find corresponding base file by replacing "new" with "base" in path
+            BASE_FILE="${PR_FILE/new/base}"
             
             echo "Checking $PR_FILE against $BASE_FILE"
             
@@ -204,14 +206,14 @@ jobs:
           echo "|-----------|------|-------|-------|" >> $GITHUB_STEP_SUMMARY
           
           # Add each benchmark result to the summary
-          PR_RESULTS=$(find target/criterion -name "new.json" | sort)
+          PR_RESULTS=$(find target/criterion -path "*/new/estimates.json" | sort)
           for PR_FILE in $PR_RESULTS; do
-            # Extract benchmark name
-            BENCH_NAME=$(basename $(dirname "$PR_FILE"))
+            # Extract benchmark name from path
+            DIR_PATH=$(dirname $(dirname "$PR_FILE"))
+            BENCH_NAME=${DIR_PATH#"target/criterion/"}
             
             # Find corresponding base file
-            RELATIVE_PATH=${PR_FILE#"target/criterion/"}
-            BASE_FILE="target/criterion/${RELATIVE_PATH/new/base}"
+            BASE_FILE="${PR_FILE/new/base}"
             
             if [ -f "$BASE_FILE" ]; then
               PR_TIME=$(jq '.mean.point_estimate' "$PR_FILE")
