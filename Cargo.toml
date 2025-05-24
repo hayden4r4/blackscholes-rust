@@ -20,10 +20,6 @@ lto = "fat"
 opt-level = 3
 panic = "abort"
 
-[features]
-default = []
-bench_throughput = []
-bench_all = ["bench_throughput"]
 
 [dev-dependencies]
 approx = "0.5.1"
@@ -77,34 +73,28 @@ harness = false
 name = "batch_pricing"
 path = "benches/batch/pricing.rs"
 harness = false
-required-features = ["bench_throughput"]
 
 [[bench]]
 name = "batch_greeks"
 path = "benches/batch/greeks.rs"
 harness = false
-required-features = ["bench_throughput"]
 
 [[bench]]
 name = "throughput"
 path = "benches/throughput/option_pricing.rs"
 harness = false
-required-features = ["bench_throughput"]
 
 [[bench]]
 name = "scaling"
 path = "benches/throughput/scaling.rs"
 harness = false
-required-features = ["bench_throughput"]
 
 [[bench]]
 name = "visualize"
 path = "benches/throughput/visualize.rs"
 harness = false
-required-features = ["bench_throughput"]
 
 [[bench]]
 name = "batch_size_study"
 path = "benches/throughput/batch_size_study.rs"
 harness = false
-required-features = ["bench_throughput"]

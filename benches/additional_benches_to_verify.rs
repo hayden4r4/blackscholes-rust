@@ -1,5 +1,7 @@
+use std::hint::black_box;
+
 use blackscholes::OptionType;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::Rng;
 
 #[allow(dead_code)]

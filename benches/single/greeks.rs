@@ -1,7 +1,7 @@
-use std::time::Duration;
+use std::{hint::black_box, time::Duration};
 
 use blackscholes::{Greeks, Inputs, OptionType};
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 #[path = "../common.rs"]
 mod common;

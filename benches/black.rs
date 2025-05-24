@@ -5,7 +5,8 @@
 // extern crate criterion;
 //
 //
-// use criterion::{black_box, Criterion, criterion_group};
+// use criterion::{Criterion, criterion_group};
+// use std::hint::black_box;
 //
 // use blackscholes::lets_be_rational::black::{
 //     asymptotic_expansion_of_normalised_black_call, small_t_expansion_of_normalised_black_call,
