@@ -1,13 +1,6 @@
 name: Benchmark
 
 on:
-  push:
-    branches: [ main, master ]
-    paths:
-      - 'src/**'
-      - 'benches/**'
-      - 'Cargo.*'
-      - '.github/workflows/benchmark.yml'
   pull_request:
     branches: [ main, master ]
     paths:
