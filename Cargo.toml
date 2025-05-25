@@ -28,17 +28,17 @@ panic = "abort"
 approx = "0.5.1"
 assert_approx_eq = "1.1.0"
 criterion = { version = "0.6.0", features = ["html_reports"] }
-proptest = "1.5.0"
-rand = { version = "0.8.5", default-features = false }
+proptest = "1.6.0"
+rand = { version = "0.9.1", default-features = false }
 plotters = "0.3"
 indicatif = "0.17"
 
 [dependencies]
 num-traits = "0.2.19"
-statrs = "0.17.1"
+statrs = "0.18.0"
 
 [target.wasm32-unknown-unknown.dependencies]
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 
 #[[bench]]
 #name = "black"
